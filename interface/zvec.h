@@ -22,7 +22,7 @@ namespace zeno
         Vec3i(int _x, int _y, int _z) : x(_x), y(_y), z(_z) {}
 
 #if 1
-        int& operator[](size_t index) {
+        int& operator[](int index) {
             //assert(index < 3 && index >= 0 && "Vec3i index out of range");
             switch (index) {
             case 0: return x;
@@ -33,7 +33,7 @@ namespace zeno
             }
         }
 
-        const int& operator[](size_t index) const {
+        const int& operator[](int index) const {
             //assert(index < 3 && index >= 0 && "Vec3i index out of range");
             switch (index) {
             case 0: return x;
@@ -52,7 +52,7 @@ namespace zeno
         Vec3f() = default;
         Vec3f(float _x, float _y, float _z) : x(_x), y(_y), z(_z) {}
 #if 1
-        float& operator[](size_t index) {
+        float& operator[](int index) {
             //assert(index < 3 && index >= 0 && "Vec3i index out of range");
             switch (index) {
             case 0: return x;
@@ -63,7 +63,7 @@ namespace zeno
             }
         }
 
-        const float& operator[](size_t index) const {
+        const float& operator[](int index) const {
             //assert(index < 3 && index >= 0 && "Vec3i index out of range");
             switch (index) {
             case 0: return x;

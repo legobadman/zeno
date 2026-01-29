@@ -4,6 +4,7 @@
 #include <zeno/utils/api.h>
 #include <memory>   //abi problem
 #include <zvec.h>
+#include <iobject2.h>
 
 namespace zeno {
 
@@ -25,6 +26,8 @@ namespace zeno {
         std::unique_ptr<IUserData> m_usrData;   //TODO: abi unique_ptr
     };
     using zany = std::unique_ptr<zeno::IObject>;
+
+    using zany2 = std::unique_ptr<zeno::IObject2>;
 
     struct ZENO_API IUserData {
         virtual std::unique_ptr<IUserData> clone() = 0;

@@ -22,7 +22,8 @@ namespace zeno
 
     using ATTR_VEC_PTR = std::shared_ptr<AttributeVector>;
 
-    class ZENO_API GeometryObject {
+    class ZENO_API GeometryObject : public IGeometryObject
+    {
     public:
         GeometryObject() = delete;
         GeometryObject(GeomTopoType type);
@@ -31,7 +32,7 @@ namespace zeno
         GeometryObject(const GeometryObject& rhs);
         GeometryObject(PrimitiveObject* spPrim);
         std::unique_ptr<PrimitiveObject> toPrimitive();
-        GeomTopoType type() const;
+
         void inheritAttributes(
             GeometryObject* rhs,
             int vtx_offset,
@@ -44,7 +45,6 @@ namespace zeno
         std::unique_ptr<GeometryObject> toIndiceMeshesTopo() const;
         std::unique_ptr<GeometryObject> toHalfEdgeTopo() const;
 
-        std::vector<vec3f> points_pos();
         std::vector<vec3i> tri_indice() const;
         std::vector<int> edge_list() const;
         std::vector<std::vector<int>> face_indice() const;
@@ -59,12 +59,6 @@ namespace zeno
         void geomTriangulate(zeno::TriangulateInfo& info);
         //standard API
 
-        //创建属性
-        int create_attr(GeoAttrGroup grp, const std::string& attr_name, const AttrVar& defl);
-        int create_face_attr(std::string const& attr_name, const AttrVar& defl);
-        int create_point_attr(std::string const& attr_name, const AttrVar& defl);
-        int create_vertex_attr(std::string const& attr_name, const AttrVar& defl);
-        int create_geometry_attr(std::string const& attr_name, const AttrVar& defl);
         //CALLBACK_REGIST(create_face_attr, void, std::string)//暂时不需要
         //CALLBACK_REGIST(create_point_attr, void, std::string)
         //CALLBACK_REGIST(create_vertex_attr, void, std::string)
@@ -73,12 +67,6 @@ namespace zeno
         void copy_attr(GeoAttrGroup grp, const std::string& src_attr, const std::string& dest_attr);
         void copy_attr_from(GeoAttrGroup grp, GeometryObject* pSrcObject, const std::string& src_attr, const std::string& dest_attr);
 
-        //设置属性
-        int set_attr(GeoAttrGroup grp, std::string const& name, const AttrVar& val);
-        int set_vertex_attr(std::string const& attr_name, const AttrVar& defl);
-        int set_point_attr(std::string const& attr_name, const AttrVar& defl);
-        int set_face_attr(std::string const& attr_name, const AttrVar& defl);
-        int set_geometry_attr(std::string const& attr_name, const AttrVar& defl);
         //CALLBACK_REGIST(set_vertex_attr, void, std::string&, const AttrVar&)
         //CALLBACK_REGIST(set_point_attr, void, std::string&, const AttrVar&)
         //CALLBACK_REGIST(set_face_attr, void, std::string&, const AttrVar&)
@@ -103,20 +91,6 @@ namespace zeno
             iter->second.set_elem<T, CHANNEL>(idx, val);
         }
 
-        /* 检查属性是否存在 */
-        bool has_attr(GeoAttrGroup grp, std::string const& name, GeoAttrType type = ATTR_TYPE_UNKNOWN);
-        bool has_vertex_attr(std::string const& name) const;
-        bool has_point_attr(std::string const& name) const;
-        bool has_face_attr(std::string const& name) const;
-        bool has_geometry_attr(std::string const& name) const;
-        std::vector<std::string> attributes(GeoAttrGroup grp);
-
-        //删除属性
-        int delete_attr(GeoAttrGroup grp, const std::string& attr_name);
-        int delete_vertex_attr(std::string const& attr_name);
-        int delete_point_attr(std::string const& attr_name);
-        int delete_face_attr(std::string const& attr_name);
-        int delete_geometry_attr(std::string const& attr_name);
         //CALLBACK_REGIST(delete_vertex_attr, void, std::string)
         //CALLBACK_REGIST(delete_point_attr, void, std::string)
         //CALLBACK_REGIST(delete_face_attr, void, std::string)
@@ -152,17 +126,104 @@ namespace zeno
             type = polyline 创建开放多边形，就是折线。
          */
         //TODO: createPrim(type, point[])
+        int isLineFace(int faceid);
+
+    public:
+        GeomTopoType topo_type() const override;
+
+        std::vector<vec3f> points_pos();
+        size_t points_pos(Vec3f* buf, size_t buf_size) override;
 
         /* 添加元素 */
-        int add_vertex(int face_id, int point_id);
+        int add_vertex(int face_id, int point_id) override;
         CALLBACK_REGIST(add_vertex, void, int)
+
+        int add_point(Vec3f pos) override;
         int add_point(zeno::vec3f pos);
         CALLBACK_REGIST(add_point, void, int)
+
+        int add_face(int* points, size_t size, bool bClose = true) override;
         int add_face(const std::vector<int>& points, bool bClose = true);
         CALLBACK_REGIST(add_face, void, int)
+
         void set_face(int idx, const std::vector<int>& points, bool bClose = true);
 
+        //创建属性
+        int create_attr(
+            GeoAttrGroup grp,
+            const char* attr_name,
+            const ZAttrValue& val
+        ) override;
+
+        int create_attr_by_vec3(
+            GeoAttrGroup grp,
+            const char* attr_name,
+            const Vec3f* arr,
+            size_t size
+        ) override;
+
+        int create_attr_by_float(
+            GeoAttrGroup grp,
+            const char* attr_name,
+            const float* arr,
+            size_t size
+        ) override;
+
+        int create_attr(GeoAttrGroup grp, const std::string& attr_name, const AttrVar& defl);
+        int create_face_attr(std::string const& attr_name, const AttrVar& defl);
+        int create_point_attr(std::string const& attr_name, const AttrVar& defl);
+        int create_vertex_attr(std::string const& attr_name, const AttrVar& defl);
+        int create_geometry_attr(std::string const& attr_name, const AttrVar& defl);
+
+        //设置属性
+        int set_attr2(
+            GeoAttrGroup grp,
+            const char* attr_name,
+            const ZAttrValue& defl
+        ) override;
+        int set_attr(GeoAttrGroup grp, std::string const& name, const AttrVar& val);
+        int set_vertex_attr(std::string const& attr_name, const AttrVar& defl);
+        int set_point_attr(std::string const& attr_name, const AttrVar& defl);
+        int set_face_attr(std::string const& attr_name, const AttrVar& defl);
+        int set_geometry_attr(std::string const& attr_name, const AttrVar& defl);
+
+        size_t get_float_attr(
+            GeoAttrGroup grp,
+            const char* attr_name,
+            float* buf,
+            size_t buf_size
+        ) override;
+
+        size_t get_vec3f_attr(
+            GeoAttrGroup grp,
+            const char* attr_name,
+            Vec3f* buf,
+            size_t buf_size
+        ) override;
+
+        /* 检查属性是否存在 */
+        bool has_attr(
+            GeoAttrGroup grp,
+            const char* name,
+            GeoAttrType type = ATTR_TYPE_UNKNOWN
+        ) override;
+        bool has_attr(GeoAttrGroup grp, std::string const& name, GeoAttrType type = ATTR_TYPE_UNKNOWN);
+        bool has_vertex_attr(std::string const& name) const;
+        bool has_point_attr(std::string const& name) const;
+        bool has_face_attr(std::string const& name) const;
+        bool has_geometry_attr(std::string const& name) const;
+        std::vector<std::string> attributes(GeoAttrGroup grp);
+
         /* 移除元素相关 */
+        int delete_attr(
+            GeoAttrGroup grp,
+            const char* name
+        ) override;
+        int delete_attr(GeoAttrGroup grp, const std::string& attr_name);
+        int delete_vertex_attr(std::string const& attr_name);
+        int delete_point_attr(std::string const& attr_name);
+        int delete_face_attr(std::string const& attr_name);
+        int delete_geometry_attr(std::string const& attr_name);
         bool remove_faces(const std::set<int>& faces, bool includePoints);
         CALLBACK_REGIST(remove_face, void, int)
         bool remove_point(int ptnum);
@@ -172,36 +233,68 @@ namespace zeno
         CALLBACK_REGIST(reset_faces, void)
         CALLBACK_REGIST(reset_vertices, void)
 
+
         /* 返回元素个数 */
-        int npoints() const;
-        int nfaces() const;
-        int nvertices() const;
-        int nvertices(int face_id) const;
-        int nattributes(GeoAttrGroup grp) const;
+        int npoints() const override;
+        int nfaces() const override;
+        int nvertices() const override;
+        int nvertices(int face_id) const override;
+        int nattributes(GeoAttrGroup grp) const override;
 
         /* 点相关 */
+        size_t point_faces(int point_id, int* faces, size_t cap) override;
+        int point_vertex(int point_id) override;
+        size_t point_vertices(int point_id, int* vertices, size_t cap) override;
         std::vector<int> point_faces(int point_id);
-        int point_vertex(int point_id);
         std::vector<int> point_vertices(int point_id);
 
         /* 面相关 */
-        int face_point(int face_id, int vert_id) const;
+        int face_point(int face_id, int vert_id) const override;
+        size_t face_points(int face_id, int* points, size_t cap) override;
+        int face_vertex(int face_id, int vert_id) override;
+        int face_vertex_count(int face_id) override;
+        size_t face_vertices(int face_id, int* vertices, size_t cap) override;
+        Vec3f face_nrm(int face_id) override;
         std::vector<int> face_points(int face_id);
-        int face_vertex(int face_id, int vert_id);
-        int face_vertex_count(int face_id);
         std::vector<int> face_vertices(int face_id);
         zeno::vec3f face_normal(int face_id);
 
         /* Vertex相关 */
-        int vertex_index(int face_id, int vertex_id);
-        int vertex_next(int linear_vertex_id);
-        int vertex_prev(int linear_vertex_id);
-        int vertex_point(int linear_vertex_id);
-        int vertex_face(int linear_vertex_id);
-        int vertex_face_index(int linear_vertex_id);
+        int vertex_index(int face_id, int vertex_id) override;
+        int vertex_next(int linear_vertex_id) override;
+        int vertex_prev(int linear_vertex_id) override;
+        int vertex_point(int linear_vertex_id) override;
+        int vertex_face(int linear_vertex_id) override;
+        int vertex_face_index(int linear_vertex_id) override;
         std::tuple<int, int, int> vertex_info(int linear_vertex_id);
 
-        int isLineFace(int faceid);
+    public: //IObject2
+        IObject2* clone() const override {
+            return nullptr;
+        }
+        size_t key(char* buf, size_t buf_size) const override
+        {
+            const char* s = m_key.c_str();
+            size_t len = m_key.size();   // 不含 '\0'
+            if (buf && buf_size > 0) {
+                size_t copy = (len < buf_size - 1) ? len : (buf_size - 1);
+                memcpy(buf, s, copy);
+                buf[copy] = '\0';
+            }
+            return len;
+        }
+        void update_key(const char* key) override {
+            m_key = key;
+        }
+        size_t serialize_json(char* buf, size_t buf_size) const override {
+            return 0;
+        }
+        IUserData2* userData() override { return nullptr; }
+        void Delete() override {
+            //delete this;
+        }
+    private:
+        std::string m_key;
 
     private:
         void _temp_code_regist();

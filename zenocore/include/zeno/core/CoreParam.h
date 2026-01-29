@@ -68,7 +68,7 @@ namespace zeno {
 
     struct ObjectParam : CoreParam {
         std::list<std::shared_ptr<ObjectLink>> links;
-        zany spObject;
+        zany2 spObject;
 
         ParamObject exportParam() const;
     };

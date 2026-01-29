@@ -61,7 +61,7 @@ namespace zeno
 
         //获取属性
         std::vector<float> get_float_attr(GeoAttrGroup grp, const zeno::String& attr_name);
-        std::vector<vec3f> get_vec3f_attr(GeoAttrGroup grp, const zeno::String& attr_name);
+        std::vector<vec3f> get_vec3f_attr(GeoAttrGroup grp, const zeno::String& attr_name); 
 
         //设置属性
         int set_attr(GeoAttrGroup grp, const zeno::String& name, const Any& val);

@@ -27,10 +27,6 @@ namespace zeno
 		return nullptr;
 	}
 
-	IDictObject* NodeImpl::get_input_DictObject(const char* param) {
-		return nullptr;
-	}
-
 	int NodeImpl::get_input2_int(const char* param) {
 		return -1;
 	}

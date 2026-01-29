@@ -11,7 +11,6 @@ namespace zeno {
 		virtual IGeometryObject* get_input_Geometry(const char* param) = 0;
 		virtual IGeometryObject* clone_input_Geometry(const char* param) = 0;
 		virtual IListObject* get_input_ListObject(const char* param) = 0;
-		virtual IDictObject* get_input_DictObject(const char* param) = 0;
 		virtual int get_input2_int(const char* param) = 0;
 		virtual float get_input2_float(const char* param) = 0;
 		virtual int get_input2_string(const char* param, char* ret, int cap) = 0;

@@ -2,6 +2,7 @@
 #define __ZENUM_H__
 
 #include <cstddef>
+#include <zvec.h>
 
 namespace zeno {
     enum NodeType
@@ -43,6 +44,44 @@ namespace zeno {
         Seperator,
         CodeEditor,
         NoMultiSockPanel,   //disable dist/list panel
+    };
+
+
+    //几何属性对应的分组
+    enum GeoAttrGroup {
+        ATTR_GEO,
+        ATTR_FACE,
+        ATTR_POINT,
+        ATTR_VERTEX,
+    };
+
+    enum GeomTopoType
+    {
+        Topo_IndiceMesh,
+        Topo_HalfEdge,
+    };
+
+    //几何属性类型
+    enum GeoAttrType {
+        ATTR_TYPE_UNKNOWN,
+        ATTR_INT,
+        ATTR_FLOAT,
+        ATTR_STRING,
+        ATTR_VEC2,
+        ATTR_VEC3,
+        ATTR_VEC4
+    };
+
+    struct ZAttrValue {
+        GeoAttrType type;
+        union {
+            int i;
+            float f;
+            const char* s;
+            Vec2f vec2;
+            Vec3f vec3;
+            Vec4f vec4;
+        };
     };
 }
 

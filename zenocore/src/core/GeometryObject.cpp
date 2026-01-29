@@ -129,7 +129,7 @@ namespace zeno
 
     }
 
-    GeomTopoType GeometryObject::type() const {
+    GeomTopoType GeometryObject::topo_type() const {
         return m_type;
     }
 
@@ -323,6 +323,63 @@ namespace zeno
         return iter->second.get_attrs<vec3f>();
     }
 
+    size_t GeometryObject::points_pos(Vec3f* buf, size_t buf_size)
+    {
+        auto pts = points_pos();   // 复用 STL 版本
+        size_t n = pts.size();
+
+        if (buf && buf_size > 0) {
+            size_t copy = (n < buf_size) ? n : buf_size;
+            for (size_t i = 0; i < copy; ++i) {
+                buf[i].x = pts[i][0];
+                buf[i].y = pts[i][1];
+                buf[i].z = pts[i][2];
+            }
+        }
+
+        return n;
+    }
+
+    size_t GeometryObject::get_float_attr(
+        GeoAttrGroup grp,
+        const char* attr_name,
+        float* buf,
+        size_t buf_size
+    )
+    {
+        auto vec = get_attrs<float>(grp, attr_name);
+        size_t n = vec.size();
+
+        if (buf && buf_size > 0) {
+            size_t copy = (n < buf_size) ? n : buf_size;
+            memcpy(buf, vec.data(), copy * sizeof(float));
+        }
+
+        return n;
+    }
+
+    size_t GeometryObject::get_vec3f_attr(
+        GeoAttrGroup grp,
+        const char* attr_name,
+        Vec3f* buf,
+        size_t buf_size
+    )
+    {
+        auto vec = get_attrs<vec3f>(grp, attr_name);
+        size_t n = vec.size();
+
+        if (buf && buf_size > 0) {
+            size_t copy = (n < buf_size) ? n : buf_size;
+            for (size_t i = 0; i < copy; ++i) {
+                buf[i].x = vec[i][0];
+                buf[i].y = vec[i][1];
+                buf[i].z = vec[i][2];
+            }
+        }
+        return n;
+    }
+
+
     std::vector<vec3i> GeometryObject::tri_indice() const {
         return m_spTopology->tri_indice();
     }
@@ -440,6 +497,19 @@ namespace zeno
         return m_spTopology->face_points(face_id);
     }
 
+    size_t GeometryObject::face_points(int face_id, int* points, size_t cap)
+    {
+        auto v = face_points(face_id);
+        size_t n = v.size();
+
+        if (points && cap > 0) {
+            size_t copy = (n < cap) ? n : cap;
+            memcpy(points, v.data(), copy * sizeof(int));
+        }
+
+        return n;
+    }
+
     //通过 face_id和内部的vertex_id索引，返回其linearindex.
     int GeometryObject::face_vertex(int face_id, int vert_id)
     {
@@ -452,10 +522,33 @@ namespace zeno
         return m_spTopology->face_vertex_count(face_id);
     }
 
+    size_t GeometryObject::face_vertices(int face_id, int* vertices, size_t cap)
+    {
+        auto v = face_vertices(face_id);
+        size_t n = v.size();
+
+        if (vertices && cap > 0) {
+            size_t copy = (n < cap) ? n : cap;
+            memcpy(vertices, v.data(), copy * sizeof(int));
+        }
+
+        return n;
+    }
+
     std::vector<int> GeometryObject::face_vertices(int face_id)
     {
-
         return m_spTopology->face_vertices(face_id);
+    }
+
+    Vec3f GeometryObject::face_nrm(int face_id)
+    {
+        auto n = face_normal(face_id);   // zeno::vec3f
+
+        Vec3f out{};
+        out.x = n[0];
+        out.y = n[1];
+        out.z = n[2];
+        return out;
     }
 
     zeno::vec3f GeometryObject::face_normal(int face_id) {
@@ -476,6 +569,19 @@ namespace zeno
         return m_spTopology->point_faces(point_id);
     }
 
+    size_t GeometryObject::point_faces(int point_id, int* faces, size_t cap)
+    {
+        auto v = point_faces(point_id);   // STL version
+        size_t n = v.size();
+
+        if (faces && cap > 0) {
+            size_t copy = (n < cap) ? n : cap;
+            memcpy(faces, v.data(), copy * sizeof(int));
+        }
+
+        return n;
+    }
+
     /*
         Returns the linear vertex number of the first vertex to share this point.
         Returns -1 if no vertices share this point.
@@ -493,6 +599,19 @@ namespace zeno
     std::vector<int> GeometryObject::point_vertices(int point_id)
     {
         return m_spTopology->point_vertices(point_id);
+    }
+
+    size_t GeometryObject::point_vertices(int point_id, int* vertices, size_t cap)
+    {
+        auto v = point_vertices(point_id);
+        size_t n = v.size();
+
+        if (vertices && cap > 0) {
+            size_t copy = (n < cap) ? n : cap;
+            memcpy(vertices, v.data(), copy * sizeof(int));
+        }
+
+        return n;
     }
 
     size_t GeometryObject::get_attr_size(GeoAttrGroup grp) const {
@@ -578,6 +697,80 @@ namespace zeno
         }
     }
 
+    int GeometryObject::create_attr(
+        GeoAttrGroup grp,
+        const char* attr_name,
+        const ZAttrValue& val
+    )
+    {
+        AttrVar var;
+
+        switch (val.type) {
+        case ATTR_INT:
+            var = val.i;
+            break;
+        case ATTR_FLOAT:
+            var = val.f;
+            break;
+        case ATTR_STRING:
+            var = std::string(val.s);
+            break;
+        case ATTR_VEC2:
+            var = vec2f(val.vec2.x, val.vec2.y);
+            break;
+        case ATTR_VEC3:
+            var = vec3f(val.vec3.x, val.vec3.y, val.vec3.z);
+            break;
+        case ATTR_VEC4:
+            var = vec4f(val.vec4.x, val.vec4.y, val.vec4.z, val.vec4.w);
+            break;
+        default:
+            return -1;
+        }
+
+        return create_attr(grp, std::string(attr_name), var);
+    }
+
+    int GeometryObject::create_attr_by_vec3(
+        GeoAttrGroup grp,
+        const char* attr_name,
+        const Vec3f* arr,
+        size_t size
+    )
+    {
+        if (!attr_name || !arr || size == 0)
+            return -1;
+
+        std::vector<zeno::vec3f> vec;
+        vec.reserve(size);
+
+        for (size_t i = 0; i < size; ++i) {
+            zeno::vec3f v;
+            v[0] = arr[i].x;
+            v[1] = arr[i].y;
+            v[2] = arr[i].z;
+            vec.push_back(v);
+        }
+
+        AttrVar var = std::move(vec);
+        return create_attr(grp, std::string(attr_name), var);
+    }
+
+    int GeometryObject::create_attr_by_float(
+        GeoAttrGroup grp,
+        const char* attr_name,
+        const float* arr,
+        size_t size
+    )
+    {
+        if (!attr_name || !arr || size == 0)
+            return -1;
+
+        std::vector<float> vec(arr, arr + size);
+
+        AttrVar var = std::move(vec);
+        return create_attr(grp, std::string(attr_name), var);
+    }
 
     int GeometryObject::create_attr(GeoAttrGroup grp, const std::string& attr_name, const AttrVar& val_or_vec)
     {
@@ -701,6 +894,14 @@ namespace zeno
         }
     }
 
+    int GeometryObject::delete_attr(
+        GeoAttrGroup grp,
+        const char* name
+    )
+    {
+        return delete_attr(grp, std::string(name));
+    }
+
     int GeometryObject::delete_attr(GeoAttrGroup grp, const std::string& attr_name)
     {
         std::map<std::string, AttributeVector>& container = get_container(grp);
@@ -796,6 +997,15 @@ namespace zeno
         return attrType == type;
     }
 
+    bool GeometryObject::has_attr(
+        GeoAttrGroup grp,
+        const char* name,
+        GeoAttrType type
+    )
+    {
+        return has_attr(grp, std::string(name), type);
+    }
+
     std::vector<std::string> GeometryObject::attributes(GeoAttrGroup grp) {
         std::map<std::string, AttributeVector>& container = get_container(grp);
         std::vector<std::string> attrs;
@@ -885,6 +1095,64 @@ namespace zeno
         return names;
     }
 
+    int GeometryObject::set_attr2(
+        GeoAttrGroup grp,
+        const char* attr_name,
+        const ZAttrValue& val
+    )
+    {
+        if (!attr_name)
+            return -1;
+
+        AttrVar var;
+
+        switch (val.type) {
+        case ATTR_INT:
+            var = val.i;
+            break;
+
+        case ATTR_FLOAT:
+            var = val.f;
+            break;
+
+        case ATTR_STRING:
+            var = std::string(val.s ? val.s : "");
+            break;
+
+        case ATTR_VEC2: {
+            zeno::vec2f v;
+            v[0] = val.vec2.x;
+            v[1] = val.vec2.y;
+            var = v;
+            break;
+        }
+
+        case ATTR_VEC3: {
+            zeno::vec3f v;
+            v[0] = val.vec3.x;
+            v[1] = val.vec3.y;
+            v[2] = val.vec3.z;
+            var = v;
+            break;
+        }
+
+        case ATTR_VEC4: {
+            zeno::vec4f v;
+            v[0] = val.vec4.x;
+            v[1] = val.vec4.y;
+            v[2] = val.vec4.z;
+            v[3] = val.vec4.w;
+            var = v;
+            break;
+        }
+
+        default:
+            return -1;
+        }
+
+        return set_attr(grp, std::string(attr_name), var);
+    }
+
     int GeometryObject::set_attr(GeoAttrGroup grp, std::string const& name, const AttrVar& val)
     {
         std::map<std::string, AttributeVector>& container = get_container(grp);
@@ -945,6 +1213,15 @@ namespace zeno
         int n = spAttr.size();
         spAttr.set(defl);
         return 0;
+    }
+
+    int GeometryObject::add_point(Vec3f pos)
+    {
+        zeno::vec3f p;
+        p[0] = pos.x;
+        p[1] = pos.y;
+        p[2] = pos.z;
+        return add_point(p);
     }
 
     int GeometryObject::add_point(zeno::vec3f pos) {
@@ -1036,6 +1313,15 @@ namespace zeno
     {
         //DEPRECATED
         return 0;
+    }
+
+    int GeometryObject::add_face(int* points, size_t size, bool bClose)
+    {
+        if (!points || size == 0)
+            return -1;
+
+        std::vector<int> tmp(points, points + size);
+        return add_face(tmp, bClose);
     }
 
     int GeometryObject::add_face(const std::vector<int>& points, bool bClose) {

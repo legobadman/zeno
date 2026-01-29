@@ -257,7 +257,6 @@ namespace zeno
         IGeometryObject* get_input_Geometry(const char* param) override;
         IGeometryObject* clone_input_Geometry(const char* param) override;
         IListObject* get_input_ListObject(const char* param) override;
-        IDictObject* get_input_DictObject(const char* param) override;
         int get_input2_int(const char* param) override;
         float get_input2_float(const char* param) override;
         int get_input2_string(const char* param, char* ret, int cap) override;
