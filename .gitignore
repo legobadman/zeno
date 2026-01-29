@@ -26,3 +26,5 @@ compile_commands.json
 /*.zip
 /RelDbInfo
 /RelDebInfo
+/MinGW-Debug
+/RelDebInfoCuda

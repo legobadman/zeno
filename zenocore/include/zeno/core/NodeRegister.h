@@ -6,6 +6,7 @@
 #include <zeno/core/data.h>
 #include <zeno/core/Descriptor.h>
 #include <zeno/utils/api.h>
+#include <zcommon.h>
 
 namespace zeno {
 
@@ -23,6 +24,7 @@ namespace zeno {
 		static NodeRegister& instance();
 		ZENO_API int registerNodeClass(INode* (*ctor)(), std::string const& clsname, Descriptor const& desc);
 		ZENO_API int registerNodeClass(INode* (*ctor)(), std::string const& nodecls, CustomUI const& customui);
+		ZENO_API int registerNodeClass2(INode2* (*ctor)(), void (*dtor)(INode2*), std::string const& nodecls, const ZNodeDescriptor& desc);
 		ZENO_API void registerObjUIInfo(size_t hashcode, std::string_view color, std::string_view nametip);
 		ZENO_API int unregisterNodeClass(std::string const& nodecls);
 		ZENO_API bool getObjUIInfo(size_t hashcode, std::string_view& color, std::string_view& nametip);

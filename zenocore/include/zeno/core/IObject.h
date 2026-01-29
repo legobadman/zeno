@@ -3,6 +3,7 @@
 #include <zeno/core/coredata.h>
 #include <zeno/utils/api.h>
 #include <memory>   //abi problem
+#include <zvec.h>
 
 namespace zeno {
 

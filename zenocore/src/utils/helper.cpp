@@ -450,6 +450,68 @@ namespace zeno {
         return true;
     }
 
+    ParamControl zctrl2ctrl(ParamControl2 ctrl) {
+        switch (ctrl)
+        {
+        case ctrl_NullControl:      return NullControl;
+        case ctrl_Lineedit:         return Lineedit;
+        case ctrl_Multiline:        return Multiline;
+        case ctrl_ReadPathEdit:     return ReadPathEdit;
+        case ctrl_WritePathEdit:    return WritePathEdit;
+        case ctrl_DirectoryPathEdit:return DirectoryPathEdit;
+        case ctrl_Combobox:         return Combobox;
+        case ctrl_Checkbox:         return Checkbox;
+        case ctrl_Vec2edit:         return Vec2edit;
+        case ctrl_Vec3edit:         return Vec3edit;
+        case ctrl_Vec4edit:         return Vec4edit;
+        case ctrl_ColorVec:         return ColorVec;
+        case ctrl_Heatmap:          return Heatmap;
+        case ctrl_CurveEditor:      return CurveEditor;
+        case ctrl_SpinBox:          return SpinBox;
+        case ctrl_Slider:           return Slider;
+        case ctrl_DoubleSpinBox:    return DoubleSpinBox;
+        case ctrl_SpinBoxSlider:    return SpinBoxSlider;
+        case ctrl_PythonEditor:     return PythonEditor;
+        case ctrl_PushButton:       return PushButton;
+        case ctrl_Seperator:        return Seperator;
+        case ctrl_CodeEditor:       return CodeEditor;
+        case ctrl_NoMultiSockPanel: return NoMultiSockPanel;
+        default:
+            return NullControl;
+        };
+    }
+
+    zeno::reflect::Any zvalue2any(const ZValue& val) {
+        switch (val._type) {
+        case ZVAL_NULL:     return Any();
+        case ZVAL_INT:      return val.i;
+        case ZVAL_FLOAT:    return val.f;
+        case ZVAL_STRING:       return std::string(val.s);
+        case ZVAL_INT_ARRAY: {
+            std::vector<int> vec(val.iarr.size);
+            for (auto i = 0; i < val.iarr.size; i++) {
+                vec[i] = *(val.iarr.data + i);
+            }
+            return vec;
+        }
+        case ZVAL_FLOAT_ARRAY: {
+            std::vector<float> vec(val.farr.size);
+            for (auto i = 0; i < val.farr.size; i++) {
+                vec[i] = *(val.farr.data + i);
+            }
+            return vec;
+        }
+        case ZVAL_STRING_ARRAY: {
+            std::vector<std::string> vec(val.sarr.size);
+            for (auto i = 0; i < val.sarr.size; i++) {
+                vec[i] = std::string(*(val.sarr.data + i));
+            }
+            return vec;
+        }
+        }
+        return Any();
+    }
+
     ZENO_API Any str2any(std::string const& defl, ParamType const& type) {
         if (defl.empty())
             return initAnyDeflValue(type);

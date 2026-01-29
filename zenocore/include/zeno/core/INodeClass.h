@@ -12,6 +12,7 @@
 #include <reflect/container/any>
 #include <reflect/container/arraylist>
 #include <zeno/core/reflectdef.h>
+#include <zcommon.h>
 
 
 namespace zeno {
@@ -24,6 +25,7 @@ namespace zeno {
         ZENO_API virtual ~INodeClass();
         virtual std::unique_ptr<NodeImpl> new_instance(Graph* pGraph, std::string const& classname) = 0;
         virtual std::unique_ptr<INode> new_coreinst() = 0;
+        virtual INode2* new_coreinst2() { return nullptr; }
     };
 
     struct ReflectNodeClass : INodeClass {
@@ -42,5 +44,15 @@ namespace zeno {
         ImplNodeClass(INode*(*ctor)(), CustomUI const& customui, std::string const& name);
         std::unique_ptr<NodeImpl> new_instance(Graph* pGraph, std::string const& name) override;
         std::unique_ptr<INode> new_coreinst() override;
+    };
+
+    struct ImplNodeClass2 : INodeClass {
+        INode2* (*ctor)();
+        void (*dtor)(INode2*);
+
+        ImplNodeClass2(INode2* (*ctor)(), void (*dtor)(INode2*), CustomUI const& customui, std::string const& name);
+        std::unique_ptr<NodeImpl> new_instance(Graph* pGraph, std::string const& name) override;
+        std::unique_ptr<INode> new_coreinst() override;
+        INode2* new_coreinst2() override;
     };
 }

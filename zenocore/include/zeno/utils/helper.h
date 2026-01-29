@@ -11,6 +11,7 @@
 #include <zeno/core/reflectdef.h>
 #include <reflect/container/any>
 #include <tinygltf/json.hpp>
+#include <zcommon.h>
 #include "zeno_types/reflect/reflection.generated.hpp"
 
 
@@ -26,6 +27,8 @@ namespace zeno {
     ZENO_API std::string any_cast_to_string(const Any& value);
     ZENO_API zvariant str2var(std::string const& defl, ParamType const& type);
     ZENO_API zeno::reflect::Any str2any(std::string const& defl, ParamType const& type);
+    ZENO_API zeno::reflect::Any zvalue2any(const ZValue& val);
+    ZENO_API ParamControl zctrl2ctrl(ParamControl2 ctrl);
     ZENO_API bool convertToEditVar(zeno::reflect::Any& var, const ParamType type);
     ZENO_API bool convertToOriginalVar(zeno::reflect::Any& editvar, const ParamType type);
     ZENO_API bool ListHasPrimObj(zeno::ListObject* list);

@@ -56,7 +56,10 @@ namespace zeno {
 
     class ForEachEnd;
 
-NodeImpl::NodeImpl(INode* pNode) : m_pNode(pNode), m_pGraph(nullptr) {
+NodeImpl::NodeImpl(INode* pNode)
+    : m_pNode(pNode)
+    , m_upNode2(nullptr, nullptr)
+{
     if (m_pNode)
         m_pNode->m_pAdapter = this;
 
@@ -70,10 +73,32 @@ NodeImpl::NodeImpl(INode* pNode) : m_pNode(pNode), m_pGraph(nullptr) {
     }
 }
 
+NodeImpl::NodeImpl(INode2* pNode, void (*dtor)(INode2*))
+    : m_upNode2(pNode, dtor)
+{
+    if (m_nodecls == "FrameCache") {
+        //有可能上一次已经缓存了内容，如果我们允许上一次的缓存留下来的话，就可以标为FrameChanged
+        //那就意味着，如果想清理缓存，只能让用户手动清理，因为机制不好理解什么时候缓存失效
+        m_dirtyReason = Dirty_FrameChanged;
+    }
+    else {
+        m_dirtyReason = Dirty_All;
+    }
+}
+
+NodeImpl::~NodeImpl() {
+    int j;
+    j = 0;
+}
+
 NodeType NodeImpl::nodeType() const {
     if (m_pNode) {
         return m_pNode->type();
-    } else {
+    }
+    else if (m_upNode2) {
+        return m_upNode2->type();
+    }
+    else {
         return NoVersionNode;
     }
 }
@@ -113,11 +138,6 @@ void NodeImpl::initUuid(Graph* pGraph, const std::string nodecls) {
         }
     }
     m_uuidPath = path;
-}
-
-NodeImpl::~NodeImpl() {
-    int j;
-    j = 0;
 }
 
 Graph* NodeImpl::getThisGraph() const {
@@ -997,9 +1017,14 @@ void NodeImpl::foreachend_apply(CalcContext* pContext)
 
 
 void NodeImpl::apply() {
-    if (m_pNode) {
+    if (m_pNode || m_upNode2) {
         try {
-            m_pNode->apply();
+            if (m_pNode) {
+                m_pNode->apply();
+            }
+            else if (m_upNode2) {
+                m_upNode2->apply(this);
+            }
         }
         catch (ErrorException const& e) {
             if (e.get_node_info().empty()) {
@@ -3504,7 +3529,7 @@ void NodeImpl::update_layout(params_change_info& changes)
 }
 
 bool NodeImpl::is_loaded() const {
-    return m_pNode != nullptr;
+    return m_pNode != nullptr || m_upNode2 != nullptr;
 }
 
 void NodeImpl::update_load_info(bool bDisable) {

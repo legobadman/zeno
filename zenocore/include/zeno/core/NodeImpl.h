@@ -20,6 +20,9 @@
 #include <zeno/core/CoreParam.h>
 #include <functional>
 #include <reflect/registry.hpp>
+#include <zcommon.h>
+#include <inodedata.h>
+#include <inodeimpl.h>
 
 
 namespace zeno
@@ -54,12 +57,13 @@ namespace zeno
         bool bOutParamIsOutput;//reflink的source可能是一个output也可能是一个input，true表示reflink引用了一个output参数
     };
 
-    class ZENO_API NodeImpl
+    class ZENO_API NodeImpl : public INodeData
     {
     public:
         INodeClass* nodeClass = nullptr;
 
         NodeImpl(INode* pNode);
+        NodeImpl(INode2* pNode, void (*dtor)(INode2*));
         virtual ~NodeImpl();
 
         //获取require_output_param指定的结果，如需要则计算（如果不脏则直接取结果）。
@@ -371,8 +375,9 @@ namespace zeno
 
         std::string m_uuidPath;
         NodeRunStatus m_status = Node_DirtyReadyToRun;
-        Graph* m_pGraph;
+        Graph* m_pGraph = nullptr;
         std::unique_ptr<INode> m_pNode;
+        std::unique_ptr<INode2, void (*)(INode2*)> m_upNode2;
         DirtyReason m_dirtyReason = NoDirty;
         bool m_bView = false;
         bool m_bypass = false;

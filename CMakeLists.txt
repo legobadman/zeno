@@ -46,6 +46,8 @@ option(ZENO_NODESVIEW_OPTIM "Optimize Node Graphics View manually" ON)
 option(ZENO_WITH_PYTHON "Build ZENO with python" OFF)
 option(ZENO_WITH_REFLECTOR "Support Reflector" ON)
 option(ZENO_WITH_QT3D "Support Qt 3D Scene" OFF)
+option(ZENO_WITH_BATCH "Support Command line Program" ON)
+option(ZENO_WITH_BASENODE "Support Base Node Library" ON)
 option(REFLECTION_USE_PREBUILT_BINARY "Use Prebuild RefactGenerator on Windows" ON)
 
 if (NOT DEFINED CMAKE_POSITION_INDEPENDENT_CODE)
@@ -197,10 +199,21 @@ endfunction()
 if (ZENO_WITH_REFLECTOR)
     add_subdirectory(reflect)
 endif()
+
 add_subdirectory(zenocore)
-add_subdirectory(zeno)
-add_subdirectory(zenobatch)
-add_subdirectory(api/python)
+add_subdirectory(customplugin)
+
+if (ZENO_WITH_BASENODE)
+    add_subdirectory(zeno)
+endif()
+
+if (ZENO_WITH_BATCH)
+    add_subdirectory(zenobatch)
+endif()
+
+if (ZENO_WITH_PYTHON)
+    add_subdirectory(api/python)
+endif()
 
 ## --- begin cihou perf-geeks
 if (ZENO_MARCH_NATIVE)
@@ -219,27 +232,22 @@ if (ZENO_USE_FAST_MATH)
 endif()
 ## --- end cihou perf-geeks
 
-target_compile_options(zs_base
-            PUBLIC $<$<COMPILE_LANGUAGE:CXX>: $<IF:$<CXX_COMPILER_ID:MSVC>, /utf-8, >>
-            )
-
-add_subdirectory(ui/zenqt)
-add_subdirectory(ui/3rdparty)
-if (WIN32)
-    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT zeno)
-endif ()
-
-if (ZENO_BUILD_EDITOR OR ZENO_BUILD_DESIGNER)
-    message(STATUS "Building Zeno UI Library")
-    #add_subdirectory(ui/zenoui)
-    #add_subdirectory(ui/zenomodel)
+if (ZENO_WITH_BASENODE)
+    target_compile_options(zs_base
+                PUBLIC $<$<COMPILE_LANGUAGE:CXX>: $<IF:$<CXX_COMPILER_ID:MSVC>, /utf-8, >>
+                )
 endif()
 
 if (ZENO_BUILD_EDITOR)
     message(STATUS "Building Zeno Editor")
-    #add_subdirectory(ui/zenoedit)
+    add_subdirectory(ui/zenqt)
+    add_subdirectory(ui/3rdparty)
     add_subdirectory(zenovis)
 endif()
+
+if (WIN32)
+    set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT zeno)
+endif ()
 
 add_subdirectory(projects)
 

@@ -241,6 +241,74 @@ namespace zeno {
         return 0;
 	}
 
+    int NodeRegister::registerNodeClass2(INode2* (*ctor)(), void (*dtor)(INode2*), std::string const& nodecls, const ZNodeDescriptor& desc) {
+        if (!nodecls.empty() && nodecls.front() == '^')
+            return -1;
+        
+        Descriptor stddesc;
+        for (auto i = 0; i < desc.input_count; i++) {
+            const ZParamDescriptor& param_desc = *(desc.inputs + i);
+            const std::string& name = std::string(param_desc.name);
+            ParamType type = param_desc.type;
+            //TODO: constrain
+            if (type == _gParamType_IObject ||
+                type == _gParamType_Geometry ||
+                type == _gParamType_List ||
+                type == _gParamType_Dict ||
+                type == _gParamType_VDBGrid)
+            {
+                stddesc.inputs.emplace_back(std::move(ParamObject(name, type)));
+            }
+            else {
+                const auto& deflVal = zvalue2any(param_desc.defl);
+                ParamControl ctrl = zctrl2ctrl(param_desc.control);
+                const auto& ctrlProp = zvalue2any(param_desc.ctrl_props);
+                stddesc.inputs.emplace_back(std::move(ParamPrimitive(name, type, deflVal, ctrl, ctrlProp, "", false)));
+            }
+        }
+
+        for (auto i = 0; i < desc.output_count; i++) {
+            const ZParamDescriptor& param_desc = *(desc.outputs + i);
+            const std::string& name = std::string(param_desc.name);
+            ParamType type = param_desc.type;
+            if (type == _gParamType_IObject ||
+                type == _gParamType_Geometry ||
+                type == _gParamType_List ||
+                type == _gParamType_Dict ||
+                type == _gParamType_VDBGrid)
+            {
+                stddesc.outputs.emplace_back(std::move(ParamObject(name, type)));
+            }
+            else {
+                const auto& deflVal = zvalue2any(param_desc.defl);
+                ParamControl ctrl = zctrl2ctrl(param_desc.control);
+                const auto& ctrlProp = zvalue2any(param_desc.ctrl_props);
+                stddesc.outputs.emplace_back(std::move(ParamPrimitive(name, type, deflVal, ctrl, ctrlProp, "", false)));
+            }
+        }
+
+        stddesc.displayName = std::string(desc.node_name);
+        if (desc.doc)
+            stddesc.doc = std::string(desc.doc);
+        if (desc.icon)
+            stddesc.iconResPath = std::string(desc.icon);
+        if (desc.cate)
+            stddesc.categories.push_back(std::string(desc.cate));
+
+        CustomUI ui = descToCustomui(stddesc);
+        auto cls = std::make_unique<ImplNodeClass2>(ctor, dtor, ui, nodecls);
+
+        NodeInfo info;
+        info.module_path = m_current_loading_module;
+        info.name = nodecls;
+        info.status = ZModule_Loaded;
+        info.cate = cls->m_customui.category;
+
+        m_cates.push_back(std::move(info));
+        nodeClasses.emplace(nodecls, std::move(cls));
+        return 0;
+    }
+
     ZENO_API void NodeRegister::registerObjUIInfo(size_t hashcode, std::string_view color, std::string_view nametip) {
         m_objsUIInfo.insert(std::make_pair(hashcode, _ObjUIInfo{ nametip, color }));
     }

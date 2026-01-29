@@ -835,7 +835,7 @@ NodeImpl* Graph::createNode(
             uuid = pNode->get_uuid();
         }
         else {
-            upNode = std::make_unique<NodeImpl>(nullptr);   //空壳
+            upNode = std::make_unique<NodeImpl>((INode*)nullptr);   //空壳
             pNode = upNode.get();
             pNode->initUuid(this, nodecls);
             uuid = pNode->get_uuid();
