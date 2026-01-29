@@ -289,12 +289,15 @@ namespace zeno
         size_t serialize_json(char* buf, size_t buf_size) const override {
             return 0;
         }
-        IUserData2* userData() override { return nullptr; }
+        IUserData2* userData() override {
+            return &m_userDat;
+        }
         void Delete() override {
             //delete this;
         }
     private:
         std::string m_key;
+        UserData m_userDat;
 
     private:
         void _temp_code_regist();

@@ -204,7 +204,7 @@ namespace zeno {
         }
     }
 
-    std::string any_cast_to_string(const Any& value)
+    std::string any_cast_to_string(const zeno::reflect::Any& value)
     {
         std::string str;
         if (value.type() == zeno::reflect::type_info<const char*>()) {
@@ -1048,6 +1048,27 @@ namespace zeno {
             }
             return paths;
             }, val);
+    }
+
+    size_t stdStr2charArr(
+        const std::string& s,
+        char* pRet,
+        size_t bufSize
+    ) {
+        size_t len = s.size();   // 不含 '\0'
+        if (pRet && bufSize > 0) {
+            size_t copy = (len < bufSize - 1) ? len : (bufSize - 1);
+            memcpy(pRet, s.data(), copy);
+            pRet[copy] = '\0';
+        }
+        return len;
+    }
+
+    std::string get_object_key(IObject2* pObject) {
+        if (!pObject) return "";
+        char buf[256];
+        pObject->key(buf, sizeof(buf));
+        return std::string(buf);
     }
 
     formula_tip_info getNodesByPath(const std::string& nodeabspath, const std::string& graphpath, const std::string& node_part, std::string funcName)

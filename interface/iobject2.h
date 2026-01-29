@@ -159,8 +159,8 @@ struct IListObject : IObject2 {
     virtual void resize(size_t sz) = 0;
     virtual void clear() = 0;
     virtual IObject2* get(size_t index) const = 0;
-    virtual void push_back(IObject2* obj) = 0;
-    virtual void set(size_t index, IObject2* obj) = 0;
+    virtual void push_back(IObject2* detached_obj) = 0;
+    virtual void set(size_t index, IObject2* detached_obj) = 0;
     virtual bool empty() const = 0;
 
     virtual size_t get_items(IObject2** buf, size_t cap) const = 0;

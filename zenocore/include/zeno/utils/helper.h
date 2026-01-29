@@ -24,7 +24,7 @@ namespace zeno {
     ZENO_API ParamType convertToType(std::string const& type, const std::string_view& param_name = "");
     ZENO_API bool isAnyEqual(const zeno::reflect::Any& lhs, const zeno::reflect::Any& rhs);
     ZENO_API std::string paramTypeToString(ParamType type);
-    ZENO_API std::string any_cast_to_string(const Any& value);
+    ZENO_API std::string any_cast_to_string(const zeno::reflect::Any& value);
     ZENO_API zvariant str2var(std::string const& defl, ParamType const& type);
     ZENO_API zeno::reflect::Any str2any(std::string const& defl, ParamType const& type);
     ZENO_API zeno::reflect::Any zvalue2any(const ZValue& val);
@@ -62,6 +62,14 @@ namespace zeno {
     std::set<std::string> getReferPath(const std::string& path);
     std::set<std::string> getReferPaths(const zvariant& val);
     formula_tip_info getNodesByPath(const std::string& nodeabspath, const std::string& graphpath, const std::string& prefix, std::string funcName);
+
+    size_t stdStr2charArr(
+        const std::string& s,
+        char* pRet,
+        size_t bufSize
+    );
+
+    std::string get_object_key(IObject2* pObject);
 
     bool isObjectType(const zeno::reflect::RTTITypeInfo& type, bool& isConstPtr);
     bool isObjectType(ParamType type);

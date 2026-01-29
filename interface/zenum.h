@@ -171,6 +171,11 @@ struct ZValue {
     };
 };
 
+struct ZIntArray {
+    int* arr;
+    int size;
+};
+
 inline ZValue ZFloatArray(const float* data, size_t n) {
     ZValue z{};
     z._type = ZVAL_FLOAT_ARRAY;

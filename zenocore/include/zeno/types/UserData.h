@@ -10,9 +10,10 @@
 #include <map>
 #include <any>
 
+
 namespace zeno {
 
-struct UserData : IUserData {
+struct UserData : IUserData2 {
     std::map<std::string, zany> m_data;
 
     UserData() {}
@@ -25,184 +26,180 @@ struct UserData : IUserData {
 
     UserData& operator=(const UserData& rhs) = delete;
 
-    std::unique_ptr<IUserData> clone() override {
-        return std::make_unique<UserData>(*this);
+    IUserData2* clone() override {
+        return new UserData(*this);
     }
 
-    bool has(const String& key) override {
-        std::string skey(key.c_str());
+    bool has(const char* key) override {
+        std::string skey(key);
         return m_data.find(skey) != m_data.end();
     }
 
-    String get_string(const String& key, String defl = "") const override {
-        std::string skey(key.c_str());
-        std::string sval = get2<std::string>(skey, zsString2Std(defl));
-        return stdString2zs(sval);
-    }
+    size_t get_string(const char* key, const char* defl, char* ret_buf, size_t cap) const override;
 
-    void set_string(const String& key, const String& sval) override {
-        std::string skey(key.c_str());
+    void set_string(const char* key, const char* sval) override {
+        std::string skey(key);
         set2(skey, zsString2Std(sval));
     }
 
-    bool has_string(const String& key) const override {
-        std::string skey(key.c_str());
+    bool has_string(const char* key) const override {
+        std::string skey(key);
         return has<std::string>(skey);
     }
 
-    int get_int(const String& key, int defl = 0) const override {
-        std::string skey(key.c_str());
+    int get_int(const char* key, int defl = 0) const override {
+        std::string skey(key);
         return get2<int>(skey, defl);
     }
 
-    void set_int(const String& key, int iVal) override {
-        std::string skey(key.c_str());
+    void set_int(const char* key, int iVal) override {
+        std::string skey(key);
         set2(skey, iVal);
     }
 
-    bool has_int(const String& key) const override {
-        std::string skey(key.c_str());
+    bool has_int(const char* key) const override {
+        std::string skey(key);
         return has<int>(skey);
     }
 
-    float get_float(const String& key, float defl = 0.f) const override {
-        std::string skey(key.c_str());
+    float get_float(const char* key, float defl = 0.f) const override {
+        std::string skey(key);
         return get2<float>(skey, defl);
     }
 
-    void set_float(const String& key, float fVal) override {
-        std::string skey(key.c_str());
+    void set_float(const char* key, float fVal) override {
+        std::string skey(key);
         set2(skey, fVal);
     }
 
-    bool has_float(const String& key) const override {
-        std::string skey(key.c_str());
+    bool has_float(const char* key) const override {
+        std::string skey(key);
         return has<float>(skey);
     }
 
-    bool get_bool(const String& key, bool defl = false) const override {
-        std::string skey(key.c_str());
+    bool get_bool(const char* key, bool defl = false) const override {
+        std::string skey(key);
         return get2<bool>(skey, defl);
     }
 
-    void set_bool(const String& key, bool val = false) override {
-        std::string skey(key.c_str());
+    void set_bool(const char* key, bool val = false) override {
+        std::string skey(key);
         set2(skey, val);
     }
 
-    bool has_bool(const String& key) const override {
-        std::string skey(key.c_str());
+    bool has_bool(const char* key) const override {
+        std::string skey(key);
         return has<bool>(skey);
     }
 
-    Vec2f get_vec2f(const String& key, Vec2f defl) const override {
-        std::string skey(key.c_str());
+    Vec2f get_vec2f(const char* key, Vec2f defl) const override {
+        std::string skey(key);
         return toAbiVec2f(get2<vec2f>(skey, toVec2f(defl)));
     }
 
-    Vec2i get_vec2i(const String& key) const override {
-        std::string skey(key.c_str());
+    Vec2i get_vec2i(const char* key) const override {
+        std::string skey(key);
         return toAbiVec2i(get2<vec2i>(skey));
     }
 
-    void set_vec2f(const String& key, const Vec2f& vec) override {
-        std::string skey(key.c_str());
+    void set_vec2f(const char* key, const Vec2f& vec) override {
+        std::string skey(key);
         set2(skey, toVec2f(vec));
     }
 
-    bool has_vec2f(const String& key) const override {
-        std::string skey(key.c_str());
+    bool has_vec2f(const char* key) const override {
+        std::string skey(key);
         return has<vec2f>(skey);
     }
 
-    void set_vec2i(const String& key, const Vec2i& vec) override {
-        std::string skey(key.c_str());
+    void set_vec2i(const char* key, const Vec2i& vec) override {
+        std::string skey(key);
         set2(skey, toVec2i(vec));
     }
 
-    bool has_vec2i(const String& key) const override {
-        std::string skey(key.c_str());
+    bool has_vec2i(const char* key) const override {
+        std::string skey(key);
         return has<vec2i>(skey);
     }
 
-    Vec3f get_vec3f(const String& key, Vec3f defl) const override {
-        std::string skey(key.c_str());
+    Vec3f get_vec3f(const char* key, Vec3f defl) const override {
+        std::string skey(key);
         return toAbiVec3f(get2<vec3f>(skey, toVec3f(defl)));
     }
 
-    bool has_vec3f(const String& key) const override {
-        std::string skey(key.c_str());
+    bool has_vec3f(const char* key) const override {
+        std::string skey(key);
         return has<vec3f>(skey);
     }
 
-    Vec3i get_vec3i(const String& key) const override {
-        std::string skey(key.c_str());
+    Vec3i get_vec3i(const char* key) const override {
+        std::string skey(key);
         return toAbiVec3i(get2<vec3i>(skey));
     }
 
-    bool has_vec3i(const String& key) const override {
-        std::string skey(key.c_str());
+    bool has_vec3i(const char* key) const override {
+        std::string skey(key);
         return has<vec3i>(skey);
     }
 
-    void set_vec3f(const String& key, const Vec3f& vec) override {
-        std::string skey(key.c_str());
+    void set_vec3f(const char* key, const Vec3f& vec) override {
+        std::string skey(key);
         set2(skey, toVec3f(vec));
     }
 
-    void set_vec3i(const String& key, const Vec3i& vec) override {
-        std::string skey(key.c_str());
+    void set_vec3i(const char* key, const Vec3i& vec) override {
+        std::string skey(key);
         set2(skey, toVec3i(vec));
     }
 
-    bool has_vec4f(const String& key) const override {
-        std::string skey(key.c_str());
+    bool has_vec4f(const char* key) const override {
+        std::string skey(key);
         return has<vec4f>(skey);
     }
 
-    Vec4f get_vec4f(const String& key) const override {
-        std::string skey(key.c_str());
+    Vec4f get_vec4f(const char* key) const override {
+        std::string skey(key);
         return toAbiVec4f(get2<vec4f>(skey));
     }
 
-    bool has_vec4i(const String& key) const override {
-        std::string skey(key.c_str());
+    bool has_vec4i(const char* key) const override {
+        std::string skey(key);
         return has<vec4i>(skey);
     }
 
-    Vec4i get_vec4i(const String& key) const override {
-        std::string skey(key.c_str());
+    Vec4i get_vec4i(const char* key) const override {
+        std::string skey(key);
         return toAbiVec4i(get2<vec4f>(skey));
     }
 
-    void set_vec4f(const String& key, const Vec4f& vec) override {
-        std::string skey(key.c_str());
+    void set_vec4f(const char* key, const Vec4f& vec) override {
+        std::string skey(key);
         set2(skey, toVec4f(vec));
     }
 
-    void set_vec4i(const String& key, const Vec4i& vec) override {
-        std::string skey(key.c_str());
+    void set_vec4i(const char* key, const Vec4i& vec) override {
+        std::string skey(key);
         set2(skey, toVec4i(vec));
     }
 
-    ZsVector<String> keys() const override {
-        ZsVector<String> vec;
-        for (const auto& [key, value] : m_data) {
-            vec.push_back(stdString2zs(key));
-        }
-        return vec;
-    }
+    //ZsVector<String> keys() const override {
+    //    ZsVector<String> vec;
+    //    for (const auto& [key, value] : m_data) {
+    //        vec.push_back(stdString2zs(key));
+    //    }
+    //    return vec;
+    //}
 
-    zany get(const String& key) const override {
-        return get(zsString2Std(key), nullptr);
-    }
+    //zany get(const char* key) const override {
+    //    return get(zsString2Std(key), nullptr);
+    //}
 
-    void set(const String& key, zany&& val) override {
-        set(zsString2Std(key), std::move(val));
-    }
+    //void set(const char* key, zany&& val) override {
+    //    set(zsString2Std(key), std::move(val));
+    //}
 
-    void del(String const& name) override {
-        m_data.erase(zsString2Std(name));
+    void del(const char* key) override {
+        m_data.erase(std::string(key));
     }
 
     size_t size() const override {

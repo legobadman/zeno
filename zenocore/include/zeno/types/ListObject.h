@@ -2,30 +2,61 @@
 
 #include <zeno/utils/api.h>
 #include <zeno/core/IObject.h>
+#include <iobject2.h>
+#include <zeno/types/UserData.h>
 
 namespace zeno {
 
-struct ListObject_impl;
-
-struct ZENO_API ListObject : IObjectClone<ListObject> {
-    typedef IObjectClone<ListObject> base;
-
+struct ZENO_API ListObject : public IListObject
+{
+public:
     ListObject();
     ListObject(const ListObject& rhs);
     ~ListObject();
 
-    std::unique_ptr<IObject> clone() const override;
-    void Delete() override;
-    size_t size();
-    void resize(size_t sz);
-    void clear();
-    IObject* get(int index);
-    zany move(int index);
-    zeno::ZsVector<IObject*> get();
-    void push_back(zany&& obj);
+    //IObject2
+    IObject2* clone() const override {
+        return new ListObject(*this);
+    }
+    size_t key(char* buf, size_t buf_size) const override
+    {
+        const char* s = m_key.c_str();
+        size_t len = m_key.size();   // 不含 '\0'
+        if (buf && buf_size > 0) {
+            size_t copy = (len < buf_size - 1) ? len : (buf_size - 1);
+            memcpy(buf, s, copy);
+            buf[copy] = '\0';
+        }
+        return len;
+    }
+    void update_key(const char* key) override;
+    size_t serialize_json(char* buf, size_t buf_size) const override {
+        return 0;
+    }
+    IUserData2* userData() override { return &m_userDat; }
+    void Delete() override {
+        delete this;
+    }
+private:
+    std::string m_key;
+    UserData m_userDat;
+
+public:
+    size_t size() const override;
+    void resize(size_t sz) override;
+    void clear() override;
+    IObject2* get(size_t index) const override;
+    void push_back(IObject2* detached_obj) override;
+    void set(size_t index, IObject2* detached_obj) override;
+
+    size_t get_items(IObject2** buf, size_t cap) const override;
+    size_t get_int_arr(int* buf, size_t cap) const override;
+    size_t get_float_arr(float* buf, size_t cap) const override;
+    size_t get_string_arr(char** buf, size_t cap) const override;
+
+    std::vector<IObject2*> get();
     //void set(const zeno::Vector<zany>& arr);
-    void set(size_t index, zany&& obj);
-    void update_key(const String& key) override;
+    void set_obj(size_t index, zany2&& obj);
     bool has_change_info() const;
     bool empty() const;
 
@@ -33,22 +64,39 @@ struct ZENO_API ListObject : IObjectClone<ListObject> {
     std::vector<float> get2_float() const;
     std::vector<std::string> get2_string() const;
 
-    template <class T>
-    std::vector<T*> getRaw() {
-        const zeno::ZsVector<IObject*>& _vecList = get();
-        std::vector<T*> resList;
-        for (int i = 0; i < _vecList.size(); i++) {
-            if (auto _obj = dynamic_cast<T*>(_vecList[i])) {
-                resList.push_back(_obj);
-            }
+    template <class T = IObject>
+    std::vector<T*> get() const {
+        std::vector<T*> res;
+        for (auto const& val : m_objects) {
+            res.push_back(dynamic_cast<T*>(val.get()));
         }
-        return resList;
+        return res;
     }
 
-    std::unique_ptr<ListObject_impl> m_impl;
+    template <class T = IObject>
+    std::vector<T*> getRaw() const {
+        std::vector<T*> res;
+        for (auto const& val : m_objects) {
+            res.push_back(safe_dynamic_cast<T>(val.get()));
+        }
+        return res;
+    }
+
+    template <class T>
+    std::vector<T> get2() const {
+        std::vector<T> res;
+        for (auto const& val : m_objects) {
+            res.push_back(objectToLiterial<T>(val));
+        }
+        return res;
+    }
+
+    std::set<std::string> m_modify, m_new_added, m_new_removed; //一次计算中发生变化的元素记录。
+    std::vector<zany2> m_objects;
+    std::set<int> dirtyIndice;
 };
 
 ZENO_API std::unique_ptr<ListObject> create_ListObject();
-ZENO_API std::unique_ptr<ListObject> create_ListObject(std::vector<zany>&& arrin);
+ZENO_API std::unique_ptr<ListObject> create_ListObject(std::vector<zany2>&& arrin);
 
 }
