@@ -16,14 +16,17 @@
 #include <zenovis/RenderEngine.h>
 #include <zenovis/Scene.h>
 #include <zeno/types/UserData.h>
+#ifdef ZENO_WITH_PYTHON
 #include <Python.h>
 #include <pybind11/pybind11.h>
+#endif
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
+#ifdef ZENO_WITH_PYTHON
 namespace py = pybind11;
-
 PyMODINIT_FUNC PyInit_zen(void);
+#endif
 
 namespace fs = std::filesystem;
 
@@ -266,12 +269,14 @@ int main(int argc, char* argv[]) {
     auto& sess = zeno::getSession();
     sess.resetMainGraph();
 
+#ifdef ZENO_WITH_PYTHON
     zeno::getSession().initPyzen([]() {
         if (PyImport_AppendInittab("zen", PyInit_zen) == -1) {
             fprintf(stderr, "Error: could not extend in-built modules table\n");
             exit(1);
         }
         });
+#endif
 
     init_plugins(argv[0]);
 

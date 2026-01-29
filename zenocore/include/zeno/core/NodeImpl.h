@@ -250,6 +250,43 @@ namespace zeno
 
         void register_removeSelf(std::function<void()> cb_func);
 
+    public: //INodeData
+        IObject2* get_input_object(const char* param) override;
+        IObject2* clone_input_object(const char* param) override;
+        IPrimitiveObject* get_input_PrimitiveObject(const char* param) override;
+        IGeometryObject* get_input_Geometry(const char* param) override;
+        IGeometryObject* clone_input_Geometry(const char* param) override;
+        IListObject* get_input_ListObject(const char* param) override;
+        IDictObject* get_input_DictObject(const char* param) override;
+        int get_input2_int(const char* param) override;
+        float get_input2_float(const char* param) override;
+        int get_input2_string(const char* param, char* ret, int cap) override;
+        bool get_input2_bool(const char* param) override;
+        bool has_input(const char* param) override;
+        bool has_link_input(const char* param) override;
+        Vec2i get_input2_vec2i(const char* param) override;
+        Vec2f get_input2_vec2f(const char* param) override;
+        Vec3i get_input2_vec3i(const char* param) override;
+        Vec3f get_input2_vec3f(const char* param) override;
+        Vec4i get_input2_vec4i(const char* param) override;
+        Vec4f get_input2_vec4f(const char* param) override;
+        int get_param_int(const char* param) override;
+        float get_param_float(const char* param) override;
+        int get_param_string(const char* param, char* buf, int bufsize) override;
+        bool get_param_bool(const char* param) override;
+        bool set_output_object(const char* param, IObject2* pObject) override;
+        bool set_output_int(const char* param, int val) override;
+        bool set_output_float(const char* param, float val) override;
+        bool set_output_bool(const char* param, bool val) override;
+        bool set_output_string(const char* param, const char* val) override;
+        bool set_output_vec2f(const char* param, Vec2f val) override;
+        bool set_output_vec2i(const char* param, Vec2i val) override;
+        bool set_output_vec3f(const char* param, Vec3f val) override;
+        bool set_output_vec3i(const char* param, Vec3i val) override;
+        bool set_output_vec4f(const char* param, Vec4f val) override;
+        bool set_output_vec4i(const char* param, Vec4i val) override;
+        int GetFrameId() const override;
+
     public:
         //为名为ds的输入参数，求得这个参数在依赖边的求值下的值，或者没有依赖边下的默认值。
         bool requireInput(std::string const& ds, CalcContext* pContext);

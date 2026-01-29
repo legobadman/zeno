@@ -4,7 +4,7 @@
 
 #define ZENO_LIKELY(x) (__builtin_expect(!!(x), 1))
 #define ZENO_UNLIKELY(x) (__builtin_expect(!!(x), 0))
-#define ZENO_RESTRICT __restrict__
+//#define ZENO_RESTRICT __restrict__
 #define ZENO_FORCEINLINE __inline__ __attribute__((always_inline))
 #define ZENO_ASSUME_ALIGNED(x, n) ((void *)__builtin_assume_aligned((void *)(x), (n)))
 #define ZENO_GNUC_ATTRIBUTE(...) __attribute__((__VA_ARGS__))
@@ -16,7 +16,7 @@
 
 #define ZENO_LIKELY(x) (x)
 #define ZENO_UNLIKELY(x) (x)
-#define ZENO_RESTRICT __restrict
+//#define ZENO_RESTRICT __restrict
 #define ZENO_FORCEINLINE __forceinline
 #define ZENO_ASSUME_ALIGNED(x, n) ((void *)((uintptr_t)(x) & (n - 1)))
 #define ZENO_GNUC_ATTRIBUTE(...)
@@ -28,7 +28,7 @@
 
 #define ZENO_LIKELY(x) (x)
 #define ZENO_UNLIKELY(x) (x)
-#define ZENO_RESTRICT
+//#define ZENO_RESTRICT
 #define ZENO_FORCEINLINE
 #define ZENO_ASSUME_ALIGNED(x, n) ((void *)((uintptr_t)(x) & (n - 1)))
 #define ZENO_GNUC_ATTRIBUTE(...)

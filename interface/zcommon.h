@@ -50,7 +50,7 @@ struct ZNodeDescriptor {
     const char* doc;
     const char* icon;
 };
-using fnRegister = bool(__cdecl*)(INode2* (*ctor)(), void (*dtor)(INode2*), const char* name, const ZNodeDescriptor&);
+using fnRegister = bool(__cdecl*)(zeno::INode2* (*ctor)(), void (*dtor)(zeno::INode2*), const char* name, const ZNodeDescriptor&);
 using fnUnRegister = bool(__cdecl*)(const char* name);
 
 #define ZENDEFNODE_ABI(Node, Inputs, Outputs, Cate, Doc, Icon)      \

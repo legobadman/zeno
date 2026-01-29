@@ -21,8 +21,9 @@ namespace zeno
         Vec3i() = default;
         Vec3i(int _x, int _y, int _z) : x(_x), y(_y), z(_z) {}
 
+#if 1
         int& operator[](size_t index) {
-            assert(index < 3 && index >= 0 && "Vec3i index out of range");
+            //assert(index < 3 && index >= 0 && "Vec3i index out of range");
             switch (index) {
             case 0: return x;
             case 1: return y;
@@ -33,7 +34,7 @@ namespace zeno
         }
 
         const int& operator[](size_t index) const {
-            assert(index < 3 && index >= 0 && "Vec3i index out of range");
+            //assert(index < 3 && index >= 0 && "Vec3i index out of range");
             switch (index) {
             case 0: return x;
             case 1: return y;
@@ -42,6 +43,7 @@ namespace zeno
                 throw;
             }
         }
+#endif
     };
 
     struct Vec3f {
@@ -49,9 +51,9 @@ namespace zeno
 
         Vec3f() = default;
         Vec3f(float _x, float _y, float _z) : x(_x), y(_y), z(_z) {}
-
+#if 1
         float& operator[](size_t index) {
-            assert(index < 3 && index >= 0 && "Vec3i index out of range");
+            //assert(index < 3 && index >= 0 && "Vec3i index out of range");
             switch (index) {
             case 0: return x;
             case 1: return y;
@@ -62,7 +64,7 @@ namespace zeno
         }
 
         const float& operator[](size_t index) const {
-            assert(index < 3 && index >= 0 && "Vec3i index out of range");
+            //assert(index < 3 && index >= 0 && "Vec3i index out of range");
             switch (index) {
             case 0: return x;
             case 1: return y;
@@ -71,6 +73,7 @@ namespace zeno
                 throw;
             }
         }
+#endif
     };
 
     struct Vec4i {

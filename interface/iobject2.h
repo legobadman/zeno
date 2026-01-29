@@ -12,7 +12,7 @@ struct IUserData2 {
     virtual bool has(const char* key) = 0;
     virtual size_t size() const = 0;
 
-    virtual size_t get_string(const char* key, const char* defl = 0, char* ret_buf, size_t cap) const = 0;
+    virtual size_t get_string(const char* key, const char* defl, char* ret_buf, size_t cap) const = 0;
     virtual void set_string(const char* key, const char* sval) = 0;
     virtual bool has_string(const char* key) const = 0;
 
@@ -62,6 +62,22 @@ struct IObject2 {
     virtual size_t serialize_json(char* buf, size_t buf_size) const = 0;
     virtual IUserData2* userData() = 0;
     virtual void Delete() = 0;  //TODO: for abi compatiblity when dtor cann't be mark virutal.
+};
+
+struct IGeometryObject : IObject2 {
+
+};
+
+struct IPrimitiveObject : IObject2 {
+
+};
+
+struct IListObject : IObject2 {
+
+};
+
+struct IDictObject : IObject2 {
+
 };
 
 }

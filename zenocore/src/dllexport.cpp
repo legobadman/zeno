@@ -9,7 +9,7 @@ int __cdecl c_func() {
 //std::vector<int> aaa;
 
 extern "C" __declspec(dllexport)
-bool __cdecl registerNode(INode2* (*ctor)(), void (*dtor)(INode2*), const char* name, const ZNodeDescriptor& desc) {
+bool __cdecl registerNode(zeno::INode2* (*ctor)(), void (*dtor)(zeno::INode2*), const char* name, const ZNodeDescriptor& desc) {
 	//INode2* pNode = ctor();
 	std::string nodecls(name);
 	auto& nodeReg = zeno::getNodeRegister();

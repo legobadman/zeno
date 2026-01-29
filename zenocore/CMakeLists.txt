@@ -79,8 +79,7 @@ if (ZENO_WITH_PYTHON)
     #target_include_directories(zenocore PUBLIC ${Python3_INCLUDE_DIRS})
     target_compile_definitions(zenocore PRIVATE -DZENO_WITH_PYTHON)
     target_link_libraries(zenocore PRIVATE ${Python3_LIBRARIES})
-    target_include_directories(zenocore PRIVATE ${Python3_INCLUDE_DIRS})
-    target_include_directories(zenocore PUBLIC "${PROJECT_SOURCE_DIR}/interface")
+    target_include_directories(zenocore PRIVATE ${Python3_INCLUDE_DIRS})  
     #target_link_options(zenocore PRIVATE /NODEFAULTLIB:python311.lib)
 
     #add_subdirectory(pybind11)
@@ -105,6 +104,7 @@ target_include_directories(zenocore PUBLIC
     $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/tpls/deprecated>
     $<INSTALL_INTERFACE:include/Zeno/zeno/include>
     ${PROJECT_SOURCE_DIR}
+    ${PROJECT_SOURCE_DIR}/interface
 )
 
 if (ZENO_INSTALL_TARGET AND ZENO_BUILD_SHARED)
