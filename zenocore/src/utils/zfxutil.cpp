@@ -2,7 +2,7 @@
 #include <zeno/core/Session.h>
 #include <zeno/core/Graph.h>
 #include <zeno/utils/string.h>
-#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/GeometryObject.h>
 #include "zeno_types/reflect/reflection.generated.hpp"
 
 

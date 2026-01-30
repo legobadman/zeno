@@ -6,6 +6,7 @@
 #include <zeno/utils/type_traits.h>
 #include <zeno/utils/vec.h>
 #include <zeno/utils/uuid.h>
+#include <zeno/utils/UserData.h>
 #include <optional>
 #include <variant>
 #include <memory>
@@ -130,12 +131,41 @@ static void polygonDecompose(std::vector<zeno::vec3f> & verts, std::vector<int> 
 
 }
 
-struct PrimitiveObject : IObjectClone<PrimitiveObject> {
+struct PrimitiveObject : public IPrimitiveObject {
 
-
-    void Delete() override {
-        //delete this;
+public: //IObject2
+    IObject2* clone() const override {
+        return new PrimitiveObject(*this);
     }
+    ZObjectType type() const override {
+        return ZObj_Primitive;
+    }
+    size_t key(char* buf, size_t buf_size) const override
+    {
+        const char* s = m_key.c_str();
+        size_t len = m_key.size();   // ²»º¬ '\0'
+        if (buf && buf_size > 0) {
+            size_t copy = (len < buf_size - 1) ? len : (buf_size - 1);
+            memcpy(buf, s, copy);
+            buf[copy] = '\0';
+        }
+        return len;
+    }
+    void update_key(const char* key) override {
+        m_key = key;
+    }
+    size_t serialize_json(char* buf, size_t buf_size) const override {
+        return 0;
+    }
+    IUserData2* userData() override {
+        return &m_userDat;
+    }
+    void Delete() override {
+        delete this;
+    }
+
+    std::string m_key;
+    UserData m_userDat;
 
     AttrVector<vec3f> verts;
     AttrVector<int> points;
@@ -295,7 +325,7 @@ struct PrimitiveObject : IObjectClone<PrimitiveObject> {
     // end of deprecated
 };
 
-ZENO_API PrimitiveObject* createPrimitive();
-ZENO_API PrimitiveObject* clonePrimitive(PrimitiveObject* pObj);
+ZENO_API std::unique_ptr<PrimitiveObject> createPrimitive();
+ZENO_API std::unique_ptr<PrimitiveObject> clonePrimitive(PrimitiveObject* pObj);
 
 } // namespace zeno

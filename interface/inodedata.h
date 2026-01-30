@@ -13,7 +13,7 @@ namespace zeno {
 		virtual IListObject* get_input_ListObject(const char* param) = 0;
 		virtual int get_input2_int(const char* param) = 0;
 		virtual float get_input2_float(const char* param) = 0;
-		virtual int get_input2_string(const char* param, char* ret, int cap) = 0;
+		virtual int get_input2_string(const char* param, char* ret, size_t cap) = 0;
 		virtual bool get_input2_bool(const char* param) = 0;
 		virtual bool has_input(const char* param) = 0;
 		virtual bool has_link_input(const char* param) = 0;
@@ -23,11 +23,7 @@ namespace zeno {
 		virtual Vec3f get_input2_vec3f(const char* param) = 0;
 		virtual Vec4i get_input2_vec4i(const char* param) = 0;
 		virtual Vec4f get_input2_vec4f(const char* param) = 0;
-		virtual int get_param_int(const char* param) = 0;
-		virtual float get_param_float(const char* param) = 0;
-		virtual int get_param_string(const char* param, char* buf, int bufsize) = 0;
-		virtual bool get_param_bool(const char* param) = 0;
-		virtual bool set_output_object(const char* param, IObject2* pObject) = 0;
+		virtual bool set_output_object(const char* param, IObject2* detached_obj) = 0;
 		virtual bool set_output_int(const char* param, int val) = 0;
 		virtual bool set_output_float(const char* param, float val) = 0;
 		virtual bool set_output_bool(const char* param, bool val) = 0;

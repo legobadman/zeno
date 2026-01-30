@@ -7,9 +7,9 @@
 #include <tinygltf/json.hpp>
 #include <glm/glm.hpp>
 #include <deque>
-
+#include <zeno/utils/helper.h>
 #include "zeno/types/PrimitiveObject.h"
-#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/GeometryObject.h>
 #include <zeno/types/ListObject_impl.h>
 #include "zeno/types/ListObject.h"
 #include "zeno/types/UserData.h"
@@ -184,7 +184,7 @@ struct SceneObject : IObject {
             auto new_geom = safe_uniqueptr_cast<GeometryObject_Adapter>(p->clone());
             new_geom->userData()->set_string("ObjectName", stdString2zs(new_key));
             if (!p->key().empty())
-                new_geom->update_key(p->key());
+                new_geom->update_key(get_object_key(p).c_str());
             new_scene_obj->geom_list[new_key] = std::move(new_geom);
         }
         new_scene_obj->root_name = new_root_name;
@@ -496,7 +496,7 @@ struct SceneObject : IObject {
         st->update_key(stdString2zs(objkey));
 
         scene->push_back(std::move(st));
-        scene->update_key(this->key()); //以后如果想追踪的话就会回到Scene最后所在的节点
+        scene->update_key(get_object_key(this).c_str()); //以后如果想追踪的话就会回到Scene最后所在的节点
         return scene;
     }
 };

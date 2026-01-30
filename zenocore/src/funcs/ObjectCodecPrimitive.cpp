@@ -1,6 +1,6 @@
 #include <zeno/funcs/ObjectCodec.h>
 #include <zeno/types/PrimitiveObject.h>
-#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/GeometryObject.h>
 #include <zeno/types/MaterialObject.h>
 #include <zeno/utils/variantswitch.h>
 #include <zeno/utils/log.h>

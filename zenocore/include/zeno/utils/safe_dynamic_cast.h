@@ -17,7 +17,7 @@ T *safe_dynamic_cast(S *s, std::string const &msg = "safe_dynamic_cast") {
 }
 
 template <class T>
-std::unique_ptr<T> safe_uniqueptr_cast(std::unique_ptr<IObject> ptrBase) {
+std::unique_ptr<T> safe_uniqueptr_cast(std::unique_ptr<IObject2> ptrBase) {
     auto t = dynamic_cast<T*>(ptrBase.release());
     if (!t) {
         throw makeError<UnimplError>("safe_uniqueptr_cast");

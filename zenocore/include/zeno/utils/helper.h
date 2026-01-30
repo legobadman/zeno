@@ -68,6 +68,7 @@ namespace zeno {
     );
 
     std::string get_object_key(IObject2* pObject);
+    std::string get_object_key(const zany2& spObject);
 
     bool isObjectType(const zeno::reflect::RTTITypeInfo& type, bool& isConstPtr);
     bool isObjectType(ParamType type);
@@ -95,12 +96,12 @@ namespace zeno {
 
     void update_list_root_key(ListObject* listobj, const std::string& key);
 
-    zany clone_by_key(IObject* pObject, const std::string& prefix);
-    void add_prefix_key(IObject* pObject, const std::string& prefix);
-    ZENO_API std::vector<std::string> get_obj_paths(IObject* pObject);
+    zany2 clone_by_key(IObject2* pObject, const std::string& prefix);
+    void add_prefix_key(IObject2* pObject, const std::string& prefix);
+    ZENO_API std::vector<std::string> get_obj_paths(IObject2* pObject);
 
     ZENO_API zany readObjCache(const std::string& file_path);
-    ZENO_API void writeObjCache(const std::string& file_path, IObject* pObject);
+    ZENO_API void writeObjCache(const std::string& file_path, IObject2* pObject);
 
     AttrVar abiAnyToAttrVar(const zeno::reflect::Any& anyval);
 }

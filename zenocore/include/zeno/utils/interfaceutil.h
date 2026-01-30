@@ -31,7 +31,7 @@ namespace zeno
             return "";
         }
     }
-    inline zeno::String stdString2zs(const std::string& ss) { return zeno::String(ss.c_str()); }
+    inline const char* stdString2zs(const std::string& ss) { return ss.c_str(); }
 
     inline zeno::vec2f toVec2f(const zeno::Vec2f& rhs) { return zeno::vec2f(rhs.x, rhs.y); }
     inline zeno::Vec2f toAbiVec2f(const zeno::vec2f& rhs) { return zeno::Vec2f{ rhs[0], rhs[1] }; }

@@ -1,6 +1,6 @@
 #include <zeno/funcs/ObjectCodec.h>
 #include <zeno/types/IObjectXMacro.h>
-#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/GeometryObject.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/types/MaterialObject.h>
 #include <zeno/types/StringObject.h>
@@ -124,7 +124,7 @@ ZENO_XMACRO_IObject(_PER_OBJECT_TYPE)
     }
 }
 
-bool encodeObject(IObject *object, std::vector<char> &buf) {
+bool encodeObject(IObject2 *object, std::vector<char> &buf) {
     auto oldsize = buf.size();
     if (!_encodeObjectImpl(object, buf))
         return false;

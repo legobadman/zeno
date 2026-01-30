@@ -67,7 +67,7 @@ namespace zeno
 
         //获取require_output_param指定的结果，如需要则计算（如果不脏则直接取结果）。
         void execute(CalcContext* pContext);
-        zany execute_get_object(const ExecuteContext& exec_context);
+        zany2 execute_get_object(const ExecuteContext& exec_context);
         zeno::reflect::Any execute_get_numeric(const ExecuteContext& exec_context);
 
         void doOnlyApply();
@@ -139,7 +139,7 @@ namespace zeno
 
         std::string get_viewobject_output_param() const;
         virtual NodeData exportInfo() const;
-        bool set_output(std::string const& param, zany&& obj);
+        bool set_output(std::string const& param, zany2&& obj);
 
         bool update_param_impl(const std::string& param, const zeno::reflect::Any& new_value);
         bool set_primitive_output(std::string const& id, const zeno::reflect::Any& val);
@@ -209,7 +209,7 @@ namespace zeno
         virtual bool is_continue_to_run();
         virtual void increment();
         virtual void reset_forloop_settings();
-        virtual std::shared_ptr<IObject> get_iterate_object();
+        virtual std::shared_ptr<IObject2> get_iterate_object();
 
         void onInterrupted();
         void mark_previous_ref_dirty();
@@ -258,7 +258,7 @@ namespace zeno
         IListObject* get_input_ListObject(const char* param) override;
         int get_input2_int(const char* param) override;
         float get_input2_float(const char* param) override;
-        int get_input2_string(const char* param, char* ret, int cap) override;
+        int get_input2_string(const char* param, char* ret, size_t cap) override;
         bool get_input2_bool(const char* param) override;
         bool has_input(const char* param) override;
         bool has_link_input(const char* param) override;
@@ -268,11 +268,7 @@ namespace zeno
         Vec3f get_input2_vec3f(const char* param) override;
         Vec4i get_input2_vec4i(const char* param) override;
         Vec4f get_input2_vec4f(const char* param) override;
-        int get_param_int(const char* param) override;
-        float get_param_float(const char* param) override;
-        int get_param_string(const char* param, char* buf, int bufsize) override;
-        bool get_param_bool(const char* param) override;
-        bool set_output_object(const char* param, IObject2* pObject) override;
+        bool set_output_object(const char* param, IObject2* detached_obj) override;
         bool set_output_int(const char* param, int val) override;
         bool set_output_float(const char* param, float val) override;
         bool set_output_bool(const char* param, bool val) override;
@@ -295,20 +291,20 @@ namespace zeno
 
         bool has_link_input(std::string const& id) const;
         bool has_input(std::string const& id) const;
-        zany clone_input(std::string const& id) const;
-        zany move_input(std::string const& id);
-        zany move_output(std::string const& id);
+        zany2 clone_input(std::string const& id) const;
+        zany2 move_input(std::string const& id);
+        zany2 move_output(std::string const& id);
         //get_input很麻烦，因为数值型的“对象”是新建出来的
         //IObject* get_input(std::string const& id) const;
-        IObject* get_input_obj(std::string const& id) const;
-        IObject* get_output_obj(std::string const& sock_name);
-        std::vector<zany> get_output_objs();
-        virtual IObject* get_default_output_object();   //thread unsafe
-        zany clone_default_output_object();
+        IObject2* get_input_obj(std::string const& id) const;
+        IObject2* get_output_obj(std::string const& sock_name);
+        std::vector<zany2> get_output_objs();
+        virtual IObject2* get_default_output_object();   //thread unsafe
+        zany2 clone_default_output_object();
         void reportStatus(bool bDirty, NodeRunStatus status);
 
-        zany takeOutputObject(ObjectParam* out_param, ObjectParam* in_param, bool& bAllOutputTaken);
-        zany takeOutputObject(const std::string& out_param, const std::string& in_param, bool& bAllOutputTaken);
+        zany2 takeOutputObject(ObjectParam* out_param, ObjectParam* in_param, bool& bAllOutputTaken);
+        zany2 takeOutputObject(const std::string& out_param, const std::string& in_param, bool& bAllOutputTaken);
         zeno::reflect::Any takeOutputPrim(PrimitiveParam* out_param, PrimitiveParam* in_param, bool& bAllOutputTaken);
         zeno::reflect::Any takeOutputPrim(const std::string& out_param, const std::string& in_param, bool& bAllOutputTaken);
         void mark_takeover();
@@ -329,30 +325,9 @@ namespace zeno
         }
 
         template <class T>
-        void set_output2(std::string const& id, T&& value) {
-            set_output(id, objectFromLiterial(std::forward<T>(value)));
-        }
-
-        template <class T>
-        [[deprecated("use get_input2<T>(id)")]]
-        T get_param(std::string const& id) const {
-            return get_input2<T>(id);
-        }
-
-        template <class T>
         std::unique_ptr<T> get_input(std::string const& id) const {
             auto obj = clone_input(id);
             return safe_uniqueptr_cast<T>(std::move(obj));
-        }
-
-        template <class T>
-        auto get_input2(std::string const& id) const {
-            return objectToLiterial<T>(clone_input(id), "input socket `" + id + "` of node `" + m_name + "`");
-        }
-
-        template <class T>
-        T get_input2(std::string const& id, T const& defl) const {
-            return has_input(id) ? get_input2<T>(id) : defl;
         }
 
     protected:

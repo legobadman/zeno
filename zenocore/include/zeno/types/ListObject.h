@@ -15,6 +15,9 @@ public:
     ~ListObject();
 
     //IObject2
+    ZObjectType type() const override {
+        return ZObj_List;
+    }
     IObject2* clone() const override {
         return new ListObject(*this);
     }
@@ -37,6 +40,8 @@ public:
     void Delete() override {
         delete this;
     }
+    ListObject& operator=(const ListObject& rhs) = delete;
+
 private:
     std::string m_key;
     UserData m_userDat;
@@ -77,6 +82,8 @@ public:
         }
         return res;
     }
+
+    void push_back2(zany2&& detached_obj);
 
     std::set<std::string> m_modify, m_new_added, m_new_removed; //一次计算中发生变化的元素记录。
     std::vector<zany2> m_objects;

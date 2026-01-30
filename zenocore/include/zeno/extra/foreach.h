@@ -9,7 +9,7 @@
 #include <zeno/core/FunctionManager.h>
 #include <zeno/types/GeometryObject.h>
 #include <zeno/utils/helper.h>
-#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/GeometryObject.h>
 #include <zeno/utils/interfaceutil.h>
 #include <zeno/geo/geometryutil.h>
 

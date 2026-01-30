@@ -259,7 +259,7 @@ class NodeImpl;
 
 struct ZfxContext
 {
-    /* in */ zany spObject;
+    /* in */ zany2 spObject;
     /* in */ NodeImpl* spNode;
     /* in */ std::string code;
     /* in */ GeoAttrGroup runover = ATTR_POINT;

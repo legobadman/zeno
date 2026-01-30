@@ -19,6 +19,17 @@ namespace zeno {
         NoVersionNode
     };
 
+    enum ZObjectType
+    {
+        ZObj_Geometry,
+        ZObj_Primitive,
+        ZObj_List,
+        ZObj_SceneAssem,
+        ZObj_Material,
+        ZObj_Camera,
+        ZObj_Define = 1000
+    };
+
     enum ParamControl
     {
         NullControl,

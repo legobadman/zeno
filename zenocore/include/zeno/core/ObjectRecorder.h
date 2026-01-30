@@ -1,6 +1,5 @@
 #pragma once
 
-#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/GeometryObject.h>
 
 namespace zeno {

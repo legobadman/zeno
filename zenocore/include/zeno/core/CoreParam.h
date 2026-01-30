@@ -21,7 +21,7 @@ namespace zeno {
     class CoreParam;
 
     struct ObjectLink {
-        std::future<zany> upstream_task;
+        std::future<zany2> upstream_task;
 
         ObjectParam* fromparam = nullptr;  //IParam stored as unique ptr in the INode, so we need no smart pointer.
         ObjectParam* toparam = nullptr;

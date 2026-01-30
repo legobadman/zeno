@@ -94,7 +94,7 @@ render_update_info Graph::applyNode(std::string const &node_name, CalcContext* p
         info.reason = Update_Reconstruct;
         auto pObj = node->get_default_output_object();
         if (pObj) {
-            info.spObject = pObj->clone();
+            info.spObject = zany2(pObj->clone());
         }
         info.uuidpath_node_objkey = node->get_uuid_path();
 
@@ -1256,7 +1256,7 @@ bool Graph::addLink(const EdgeInfo& edge) {
     {
         ParamObject inParam = inNode->get_input_obj_param(edge.inParam);
         ParamObject outParam = outNode->get_output_obj_param(edge.outParam);
-        if (inParam.type == gParamType_Dict || inParam.type == gParamType_List) {
+        if (inParam.type == gParamType_List) {
             std::vector<EdgeInfo> inParamLinks = inParam.links;
             if (inParamLinks.size() <= 1)
             {
@@ -1415,7 +1415,7 @@ bool Graph::removeLink(const EdgeInfo& edge) {
 
     if (!bPrimType2) {
         const ParamObject& inParam = inNode->get_input_obj_param(edge.inParam);
-        if (inParam.type == gParamType_List || inParam.type == gParamType_Dict) {
+        if (inParam.type == gParamType_List) {
             std::vector<EdgeInfo> inParamLinks = inParam.links;
             if (inParamLinks.size() == 1) {
                 if (auto node = getNode(inParamLinks[0].outNode)) {

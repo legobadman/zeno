@@ -13,8 +13,7 @@ struct UserData : IUserData2 {
     std::map<std::string, zeno::reflect::Any> m_data;
 
     UserData() = default;
-    UserData(const UserData& rhs);
-    UserData& operator=(const UserData& rhs) = delete;
+    void copy(IUserData2* pUserData) override;
     IUserData2* clone() override;
     bool has(const char* key) override;
     size_t get_string(const char* key, const char* defl, char* ret_buf, size_t cap) const override;

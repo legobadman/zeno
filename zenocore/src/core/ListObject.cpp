@@ -105,6 +105,10 @@ namespace zeno
         m_objects.push_back(zany2(detached_obj));
     }
 
+    void ListObject::push_back2(zany2&& detached_obj) {
+        m_objects.push_back(std::move(detached_obj));
+    }
+
     //void ListObject::set(const zeno::Vector<zany>& arr) {
     //    m_impl->set(zeVec2stdVec(arr));
     //}

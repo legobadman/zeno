@@ -72,14 +72,16 @@ namespace zeno {
         return iter->second;
     }
 
-    static int getElementCount(IObject* spObject, GeoAttrGroup runover) {
+    static int getElementCount(IObject2* spObject, GeoAttrGroup runover) {
         switch (runover)
         {
         case ATTR_POINT: {
-            if (auto spGeo = dynamic_cast<GeometryObject_Adapter*>(spObject)) {
-                return spGeo->npoints();
+            if (ZObj_Geometry == spObject->type()) {
+                auto pGeo = static_cast<IGeometryObject*>(spObject);
+                return pGeo->npoints();
             }
-            else if (auto spPrim = dynamic_cast<PrimitiveObject*>(spObject)) {
+            else if (ZObj_Primitive == spObject->type()) {
+                auto spPrim = static_cast<PrimitiveObject*>(spObject);
                 return spPrim->verts->size();
             }
             else {
@@ -87,10 +89,12 @@ namespace zeno {
             }
         }
         case ATTR_FACE:
-            if (auto spGeo = dynamic_cast<GeometryObject_Adapter*>(spObject)) {
-                return spGeo->nfaces();
+            if (ZObj_Geometry == spObject->type()) {
+                auto pGeo = static_cast<IGeometryObject*>(spObject);
+                return pGeo->nfaces();
             }
-            else if (auto spPrim = dynamic_cast<PrimitiveObject*>(spObject)) {
+            else if (ZObj_Primitive == spObject->type()) {
+                auto spPrim = static_cast<PrimitiveObject*>(spObject);
                 if (spPrim->tris.size() > 0)
                     return spPrim->tris.size();
                 else
@@ -110,7 +114,7 @@ namespace zeno {
 
     void FunctionManager::executeZfx(std::shared_ptr<ZfxASTNode> root, ZfxContext* pCtx) {
         //printSyntaxTree(root, pCtx->code);
-        auto spGeom = static_cast<GeometryObject_Adapter*>(pCtx->spObject.get());
+        auto spGeom = static_cast<GeometryObject*>(pCtx->spObject.get());
         bool bConvertHalfEdge = false;
         //不需要转换了，后续IndiceMeshes也得实现同样的几何api，会出现两者混用的情况
         /*
@@ -1101,7 +1105,8 @@ namespace zeno {
         assert(!attr_name.empty());
         GeoAttrGroup grp = pContext->runover;
         auto& zfxvec = zfxvar.value;
-        if (auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get())) {
+        if (ZObj_Geometry == pContext->spObject->type()) {
+            auto spGeo = static_cast<GeometryObject*>(pContext->spObject.get());
             AttrVar wtf = zeno::zfx::convertToAttrVar(zfxvec);
             std::string attrname;
             if (attr_name[0] == '@')
@@ -1146,8 +1151,8 @@ namespace zeno {
         }
     }
 
-    static ZfxVariable getAttrValue_impl(std::shared_ptr<IObject> spObject, const std::string& attr_name, ZfxContext* pContext) {
-        if (auto spPrim = std::dynamic_pointer_cast<PrimitiveObject>(spObject)) {
+    static ZfxVariable getAttrValue_impl(IObject2* spObject, const std::string& attr_name, ZfxContext* pContext) {
+        if (auto spPrim = dynamic_cast<PrimitiveObject*>(spObject)) {
             if (attr_name == "pos")
             {
                 const auto& P = spPrim->attr<vec3f>("pos");
@@ -1192,7 +1197,7 @@ namespace zeno {
                 }
             }
         }
-        else if (auto spGeo = dynamic_cast<GeometryObject_Adapter*>(spObject.get())) {
+        else if (auto spGeo = dynamic_cast<GeometryObject*>(spObject)) {
             if (attr_name == "pos")
             {
                 const auto& P = spGeo->points_pos();
@@ -1407,7 +1412,7 @@ namespace zeno {
                     }
 
                     AttrVar initValue = getInitValueFromVariant(res.value); //拿初值就行
-                    auto spGeom = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
+                    auto spGeom = dynamic_cast<GeometryObject*>(pContext->spObject.get());
                     if (pContext->runover == ATTR_POINT) {
                         if (!spGeom->has_point_attr(attrname)) {
                             spGeom->create_point_attr(attrname, initValue);

@@ -509,7 +509,7 @@ namespace zeno {
     struct render_update_info {
         UpdateReason reason = Update_Unknown;
         std::string uuidpath_node_objkey;   //节点的uuid路径，同时也是obj的key.
-        zany spObject;  //对象所属权可藉此传送到渲染端
+        zany2 spObject;  //对象所属权可藉此传送到渲染端
         std::vector<std::string> remove_objs;
 
         render_update_info() {}
@@ -517,7 +517,7 @@ namespace zeno {
             reason = rhs.reason;
             uuidpath_node_objkey = rhs.uuidpath_node_objkey;
             if (rhs.spObject)
-                spObject = rhs.spObject->clone();
+                spObject.reset(rhs.spObject->clone());
             remove_objs = rhs.remove_objs;
         }
 
@@ -525,7 +525,7 @@ namespace zeno {
             reason = rhs.reason;
             uuidpath_node_objkey = rhs.uuidpath_node_objkey;
             if (rhs.spObject)
-                spObject = rhs.spObject->clone();
+                spObject.reset(rhs.spObject->clone());
             remove_objs = rhs.remove_objs;
             return *this;
         }

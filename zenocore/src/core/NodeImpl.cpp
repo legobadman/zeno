@@ -668,7 +668,7 @@ void NodeImpl::mark_dirty_objs()
     {
         if (param.spObject) {
             assert(param.spObject);
-            if (param.spObject->key().empty()) {
+            if (get_object_key(param.spObject.get()).empty()) {
                 continue;
             }
         }
@@ -730,9 +730,6 @@ void NodeImpl::preApply(CalcContext* pContext) {
         if (param.type == gParamType_List) {
             param.spObject = processList(&param, pContext);
         }
-        else if (param.type == gParamType_Dict) {
-            param.spObject = processDict(&param, pContext);
-        }
         else {
             if (param.links.size() == 1) {
                 auto spLink = *param.links.begin();
@@ -748,7 +745,7 @@ void NodeImpl::preApply(CalcContext* pContext) {
                     //没有task，说明上游不需要计算，但对于多支路的下游来说，就不一定知道上游是否经历了计算
                     //因此，在传递脏位的时候，要顺带把param.spObject情况，然而再到 上游拷一次
                     if (!param.spObject)
-                        param.spObject = spLink->fromparam->spObject->clone();
+                        param.spObject = zany2(spLink->fromparam->spObject->clone());
                 }
                 param.spObject->update_key(stdString2zs(m_uuid));
             }
@@ -809,7 +806,7 @@ void NodeImpl::launch_param_task(const std::string& param) {
                 objParam.spObject = task.get();
             }
             else {
-                objParam.spObject = spLink->fromparam->spObject->clone();
+                objParam.spObject = zany2(spLink->fromparam->spObject->clone());
             }
         }
     }
@@ -1228,7 +1225,7 @@ void NodeImpl::update_out_objs_key()
         if (param.spObject)
         {
             //目前节点处所看到的object，都隶属于此节点本身。
-            if (param.spObject->key().empty())
+            if (get_object_key(param.spObject).empty())
                 param.spObject->update_key(stdString2zs(m_uuid));
         }
     }
@@ -1668,7 +1665,7 @@ std::unique_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
             if (!listobj->has_change_info()) {
                 //上游没有修改信息，只能全部加进来，还要比较有哪些被删掉
                 for (const auto& obj : listobj->m_objects) {
-                    std::string key = zsString2Std(obj->key());
+                    std::string key = get_object_key(obj);
                     if (key.empty()) throw makeNodeError<UnimplError>(get_path(), "there is object in list with empty key");
                     //直接全部收集
                     listobj->m_new_added.insert(key);
@@ -1695,7 +1692,7 @@ std::unique_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                 spList.reset(static_cast<ListObject*>(outResult.release()));
                 //无论原来有没有缓存，上游的list已经脏了，就干脆直接换新的，不去一个个比较了
                 list_register_all_items(spList.get());
-                spList->update_key(out_param->spObject->key());
+                spList->update_key(get_object_key(out_param->spObject).c_str());
             }
             else {
                 assert(!outNode->is_dirty());
@@ -1706,10 +1703,10 @@ std::unique_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                 }
                 else {
                     //outNode已经算好了，直接拿应该不会导致race condition
-                    spList = safe_uniqueptr_cast<ListObject>(out_param->spObject->clone());
+                    spList = safe_uniqueptr_cast<ListObject>(zany2(out_param->spObject->clone()));
                     //新的list，这里全部内容都要登记到new_added.
                     list_register_all_items(spList.get());
-                    spList->update_key(out_param->spObject->key());
+                    spList->update_key(get_object_key(out_param->spObject).c_str());
                 }
             }
             if (!spList) {
@@ -1727,7 +1724,7 @@ std::unique_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
         std::set<std::string> old_list;
         if (cachedList) {
             for (const auto& obj : cachedList->m_objects) {
-                old_list.insert(zsString2Std(obj->key()));
+                old_list.insert(get_object_key(obj));
             }
         }
 
@@ -1744,12 +1741,12 @@ std::unique_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
             if (spLink->upstream_task.valid()) {
                 //有任务发起，说明上游新增了或者修改了某一个节点
                 auto outResult = spLink->upstream_task.get();
-                upstream_obj_key = zsString2Std(out_param->spObject->key());
+                upstream_obj_key = get_object_key(out_param->spObject);
                 outResult->update_key(stdString2zs(upstream_obj_key));
                 add_prefix_key(outResult.get(), m_uuid);
-                new_obj_key = zsString2Std(outResult->key());
+                new_obj_key = get_object_key(outResult);
 
-                spList->push_back(std::move(outResult));
+                spList->push_back2(std::move(outResult));
 
                 if (old_list.find(new_obj_key) != old_list.end()) {
                     //旧的列表有这一项，说明是修改的
@@ -1764,12 +1761,12 @@ std::unique_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                 //没有任务发起，但上游可能已经有缓存好的结果，直接加到list即可
                 assert(!outNode->is_dirty());
                 //想知道是不是新增，要与oldList对比
-                upstream_obj_key = zsString2Std(out_param->spObject->key());
+                upstream_obj_key = get_object_key(out_param->spObject);
                 new_obj_key = m_uuid + '\\' + upstream_obj_key;
                 if (old_list.find(new_obj_key) != old_list.end()) {
                     //直接从缓存取就行
                     for (const auto& obj : cachedList->m_objects) {
-                        if (zsString2Std(obj->key()) == new_obj_key) {
+                        if (get_object_key(obj) == new_obj_key) {
                             spList->push_back(obj->clone());
                             break;
                         }
@@ -1777,12 +1774,12 @@ std::unique_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                 }
                 else {
                     //上游节点不脏，但边新增到list，这时候需要标脏这个obj，否则渲染端没法认出
-                    auto new_obj = out_param->spObject->clone();
+                    auto new_obj = zany2(out_param->spObject->clone());
                     new_obj->update_key(stdString2zs(upstream_obj_key));
                     add_prefix_key(new_obj.get(), m_uuid);
-                    spList->m_modify.insert(zsString2Std(new_obj->key()));
+                    spList->m_modify.insert(get_object_key(new_obj));
 
-                    spList->push_back(std::move(new_obj));
+                    spList->push_back2(std::move(new_obj));
                 }
             }
             old_list.erase(new_obj_key);
@@ -1933,10 +1930,6 @@ zeno::reflect::Any NodeImpl::processPrimitive(PrimitiveParam* in_param)
         //TODO: List现在还没有ui支持，而且List是泛型容器，对于非Literal值不好设定默认值。
         break;
     }
-    case gParamType_Dict:
-    {
-        break;
-    }
     case gParamType_ListOfMat4:
     {
         if (in_param->links.size() == 1 && in_param->links.front()->toparam->type == gParamType_ListOfMat4) {
@@ -2007,15 +2000,10 @@ bool NodeImpl::receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, Object
             bCloned = false;
         }
     }
-    else if (auto dict = dynamic_cast<DictObject*>(out_param->spObject.get())) {
-        if (DictHasPrimObj(dict)) {
-            bCloned = false;
-        }
-    }
 
     bool bAllTaken = false;
     auto outputObj = outNode->takeOutputObject(out_param, in_param, bAllTaken);
-    in_param->spObject = outputObj->clone();
+    in_param->spObject = zany2(outputObj->clone());
     in_param->spObject->update_key(stdString2zs(m_uuidPath));
 
     if (outNode->is_nocache() && bAllTaken) {
@@ -2025,8 +2013,6 @@ bool NodeImpl::receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, Object
 
     if (auto splist = dynamic_cast<ListObject*>(in_param->spObject.get())) {
         update_list_root_key(splist, m_uuidPath);
-    } else if (auto spdict = dynamic_cast<DictObject*>(in_param->spObject.get())) {
-        update_dict_root_key(spdict, m_uuidPath);
     }
 
     return true;
@@ -2037,14 +2023,14 @@ void NodeImpl::execute(CalcContext* pContext) {
     doApply(pContext);
 }
 
-zany NodeImpl::execute_get_object(const ExecuteContext& exec_context) {
+zany2 NodeImpl::execute_get_object(const ExecuteContext& exec_context) {
     //锁的粒度可以更精细化，比如没有apply和takeover，在只读的情况下，可以释放锁
     //另一方面，如果多个节点想获取同一个节点的输出，就得排队了
     std::lock_guard scope(m_mutex);
 
     doApply(exec_context.pContext);
 
-    zany res;
+    zany2 res;
     //TODO: take over要设计成只限制一对一连接，否则遇到没法clone的对象，就没法move给两个下游了
     if (is_nocache()) {
         //TODO: 是否要在这里清理outputNode?
@@ -2057,7 +2043,7 @@ zany NodeImpl::execute_get_object(const ExecuteContext& exec_context) {
         if (!result) {
             throw makeNodeError<UnimplError>(get_path(), "no result");
         }
-        res = result->clone();
+        res = zany2(result->clone());
     }
     return res;
 }
@@ -2244,7 +2230,7 @@ void NodeImpl::bypass() {
     if (input_objparam.type != output_objparam.type) {
         throw makeNodeError<UnimplError>(get_path(), "the input and output type is not matched, when the mute button is on");
     }
-    output_objparam.spObject = input_objparam.spObject->clone();
+    output_objparam.spObject = zany2(input_objparam.spObject->clone());
 }
 
 void NodeImpl::check_break_and_return() {
@@ -3864,7 +3850,7 @@ bool NodeImpl::has_input(std::string const &id) const {
     }
 }
 
-IObject* NodeImpl::get_input_obj(std::string const& id) const {
+IObject2* NodeImpl::get_input_obj(std::string const& id) const {
     auto iter2 = m_inputObjs.find(id);
     if (iter2 != m_inputObjs.end()) {
         return iter2->second.spObject.get();
@@ -3979,7 +3965,7 @@ IObject* NodeImpl::get_input(std::string const& id) const {
 }
 */
 
-zany NodeImpl::move_input(std::string const& id) {
+zany2 NodeImpl::move_input(std::string const& id) {
     auto iter = m_inputObjs.find(id);
     if (iter == m_inputObjs.end()) {
         throw makeNodeError<KeyError>(get_path(), id, "move_input");
@@ -3987,7 +3973,7 @@ zany NodeImpl::move_input(std::string const& id) {
     return std::move(iter->second.spObject);
 }
 
-zany NodeImpl::move_output(std::string const& id) {
+zany2 NodeImpl::move_output(std::string const& id) {
     auto iter = m_outputObjs.find(id);
     if (iter == m_outputObjs.end()) {
         throw makeNodeError<KeyError>(get_path(), id, "move_input");
@@ -3995,107 +3981,17 @@ zany NodeImpl::move_output(std::string const& id) {
     return std::move(iter->second.spObject);
 }
 
-zany NodeImpl::clone_input(std::string const &id) const {
+zany2 NodeImpl::clone_input(std::string const &id) const {
     auto iter = m_inputPrims.find(id);
     if (iter != m_inputPrims.end()) {
-        auto& val = iter->second.result;
-        if (!val.has_value()) {
-            throw makeNodeError<UnimplError>(get_path(), "cannot get prim result of " + id + "`");
-        }
-        const ParamType paramType = iter->second.type;
-        switch (paramType) {
-            case zeno::types::gParamType_Int:
-            case zeno::types::gParamType_Float:
-            case zeno::types::gParamType_Bool:
-            case zeno::types::gParamType_Vec2f:
-            case zeno::types::gParamType_Vec2i:
-            case zeno::types::gParamType_Vec3f:
-            case zeno::types::gParamType_Vec3i:
-            case zeno::types::gParamType_Vec4f:
-            case zeno::types::gParamType_Vec4i:
-            case gParamType_AnyNumeric:
-            {
-                //依然有很多节点用了NumericObject，为了兼容，需要套一层NumericObject出去。
-                auto spNum = std::make_unique<NumericObject>();
-                const auto& anyType = val.type();
-                if (anyType == zeno::reflect::type_info<int>()) {
-                    spNum->set<int>(zeno::reflect::any_cast<int>(val));
-                }
-                else if (anyType == zeno::reflect::type_info<bool>()) {
-                    spNum->set<int>(zeno::reflect::any_cast<bool>(val));
-                }
-                else if (anyType == zeno::reflect::type_info<float>()) {
-                    spNum->set<float>(zeno::reflect::any_cast<float>(val));
-                }
-                else if (anyType == zeno::reflect::type_info<vec2i>()) {
-                    spNum->set<vec2i>(zeno::reflect::any_cast<vec2i>(val));
-                }
-                else if (anyType == zeno::reflect::type_info<vec3i>()) {
-                    spNum->set<vec3i>(zeno::reflect::any_cast<vec3i>(val));
-                }
-                else if (anyType == zeno::reflect::type_info<vec4i>()) {
-                    spNum->set<vec4i>(zeno::reflect::any_cast<vec4i>(val));
-                }
-                else if (anyType == zeno::reflect::type_info<vec2f>()) {
-                    spNum->set<vec2f>(zeno::reflect::any_cast<vec2f>(val));
-                }
-                else if (anyType == zeno::reflect::type_info<vec3f>()) {
-                    spNum->set<vec3f>(zeno::reflect::any_cast<vec3f>(val));
-                }
-                else if (anyType == zeno::reflect::type_info<vec4f>()) {
-                    spNum->set<vec4f>(zeno::reflect::any_cast<vec4f>(val));
-                }
-                else if (paramType == gParamType_AnyNumeric && 
-                    (anyType == zeno::reflect::type_info<const char*>() ||
-                     anyType == zeno::reflect::type_info<zeno::String>() ||
-                     anyType == zeno::reflect::type_info<std::string>())) {
-                    std::string str = zeno::any_cast_to_string(val);
-                    return std::make_unique<StringObject>(str);
-                }
-                else
-                {
-                    //throw makeError<TypeError>(typeid(T));
-                    //error, throw expection.
-                }
-                return spNum;
-            }
-            case zeno::types::gParamType_Matrix3:
-            {
-                auto matrixObj = std::make_unique<MatrixObject>();
-                matrixObj->m = zeno::reflect::any_cast<glm::mat3>(val);
-                return matrixObj;
-            }
-            case zeno::types::gParamType_Matrix4:
-            {
-                auto matrixObj = std::make_unique<MatrixObject>();
-                matrixObj->m = zeno::reflect::any_cast<glm::mat4>(val);
-                return matrixObj;
-            }
-            case zeno::types::gParamType_String:
-            {
-                std::string str = zeno::any_cast_to_string(val);
-                return std::make_unique<StringObject>(str);
-            }
-            case zeno::types::gParamType_Shader:
-            {
-                throw makeNodeError<UnimplError>(get_path(), "ShaderObject has been deprecated, you can get it by get_param_result, cast it into the type `ShaderData`");
-            }
-            case gParamType_Heatmap:
-            {
-                auto heatmapObj = std::make_unique<zeno::HeatmapObject>();
-                heatmapObj->colors = zeno::reflect::any_cast<zeno::HeatmapData>(val).colors;
-                return heatmapObj;
-            }
-            default:
-                return nullptr;
-        }
+        throw makeNodeError<UnimplError>(get_path(), id + "is not a input object");
     }
     else {
         auto iter2 = m_inputObjs.find(id);
         if (iter2 != m_inputObjs.end()) {
             if (!iter2->second.spObject)
                 return nullptr;
-            return iter2->second.spObject->clone();
+            return zany2(iter2->second.spObject->clone());
         }
         throw makeNodeError<KeyError>(get_path(), id, "get_input");
     }
@@ -4134,7 +4030,7 @@ bool NodeImpl::set_primitive_output(std::string const& id, const zeno::reflect::
     return true;
 }
 
-bool NodeImpl::set_output(std::string const& param, zany&& obj) {
+bool NodeImpl::set_output(std::string const& param, zany2&& obj) {
     //只给旧节点模块使用，如果函数暴露reflect::Any，就会迫使所有使用这个函数的cpp文件include headers
     //会增加程序体积以及编译时间，待后续生成文件优化后再考虑处理。
     auto iter = m_outputObjs.find(param);
@@ -4196,7 +4092,7 @@ bool NodeImpl::set_output(std::string const& param, zany&& obj) {
     return false;
 }
 
-IObject* NodeImpl::get_default_output_object() {
+IObject2* NodeImpl::get_default_output_object() {
     if (m_nodecls == "SubOutput") {
         return get_input_obj("port");
     }
@@ -4206,30 +4102,15 @@ IObject* NodeImpl::get_default_output_object() {
     return m_outputObjs.begin()->second.spObject.get();
 }
 
-zany NodeImpl::clone_default_output_object() {
+zany2 NodeImpl::clone_default_output_object() {
     std::lock_guard lock(m_mutex);
-    if (IObject* default_output_obj = get_default_output_object()) {
-        return default_output_obj->clone();
-    }
-    else {
-        if (!m_outputPrims.empty()) {
-            bool bSucceed = false;
-            //输出所有numeric
-            auto lst = create_ListObject();
-            for (const auto& [_, outparam] : m_outputPrims) {
-                NumericValue val = AnyToNumeric(outparam.result, bSucceed);
-                auto numobj = std::make_unique<NumericObject>();
-                numobj->value = val;
-                numobj->update_key(stdString2zs(outparam.name));
-                lst->push_back(std::move(numobj));
-            }
-            return lst;
-        }
+    if (IObject2* default_output_obj = get_default_output_object()) {
+        return zany2(default_output_obj->clone());
     }
     return nullptr;
 }
 
-IObject* NodeImpl::get_output_obj(std::string const& param) {
+IObject2* NodeImpl::get_output_obj(std::string const& param) {
     auto& spParam = safe_at(m_outputObjs, param, "miss output param `" + param + "` on node `" + m_name + "`");
     return spParam.spObject.get();
 }
@@ -4294,7 +4175,7 @@ bool NodeImpl::is_takenover() const {
     return m_takenover;
 }
 
-zany NodeImpl::takeOutputObject(ObjectParam* out_param, ObjectParam* in_param, bool& bAllOutputTaken) {
+zany2 NodeImpl::takeOutputObject(ObjectParam* out_param, ObjectParam* in_param, bool& bAllOutputTaken) {
     for (auto link : out_param->links) {
         if (link->toparam == in_param) {
             link->bTraceAndTaken = true;
@@ -4302,10 +4183,10 @@ zany NodeImpl::takeOutputObject(ObjectParam* out_param, ObjectParam* in_param, b
         }
     }
     bAllOutputTaken = checkAllOutputLinkTraced();
-    return std::move(out_param->spObject);
+    return std::move(out_param->spObject); //TODO: reset
 }
 
-zany NodeImpl::takeOutputObject(const std::string& out_param, const std::string& in_param, bool& bAllOutputTaken) {
+zany2 NodeImpl::takeOutputObject(const std::string& out_param, const std::string& in_param, bool& bAllOutputTaken) {
     auto iter = m_outputObjs.find(out_param);
     if (iter == m_outputObjs.end())
         throw makeNodeError<KeyError>(get_path(), out_param, "no such output object param");
@@ -4320,10 +4201,10 @@ zany NodeImpl::takeOutputObject(const std::string& out_param, const std::string&
     return std::move(outparam.spObject);
 }
 
-std::vector<zany> NodeImpl::get_output_objs() {
-    std::vector<zany> objs;
+std::vector<zany2> NodeImpl::get_output_objs() {
+    std::vector<zany2> objs;
     for (const auto& [name, objparam] : m_outputObjs) {
-        objs.push_back(objparam.spObject->clone());
+        objs.push_back(zany2(objparam.spObject->clone()));
     }
     return objs;
 }
@@ -4448,7 +4329,7 @@ void NodeImpl::reset_forloop_settings() {
 
 }
 
-std::shared_ptr<IObject> NodeImpl::get_iterate_object() {
+std::shared_ptr<IObject2> NodeImpl::get_iterate_object() {
     return nullptr;
 }
 

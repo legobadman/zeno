@@ -9,8 +9,8 @@ namespace zeno
         return stdStr2charArr(sval, ret_buf, cap);
     }
 
-    UserData::UserData(const UserData& rhs) {
-        m_data = rhs.m_data;
+    void UserData::copy(IUserData2* pUserData) {
+        m_data = ((UserData*)pUserData)->m_data;
     }
 
     IUserData2* UserData::clone() {

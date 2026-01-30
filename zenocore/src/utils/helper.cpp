@@ -79,7 +79,6 @@ namespace zeno {
                 return gParamType_IObject;
             }
             else if (param_name == "list" || param_name == "droppedList") { return gParamType_List; }
-            else if (param_name == "dict") { return gParamType_Dict; }
             else if (param_name == "camera" || param_name == "cam") {
                 return gParamType_Camera;
             }
@@ -239,7 +238,6 @@ namespace zeno {
         case gParamType_IObject: return "iobject";
         case gParamType_Primitive:    return "prim";
         case gParamType_Geometry:return "geometry";
-        case gParamType_Dict:    return "dict";
         case gParamType_List:    return "list";
         case gParamType_Curve:   return "curve";
         case gParamType_Heatmap: return "color";
@@ -1060,6 +1058,10 @@ namespace zeno {
         return std::string(buf);
     }
 
+    std::string get_object_key(const zany2& spObject) {
+        return get_object_key(spObject.get());
+    }
+
     formula_tip_info getNodesByPath(const std::string& nodeabspath, const std::string& graphpath, const std::string& node_part, std::string funcName)
     {
         formula_tip_info ret;
@@ -1396,7 +1398,7 @@ namespace zeno {
         {
             return true;
         }
-        else if (inType == gParamType_Dict || inType == gParamType_List) {
+        else if (inType == gParamType_List) {
             return true;
         }
         else if (inType == gParamType_AnyNumeric || outType == gParamType_AnyNumeric) {
@@ -1889,7 +1891,7 @@ namespace zeno {
 
     void update_list_root_key(ListObject* listobj, const std::string& key)
     {
-        std::string listkey = zsString2Std(listobj->key());
+        std::string listkey = get_object_key(listobj);
         auto it = listkey.find_first_of('\\');
         std::string newkey = it == std::string::npos ? listkey : (key + listkey.substr(it));
         listobj->update_key(stdString2zs(newkey));
@@ -1913,8 +1915,8 @@ namespace zeno {
         for (auto obj : listobj->get()) {
             if (auto plist = dynamic_cast<ListObject*>(obj)) {
                 update_list_root_key(plist, key);
-            } selse {
-                std::string objkey = zsString2Std(obj->key());
+            } else {
+                std::string objkey = get_object_key(obj);
                 auto it = objkey.find_first_of('\\');
                 newkey = it == std::string::npos ? objkey : (key + objkey.substr(it));
                 obj->update_key(stdString2zs(newkey));
@@ -1922,11 +1924,11 @@ namespace zeno {
         }
     }
 
-    void add_prefix_key(IObject* pObject, const std::string& prefix) {
-        auto objKey = pObject->key();
+    void add_prefix_key(IObject2* pObject, const std::string& prefix) {
+        auto objKey = get_object_key(pObject);
         if (!objKey.empty()) {
-            zeno::String newKey = stdString2zs(prefix) + '\\' + objKey;
-            pObject->update_key(newKey);
+            auto newKey = prefix + '\\' + objKey;
+            pObject->update_key(newKey.c_str());
         }
         if (ListObject* pList = dynamic_cast<ListObject*>(pObject)) {
             for (auto& elemObj : pList->m_objects) {
@@ -1948,11 +1950,11 @@ namespace zeno {
         }
     }
 
-    zany clone_by_key(IObject* pObject, const std::string& prefix) {
+    zany2 clone_by_key(IObject2* pObject, const std::string& prefix) {
         if (ListObject* pList = dynamic_cast<ListObject*>(pObject)) {
             auto newList = create_ListObject();
-            zeno::String newKey = stdString2zs(prefix) + '\\' + pList->key();
-            newList->update_key(newKey);
+            auto newKey = prefix + '\\' + get_object_key(pList);
+            newList->update_key(newKey.c_str());
             for (const auto& uuid : pList->m_modify) {
                 std::string _key = prefix + '\\' + uuid;
                 newList->m_modify.insert(_key);
@@ -1974,13 +1976,13 @@ namespace zeno {
         }
         else {
             auto spClonedObj = pObject->clone();
-            zeno::String newkey = stdString2zs(prefix) + '\\' + pObject->key();
-            spClonedObj->update_key(newkey);
-            return spClonedObj;
+            auto newkey = prefix + '\\' + get_object_key(pObject);
+            spClonedObj->update_key(newkey.c_str());
+            return zany2(spClonedObj);
         }
     }
 
-    std::vector<std::string> get_obj_paths(IObject* pObject) {
+    std::vector<std::string> get_obj_paths(IObject2* pObject) {
         std::vector<std::string> _paths;
         if (ListObject* lstObj = dynamic_cast<ListObject*>(pObject)) {
             for (auto spObj : lstObj->get()) {
@@ -1992,7 +1994,7 @@ namespace zeno {
             return _paths;
         }
         else {
-            _paths.push_back(zsString2Std(pObject->key()));
+            _paths.push_back(get_object_key(pObject));
             return _paths;
         }
     }
@@ -2016,7 +2018,7 @@ namespace zeno {
         return decodeObject(buffer, szBuffer);
     }
 
-    void writeObjCache(const std::string& file_path, IObject* pObject) {
+    void writeObjCache(const std::string& file_path, IObject2* pObject) {
         std::vector<char> buffer;
         bool ret = encodeObject(pObject, buffer);
         if (!ret)
@@ -2226,7 +2228,6 @@ namespace zeno {
         case gParamType_Vec3f:     return zeno::Vec3edit;
         case gParamType_Vec4f:     return zeno::Vec4edit;
         case gParamType_Primitive:
-        case gParamType_Dict:
         case gParamType_List:      return zeno::NullControl;
             //Param_Color:  //need this?
         case gParamType_Curve:     return zeno::CurveEditor;

@@ -9,7 +9,7 @@
 #include <zeno/utils/api.h>
 #include <zeno/types/AttrVector.h>
 #include <zeno/types/PrimitiveObject.h>
-
+#include <zeno/types/UserData.h>
 
 namespace zeno
 {
@@ -194,6 +194,8 @@ namespace zeno
             size_t buf_size
         ) override;
 
+        std::vector<float> GeometryObject::get_float_attr_vec3(GeoAttrGroup grp, const std::string& attr_name);
+
         size_t get_vec3f_attr(
             GeoAttrGroup grp,
             const char* attr_name,
@@ -270,7 +272,10 @@ namespace zeno
 
     public: //IObject2
         IObject2* clone() const override {
-            return nullptr;
+            return new GeometryObject(*this);
+        }
+        ZObjectType type() const override {
+            return ZObj_Geometry;
         }
         size_t key(char* buf, size_t buf_size) const override
         {
@@ -323,6 +328,14 @@ namespace zeno
         const GeomTopoType m_type;
     };
 
+    ZENO_API std::unique_ptr<GeometryObject> create_GeometryObject(GeomTopoType type);
+    ZENO_API std::unique_ptr<GeometryObject> create_GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, int nFaces, bool bInitFaces = false);
+    ZENO_API std::unique_ptr<GeometryObject> create_GeometryObject(
+        GeomTopoType type,
+        bool bTriangle,
+        const std::vector<zeno::vec3f>& points,
+        const std::vector<std::vector<int>>& faces);
+    ZENO_API std::unique_ptr<GeometryObject> create_GeometryObject(PrimitiveObject* prim);
 }
 
 #endif

@@ -9,6 +9,7 @@ namespace zeno {
 
 struct IUserData2 {
     virtual IUserData2* clone() = 0;
+    virtual void copy(IUserData2* pUserData) = 0;
     //virtual ~IUserData() = default; //虚析构函数在vtbl中的位置随着编译器的不同而不同
 
     virtual bool has(const char* key) = 0;
@@ -64,6 +65,7 @@ struct IObject2 {
     virtual size_t serialize_json(char* buf, size_t buf_size) const = 0;
     virtual IUserData2* userData() = 0;
     virtual void Delete() = 0;  //TODO: for abi compatiblity when dtor cann't be mark virutal.
+    virtual ZObjectType type() const = 0;
 };
 
 struct IGeometryObject : IObject2 {

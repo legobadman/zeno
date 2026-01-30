@@ -10,7 +10,6 @@
 #include <zeno/para/parallel_for.h>
 #include <zeno/para/parallel_scan.h>
 #include <zeno/utils/variantswitch.h>
-#include <zeno/types/GeometryObject.h>
 #include <zeno/core/Session.h>
 #include <zeno/core/ObjectRecorder.h>
 #include <regex>
@@ -108,6 +107,7 @@ namespace zeno
         m_point_attrs = rhs.m_point_attrs;
         m_face_attrs = rhs.m_face_attrs;
         m_geo_attrs = rhs.m_geo_attrs;
+        m_userDat = rhs.m_userDat;
     }
 
     GeometryObject::~GeometryObject() {
@@ -338,6 +338,10 @@ namespace zeno
         }
 
         return n;
+    }
+
+    std::vector<float> GeometryObject::get_float_attr_vec3(GeoAttrGroup grp, const std::string& attr_name) {
+        return get_attrs<float>(grp, attr_name);
     }
 
     size_t GeometryObject::get_float_attr(
@@ -1404,5 +1408,46 @@ namespace zeno
         default:
             return 0;
         }
+    }
+
+
+
+    std::unique_ptr<GeometryObject> create_GeometryObject(GeomTopoType type) {
+        return std::make_unique<GeometryObject>(type);
+    }
+
+    std::unique_ptr<GeometryObject> create_GeometryObject(
+        GeomTopoType type,
+        bool bTriangle,
+        int nPoints,
+        int nFaces,
+        bool bInitFaces)
+    {
+        auto pGeom = std::make_unique<GeometryObject>(type, bTriangle, nPoints, nFaces, bInitFaces);
+        std::vector<vec3f> points(nPoints);
+        pGeom->create_attr(ATTR_POINT, "pos", points);
+        return pGeom;
+    }
+
+    std::unique_ptr<GeometryObject> create_GeometryObject(
+        GeomTopoType type,
+        bool bTriangle,
+        const std::vector<zeno::vec3f>& points,
+        const std::vector<std::vector<int>>& faces)
+    {
+        auto pGeom = std::make_unique<GeometryObject>(type, bTriangle, (int)points.size(), faces);
+        pGeom->create_attr(ATTR_POINT, "pos", points);
+        return pGeom;
+    }
+
+    std::unique_ptr<GeometryObject> create_GeometryObject(PrimitiveObject* prim)
+    {
+        if (!prim->userData()->has_bool("cyhair")) {
+            if (!prim || prim->verts->empty())
+                return nullptr;
+        }
+        auto pGeom = std::make_unique<GeometryObject>(prim);
+        pGeom->userData()->copy(prim->userData());
+        return pGeom;
     }
 }

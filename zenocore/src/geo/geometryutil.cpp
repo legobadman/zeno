@@ -1,7 +1,5 @@
 #include <zeno/geo/geometryutil.h>
-#include <zeno/types/IGeometryObject.h>
 #include <zeno/types/GeometryObject.h>
-#include <zeno/types/ListObject_impl.h>
 #include <zeno/types/UserData.h>
 #include <zeno/utils/helper.h>
 #include <zeno/utils/safe_dynamic_cast.h>
@@ -51,12 +49,7 @@ namespace zeno
         }
     };
 
-    bool prim_remove_point(GeometryObject* prim, int ptnum)
-    {
-        return false;
-    }
-
-    ZENO_API std::vector<vec3f> calc_point_normals(GeometryObject* geo, const std::vector<vec3i>& tris, float flip)
+    std::vector<vec3f> calc_point_normals(GeometryObject* geo, const std::vector<vec3i>& tris, float flip)
     {
         size_t n = geo->npoints();
         std::vector<vec3f> normals(n);
@@ -214,7 +207,7 @@ namespace zeno
         return parallel_reduce_minmax(verts.begin(), verts.end());
     }
 
-    void geom_set_abcpath(GeometryObject_Adapter* geom, zeno::String path_name) {
+    void geom_set_abcpath(GeometryObject* geom, const char* path_name) {
         auto pUserData = geom->userData();
         int faceset_count = pUserData->get_int("abcpath_count", 0);
         for (auto j = 0; j < faceset_count; j++) {
@@ -225,8 +218,8 @@ namespace zeno
         geom->create_face_attr("abcpath", (int)0);
     }
 
-    void geom_set_faceset(GeometryObject_Adapter* geom, zeno::String faceset_name) {
-        IUserData* pUserData = geom->userData();
+    void geom_set_faceset(GeometryObject* geom, const char* faceset_name) {
+        auto pUserData = geom->userData();
         int faceset_count = pUserData->get_int("faceset_count", 0);
         for (auto j = 0; j < faceset_count; j++) {
             pUserData->del(stdString2zs(zeno::format("faceset_{}", j)));
@@ -236,7 +229,7 @@ namespace zeno
         geom->create_face_attr("faceset", (int)0);
     }
 
-    static void set_special_attr_remap(GeometryObject_Adapter* p, std::string attr_name, std::unordered_map<std::string, int>& facesetNameMap) {
+    static void set_special_attr_remap(GeometryObject* p, std::string attr_name, std::unordered_map<std::string, int>& facesetNameMap) {
         UserData* pUserData = dynamic_cast<UserData*>(p->userData());
         int faceset_count = pUserData->get_int(stdString2zs(attr_name + "_count"), 0);
         {
@@ -261,14 +254,14 @@ namespace zeno
     }
 
 
-    ZENO_API std::unique_ptr<zeno::GeometryObject_Adapter> mergeObjects(
+    ZENO_API IGeometryObject* mergeObjects(
         zeno::ListObject* spList,
         std::string const& tagAttr,
         bool tag_on_vert,
         bool tag_on_face)
     {
         size_t nTotalPts = 0, nTotalFaces = 0, nVertices = 0;
-        const std::vector<zeno::GeometryObject_Adapter*>& geoobjs = spList->get<zeno::GeometryObject_Adapter>();
+        const std::vector<zeno::GeometryObject*>& geoobjs = spList->get<zeno::GeometryObject>();
         for (auto spObject : geoobjs) {
             nTotalPts += spObject->npoints();
             nTotalFaces += spObject->nfaces();
@@ -404,7 +397,7 @@ namespace zeno
     }
 
     void transformGeom(
-        zeno::GeometryObject_Adapter* geom
+        zeno::GeometryObject* geom
         , glm::mat4 matrix
         , std::string pivotType
         , vec3f pivotPos
@@ -477,7 +470,7 @@ namespace zeno
         user_data->del("_bboxMax");
     }
 
-    ZENO_API bool dividePlane(
+    static bool dividePlane(
         const std::vector<vec3f>& face_pts, /*容器的顺序就是面点的逆序排序*/
         float A, float B, float C, float D,
         /*out*/std::vector<DivideFace>& split_faces,
@@ -758,8 +751,8 @@ namespace zeno
         return true;
     }
 
-    ZENO_API std::unique_ptr<zeno::GeometryObject_Adapter> divideObject(
-        zeno::GeometryObject_Adapter* input_object,
+    ZENO_API std::unique_ptr<zeno::GeometryObject> divideObject(
+        zeno::GeometryObject* input_object,
         DivideKeep keep,
         zeno::vec3f center_pos,
         zeno::vec3f direction
@@ -885,8 +878,8 @@ namespace zeno
         return spOutput;
     }
 
-    ZENO_API std::unique_ptr<zeno::GeometryObject_Adapter> scatter(
-        zeno::GeometryObject_Adapter* input,
+    ZENO_API std::unique_ptr<zeno::GeometryObject> scatter(
+        zeno::GeometryObject* input,
         const std::string& sampleRegion,
         const int nPointCount,
         int seed)
@@ -961,7 +954,7 @@ namespace zeno
         return spOutput;
     }
 
-    ZENO_API std::unique_ptr<zeno::GeometryObject_Adapter> constructGeom(const std::vector<std::vector<zeno::vec3f>>& faces) {
+    ZENO_API std::unique_ptr<zeno::GeometryObject> constructGeom(const std::vector<std::vector<zeno::vec3f>>& faces) {
         int nPoints = 0, nFaces = faces.size();
         for (auto& facePts : faces) {
             nPoints += facePts.size();
@@ -1020,7 +1013,7 @@ namespace zeno
         }
     }
 
-    ZENO_API std::unique_ptr<zeno::GeometryObject_Adapter> fuseGeometry(zeno::GeometryObject_Adapter* input, float threshold) {
+    ZENO_API std::unique_ptr<zeno::GeometryObject> fuseGeometry(zeno::GeometryObject* input, float threshold) {
 
         std::vector<vec3f> points = input->points_pos();
         _PointCloud cloud{ points };
@@ -1104,44 +1097,5 @@ namespace zeno
         return spOutput;
     }
 
-    ZENO_API glm::mat4 calc_rotate_matrix(
-        float xangle,
-        float yangle,
-        float zangle,
-        Rotate_Orientaion orientaion
-    ) {
-        float rad_x = xangle * (M_PI / 180.0);
-        float rad_y = yangle * (M_PI / 180.0);
-        float rad_z = zangle * (M_PI / 180.0);
-#if 0
-        switch (orientaion)
-        {
-        case Orientaion_XY: //绕x轴旋转90
-            rad_x = (xangle + 90) * (M_PI / 180.0);
-            break;
-        case Orientaion_YZ: //绕z轴旋转-90
-            rad_z = (zangle - 90) * (M_PI / 180.0);
-            break;
-        case Orientaion_ZX:
-            break;//默认都是基于ZX平面
-        }
-#endif
-        //这里构造的方式是基于列，和公式上的一样，所以看起来反过来了
-        glm::mat4 mx = glm::mat4(
-            1, 0, 0, 0,
-            0, cos(rad_x), sin(rad_x), 0,
-            0, -sin(rad_x), cos(rad_x), 0,
-            0, 0, 0, 1);
-        glm::mat4 my = glm::mat4(
-            cos(rad_y), 0, -sin(rad_y), 0,
-            0, 1, 0, 0,
-            sin(rad_y), 0, cos(rad_y), 0,
-            0, 0, 0, 1);
-        glm::mat4 mz = glm::mat4(
-            cos(rad_z), sin(rad_z), 0, 0,
-            -sin(rad_z), cos(rad_z), 0, 0,
-            0, 0, 1, 0,
-            0, 0, 0, 1);
-        return mz * my * mx;
-    }
+    
 }
