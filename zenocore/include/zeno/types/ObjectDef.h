@@ -3,7 +3,6 @@
 #include <zeno/core/IObject.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/types/ListObject.h>
-#include <zeno/types/DictObject.h>
 #include <zeno/types/InstancingObject.h>
 #include <zeno/types/TextureObject.h>
 #include <zeno/types/NumericObject.h>

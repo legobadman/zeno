@@ -504,13 +504,13 @@ struct SceneObject : IObject {
 static std::unique_ptr<SceneObject> get_scene_tree_from_list2(ListObject* list_obj) {
     auto scene_tree = std::make_unique<SceneObject>();
     for (auto i = 0; i < list_obj->size(); i++) {
-        auto ud = list_obj->m_impl->m_objects[i]->userData();
+        auto ud = list_obj->m_objects[i]->userData();
         auto resource_type = ud->get_string("ResourceType", "None");
         if (resource_type == "SceneTree") {
             scene_tree->from_json(zsString2Std(ud->get_string("json")));
         }
         else if (resource_type == "Mesh") {
-            auto prim = safe_uniqueptr_cast<GeometryObject_Adapter>(list_obj->m_impl->m_objects[i]->clone());
+            auto prim = safe_uniqueptr_cast<GeometryObject_Adapter>(list_obj->m_objects[i]->clone());
             auto object_name = zsString2Std(prim->userData()->get_string("ObjectName"));
             scene_tree->geom_list[object_name] = std::move(prim);
         }

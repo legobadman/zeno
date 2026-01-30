@@ -13,9 +13,9 @@ namespace zeno
                 throw makeError<UnimplError>("no input objects on Switch");
             }
             int switch_num = get_input2_int("Switch Number");
-            int n = input_objects->m_impl->size();
+            int n = input_objects->size();
             int clip_switch = std::min(n - 1, std::max(0, switch_num));
-            auto obj = input_objects->m_impl->get(clip_switch);
+            auto obj = input_objects->get(clip_switch);
             set_output("Output Object", obj->clone());
         }
     };

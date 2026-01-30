@@ -62,10 +62,6 @@ namespace zeno
         return dynamic_cast<ListObject*>(get_input(param));
     }
 
-    DictObject* INode::get_input_DictObject(const zeno::String& param) {
-        return dynamic_cast<DictObject*>(get_input(param));
-    }
-
     int INode::get_input2_int(const zeno::String& param) {
         const auto& anyVal = m_pAdapter->get_param_result(zsString2Std(param));
         int res = 0;

@@ -7,7 +7,6 @@
 #include <zeno/core/NodeImpl.h>
 #include <zeno/funcs/LiterialConverter.h>
 #include <zeno/types/FunctionObject.h>
-#include <zeno/types/DictObject.h>
 #include <zeno/utils/safe_dynamic_cast.h>
 #include <zeno/utils/safe_at.h>
 

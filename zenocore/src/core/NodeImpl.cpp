@@ -22,7 +22,6 @@
 #include <zeno/utils/uuid.h>
 #include <zeno/extra/GlobalState.h>
 #include <zeno/core/CoreParam.h>
-#include <zeno/types/DictObject.h>
 #include <zeno/ListObject.h>
 #include <zeno/utils/helper.h>
 #include <zeno/utils/uuid.h>
@@ -1624,153 +1623,6 @@ std::set<RefSourceInfo> NodeImpl::resolveReferSource(const Any& param_defl) {
     return refSources;
 }
 
-std::unique_ptr<DictObject> NodeImpl::processDict(ObjectParam* in_param, CalcContext* pContext) {
-    //连接的元素是list还是list of list的规则，参照Graph::addLink下注释。
-    bool bDirectLink = false;
-    const auto& inLinks = in_param->links;
-#if 1
-    if (inLinks.size() == 1)
-    {
-        auto dict_register_all_items = [&](DictObject* dictobj) {
-            if (!dictobj->has_change_info()) {
-                //上游没有修改信息，只能全部加进来，还要比较有哪些被删掉
-                for (const auto& [dictkey, obj] : dictobj->lut) {
-                    std::string key = zsString2Std(obj->key());
-                    if (key.empty())
-                        continue;
-                    //直接全部收集
-                    dictobj->m_new_added.insert(key);
-                }
-            }
-            };
-
-        std::shared_ptr<ObjectLink> spLink = inLinks.front();
-        auto out_param = spLink->fromparam;
-        auto outNode = out_param->m_wpNode;
-        assert(outNode);
-
-        if (out_param->type == in_param->type && spLink->tokey.empty()) //根据Graph::addLink规则，类型相同且无key视为直连
-        {
-            std::unique_ptr<DictObject> spDict;
-            bDirectLink = true;
-
-            if (spLink->upstream_task.valid()) {
-                auto outResult = spLink->upstream_task.get();   //outResult已经是本节点输入参数所有，不属于outnode了
-                auto _spDict = dynamic_cast<DictObject*>(outResult.get());
-                if (!_spDict) {
-                    throw makeNodeError(get_path(), "no list object received");
-                }
-                spDict.reset(static_cast<DictObject*>(outResult.release()));
-                //无论原来有没有缓存，上游的list已经脏了，就干脆直接换新的，不去一个个比较了
-                dict_register_all_items(spDict.get());
-                spDict->update_key(out_param->spObject->key());
-            }
-            else {
-                assert(!outNode->is_dirty());
-                //上游已经算好了，但当前的输入没有建立缓存，就得从上游拷贝一下
-                if (in_param->spObject) {
-                    //相当于转一次又给回外面。。。
-                    spDict = safe_uniqueptr_cast<DictObject>(std::move(in_param->spObject));
-                }
-                else {
-                    //outNode已经算好了，直接拿应该不会导致race condition
-                    spDict = safe_uniqueptr_cast<DictObject>(out_param->spObject->clone());
-                    //新的list，这里全部内容都要登记到new_added.
-                    dict_register_all_items(spDict.get());
-                    spDict->update_key(out_param->spObject->key());
-                }
-            }
-            if (!spDict) {
-                throw makeNodeError<UnimplError>(get_path(), "no outResult List from output");
-            }
-            bDirectLink = true;
-            add_prefix_key(spDict.get(), m_uuid);
-            return spDict;
-        }
-    }
-#endif
-    if (!bDirectLink)
-    {
-        std::map<std::string, IObject*> existObjs;
-        if (in_param->spObject) {
-            auto spOldDict = dynamic_cast<DictObject*>(in_param->spObject.get());
-            for (auto& [key, spobj] : spOldDict->lut) {
-                std::string skey = zsString2Std(spobj->key());
-                existObjs.insert({skey, spobj.get()});
-            }
-        }
-
-        auto spDict = std::make_unique<DictObject>();
-        for (const auto& spLink : in_param->links)
-        {
-            const std::string& keyName = spLink->tokey;
-            auto out_param = spLink->fromparam;
-            zeno::NodeImpl* outNode = out_param->m_wpNode;
-
-            bool is_this_item_dirty = outNode->is_dirty();
-
-            if (is_this_item_dirty) {  //list中的元素是dirty的，重新计算并加入list
-                outNode->doApply(pContext);
-            }
-
-            auto outResult = outNode->get_output_obj(out_param->name);
-            assert(outResult);
-            {
-                zany newObj;
-                if (auto _spList = dynamic_cast<zeno::ListObject*>(outResult)) {
-                    newObj = clone_by_key(_spList, m_uuid);
-                }
-                else if (auto _spDict = dynamic_cast<zeno::DictObject*>(outResult)) {
-                    newObj = clone_by_key(_spDict, m_uuid);
-                }
-                else {
-                    zeno::String newkey = stdString2zs(m_uuid) + '\\' + outResult->key();
-                    newObj = outResult->clone();
-                    newObj->update_key(newkey);
-                }
-                
-                std::string const& new_key = zsString2Std(newObj->key());
-                spDict->lut[keyName] = std::move(newObj);
-
-                if (is_this_item_dirty) {
-                    //需要区分是新的还是旧的，这里先粗暴认为全是新的
-                    if (existObjs.find(new_key) != existObjs.end()) {
-                        spDict->m_modify.insert(new_key);
-                        existObjs.erase(new_key);
-                    }
-                    else {
-                        spDict->m_new_added.insert(new_key);
-                    }
-                } else {
-                    spDict->m_modify.insert(new_key);//需视为modify，否则关闭这个list节点的view时会崩或显示不正常的bug
-                }
-                existObjs.erase(new_key);
-            }
-        }
-        //剩下没出现的都认为是移除掉了
-        std::function<void(IObject*)> flattenDict = [&flattenDict, &spDict](IObject* obj) {
-            if (auto _spList = dynamic_cast<ListObject*>(obj)) {
-                for (int i = 0; i < _spList->m_impl->size(); ++i) {
-                    flattenDict(_spList->m_impl->get(i));
-                }
-            } else if (auto _spDict = dynamic_cast<DictObject*>(obj)) {
-                for (auto& [key, obj] : _spDict->get()) {
-                    flattenDict(obj);
-                }
-            } else {
-                spDict->m_new_removed.insert(zsString2Std(obj->key()));
-            }
-        };
-        for (auto& [key, removeobj] : existObjs) {
-            flattenDict(removeobj);//提前节需要移除的对象的key全部展平，在GraphicsManager.h中一次性移除，才能正确显示
-        }
-
-        spDict->update_key(stdString2zs(m_uuid));
-        return spDict;
-    }
-    return nullptr;
-}
-
 void NodeImpl::clear_container_info() {
     for (auto& [_, param] : m_inputObjs) {
         for (auto spLink : param.links) {
@@ -1778,9 +1630,9 @@ void NodeImpl::clear_container_info() {
         }
         if (param.type == gParamType_List && param.spObject) {
             auto spList = static_cast<ListObject*>(param.spObject.get());
-            spList->m_impl->m_new_added.clear();
-            spList->m_impl->m_new_removed.clear();
-            spList->m_impl->m_modify.clear();
+            spList->m_new_added.clear();
+            spList->m_new_removed.clear();
+            spList->m_modify.clear();
         }
     }
     for (auto& [_, param] : m_outputObjs) {
@@ -1789,9 +1641,9 @@ void NodeImpl::clear_container_info() {
         }
         if (param.type == gParamType_List && param.spObject) {
             auto spList = static_cast<ListObject*>(param.spObject.get());
-            spList->m_impl->m_new_added.clear();
-            spList->m_impl->m_new_removed.clear();
-            spList->m_impl->m_modify.clear();
+            spList->m_new_added.clear();
+            spList->m_new_removed.clear();
+            spList->m_modify.clear();
         }
     }
 }
@@ -1815,11 +1667,11 @@ std::unique_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
         auto list_register_all_items = [&](ListObject* listobj) {
             if (!listobj->has_change_info()) {
                 //上游没有修改信息，只能全部加进来，还要比较有哪些被删掉
-                for (const auto& obj : listobj->m_impl->m_objects) {
+                for (const auto& obj : listobj->m_objects) {
                     std::string key = zsString2Std(obj->key());
                     if (key.empty()) throw makeNodeError<UnimplError>(get_path(), "there is object in list with empty key");
                     //直接全部收集
-                    listobj->m_impl->m_new_added.insert(key);
+                    listobj->m_new_added.insert(key);
                 }
             }
         };
@@ -1874,7 +1726,7 @@ std::unique_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
         auto cachedList = static_cast<ListObject*>(in_param->spObject.get());
         std::set<std::string> old_list;
         if (cachedList) {
-            for (const auto& obj : cachedList->m_impl->m_objects) {
+            for (const auto& obj : cachedList->m_objects) {
                 old_list.insert(zsString2Std(obj->key()));
             }
         }
@@ -1901,11 +1753,11 @@ std::unique_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
 
                 if (old_list.find(new_obj_key) != old_list.end()) {
                     //旧的列表有这一项，说明是修改的
-                    spList->m_impl->m_modify.insert(new_obj_key);
+                    spList->m_modify.insert(new_obj_key);
                 }
                 else {
                     //旧的列表没有，现在发现新的
-                    spList->m_impl->m_new_added.insert(new_obj_key);
+                    spList->m_new_added.insert(new_obj_key);
                 }
             }
             else {
@@ -1916,7 +1768,7 @@ std::unique_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                 new_obj_key = m_uuid + '\\' + upstream_obj_key;
                 if (old_list.find(new_obj_key) != old_list.end()) {
                     //直接从缓存取就行
-                    for (const auto& obj : cachedList->m_impl->m_objects) {
+                    for (const auto& obj : cachedList->m_objects) {
                         if (zsString2Std(obj->key()) == new_obj_key) {
                             spList->push_back(obj->clone());
                             break;
@@ -1928,7 +1780,7 @@ std::unique_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
                     auto new_obj = out_param->spObject->clone();
                     new_obj->update_key(stdString2zs(upstream_obj_key));
                     add_prefix_key(new_obj.get(), m_uuid);
-                    spList->m_impl->m_modify.insert(zsString2Std(new_obj->key()));
+                    spList->m_modify.insert(zsString2Std(new_obj->key()));
 
                     spList->push_back(std::move(new_obj));
                 }
@@ -1936,7 +1788,7 @@ std::unique_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
             old_list.erase(new_obj_key);
         }
         //从old_list剩下的，就是要被删除的元素
-        spList->m_impl->m_new_removed = old_list;
+        spList->m_new_removed = old_list;
         spList->update_key(stdString2zs(m_uuid));
         return spList;
     }
@@ -2507,9 +2359,9 @@ void NodeImpl::doApply(CalcContext* pContext) {
     for (auto const& [name, param] : m_outputObjs) {
         if (param.type == gParamType_List && param.spObject) {
             auto list = static_cast<ListObject*>(param.spObject.get());
-            list->m_impl->m_modify.clear();
-            list->m_impl->m_new_added.clear();
-            list->m_impl->m_new_removed.clear();
+            list->m_modify.clear();
+            list->m_new_added.clear();
+            list->m_new_removed.clear();
         }
     }
 

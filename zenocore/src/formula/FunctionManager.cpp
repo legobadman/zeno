@@ -115,7 +115,7 @@ namespace zeno {
         //不需要转换了，后续IndiceMeshes也得实现同样的几何api，会出现两者混用的情况
         /*
         * //检查语法树，观察是否存在几何拓扑的增删改，如有则转为半边结构的拓扑
-        if (spGeom && spGeom->m_impl->type() == zeno::Topo_IndiceMesh) {
+        if (spGeom && spGeom->type() == zeno::Topo_IndiceMesh) {
             bConvertHalfEdge = hasGeomTopoQueryModify(root);
             if (bConvertHalfEdge) {
                 pCtx->spObject = spGeom->toHalfEdgeTopo();
@@ -1106,11 +1106,11 @@ namespace zeno {
             std::string attrname;
             if (attr_name[0] == '@')
                 attrname = attr_name.substr(1);
-            if (!spGeo->m_impl->has_attr(grp, attrname)) {
-                spGeo->m_impl->create_attr(grp, attrname, wtf);
+            if (!spGeo->has_attr(grp, attrname)) {
+                spGeo->create_attr(grp, attrname, wtf);
             }
             else {
-                spGeo->m_impl->set_attr(grp, attrname, wtf);
+                spGeo->set_attr(grp, attrname, wtf);
             }
         }
         else {
@@ -1409,23 +1409,23 @@ namespace zeno {
                     AttrVar initValue = getInitValueFromVariant(res.value); //拿初值就行
                     auto spGeom = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
                     if (pContext->runover == ATTR_POINT) {
-                        if (!spGeom->m_impl->has_point_attr(attrname)) {
-                            spGeom->m_impl->create_point_attr(attrname, initValue);
+                        if (!spGeom->has_point_attr(attrname)) {
+                            spGeom->create_point_attr(attrname, initValue);
                         }
                     }
                     else if (pContext->runover == ATTR_VERTEX) {
-                        if (!spGeom->m_impl->has_vertex_attr(attrname)) {
-                            spGeom->m_impl->create_vertex_attr(attrname, initValue);
+                        if (!spGeom->has_vertex_attr(attrname)) {
+                            spGeom->create_vertex_attr(attrname, initValue);
                         }
                     }
                     else if (pContext->runover == ATTR_FACE) {
-                        if (!spGeom->m_impl->has_face_attr(attrname)) {
-                            spGeom->m_impl->create_face_attr(attrname, initValue);
+                        if (!spGeom->has_face_attr(attrname)) {
+                            spGeom->create_face_attr(attrname, initValue);
                         }
                     }
                     else if (pContext->runover == ATTR_GEO) {
-                        if (!spGeom->m_impl->has_geometry_attr(attrname)) {
-                            spGeom->m_impl->create_geometry_attr(attrname, initValue);
+                        if (!spGeom->has_geometry_attr(attrname)) {
+                            spGeom->create_geometry_attr(attrname, initValue);
                         }
                     }
                     setAttrValue(attrname, channel, res, root->opVal, filter, pContext);

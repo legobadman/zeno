@@ -17,7 +17,6 @@
 
 namespace zeno {
 
-    struct DictObject;
     struct ListObject;
     struct SubnetNode;
 
@@ -32,7 +31,6 @@ namespace zeno {
     ZENO_API bool convertToEditVar(zeno::reflect::Any& var, const ParamType type);
     ZENO_API bool convertToOriginalVar(zeno::reflect::Any& editvar, const ParamType type);
     ZENO_API bool ListHasPrimObj(zeno::ListObject* list);
-    ZENO_API bool DictHasPrimObj(zeno::DictObject* dict);
     ZENO_API zvariant initDeflValue(ParamType type);
     ZENO_API zeno::reflect::Any initAnyDeflValue(ParamType const& type);
     ZENO_API zvariant AnyToZVariant(zeno::reflect::Any const& var);
@@ -96,7 +94,6 @@ namespace zeno {
     bool isSubnetInputOutputParam(NodeImpl* spParentnode, std::string paramName);
 
     void update_list_root_key(ListObject* listobj, const std::string& key);
-    void update_dict_root_key(DictObject* dictobj, const std::string& key);
 
     zany clone_by_key(IObject* pObject, const std::string& prefix);
     void add_prefix_key(IObject* pObject, const std::string& prefix);

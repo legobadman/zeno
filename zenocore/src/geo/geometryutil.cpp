@@ -250,11 +250,11 @@ namespace zeno
                 cur_faceset_index_map[i] = facesetNameMap[path];
             }
 
-            if (p->m_impl->has_face_attr(attr_name)) {
+            if (p->has_face_attr(attr_name)) {
                 for (int i = 0; i < p->nfaces(); i++) {
-                    int val = p->m_impl->get_elem<int>(ATTR_FACE, attr_name, 0, i);
+                    int val = p->get_elem<int>(ATTR_FACE, attr_name, 0, i);
                     int newval = cur_faceset_index_map[val];
-                    p->m_impl->set_elem(ATTR_FACE, attr_name, i, newval);
+                    p->set_elem(ATTR_FACE, attr_name, i, newval);
                 }
             }
         }
@@ -268,7 +268,7 @@ namespace zeno
         bool tag_on_face)
     {
         size_t nTotalPts = 0, nTotalFaces = 0, nVertices = 0;
-        const std::vector<zeno::GeometryObject_Adapter*>& geoobjs = spList->m_impl->get<zeno::GeometryObject_Adapter>();
+        const std::vector<zeno::GeometryObject_Adapter*>& geoobjs = spList->get<zeno::GeometryObject_Adapter>();
         for (auto spObject : geoobjs) {
             nTotalPts += spObject->npoints();
             nTotalFaces += spObject->nfaces();
@@ -282,7 +282,7 @@ namespace zeno
         for (int iGeom = 0; iGeom < geoobjs.size(); iGeom++)
         {
             auto elemObj = geoobjs[iGeom];
-            std::vector<vec3f> obj_pos = elemObj->m_impl->points_pos();
+            std::vector<vec3f> obj_pos = elemObj->points_pos();
             int nPts = elemObj->npoints();
             int nFaces = elemObj->nfaces();
             if (!elemObj->is_base_triangle()) {
@@ -291,7 +291,7 @@ namespace zeno
 
             std::copy(obj_pos.begin(), obj_pos.end(), newObjPos.begin() + pt_offset);
             for (int iFace = 0; iFace < nFaces; iFace++) {
-                std::vector<int> facePoints = elemObj->m_impl->face_points(iFace);
+                std::vector<int> facePoints = elemObj->face_points(iFace);
                 for (int k = 0; k < facePoints.size(); ++k) {
                     facePoints[k] += pt_offset;
                 }
@@ -324,9 +324,9 @@ namespace zeno
             int matNum = p->userData()->get_int("matNum", 0);
             if (matNum > 0) {
                 for (int i = 0; i < p->nfaces(); i++) {
-                     int matid = p->m_impl->get_elem<int>(ATTR_FACE, "matid", 0, i);
+                     int matid = p->get_elem<int>(ATTR_FACE, "matid", 0, i);
                      if (matid != -1) {
-                         p->m_impl->set_elem<int>(ATTR_FACE, "matid", i, matid + 1);
+                         p->set_elem<int>(ATTR_FACE, "matid", i, matid + 1);
                      }
                 }
                 for (int i = 0; i < matNum; i++) {
@@ -420,7 +420,7 @@ namespace zeno
         if (pivotType == "bboxCenter") {
             zeno::vec3f _min;
             zeno::vec3f _max;
-            std::tie(_min, _max) = geomBoundingBox(geom->m_impl.get());
+            std::tie(_min, _max) = geomBoundingBox(geom.get());
             _pivot = (_min + _max) / 2;
         }
         else if (pivotType == "custom") {
@@ -443,7 +443,7 @@ namespace zeno
         if (geom->has_attr(ATTR_POINT, "pos"))
         {
             //TODO: 前面可以判断是否符合写时复制，比如transform的tsr是否发生改变
-            geom->m_impl->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "pos", 0, [&](int idx, zeno::vec3f old_pos)->zeno::vec3f {
+            geom->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "pos", 0, [&](int idx, zeno::vec3f old_pos)->zeno::vec3f {
                 auto p = zeno::vec_to_other<glm::vec3>(old_pos);
                 p = mapplypos(matrix, p);
                 auto newpos = zeno::other_to_vec<3>(p);
@@ -457,7 +457,7 @@ namespace zeno
 
         if (geom->has_attr(ATTR_POINT, "nrm"))
         {
-            geom->m_impl->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "nrm", 0, [&](int idx, zeno::vec3f old_nrm)->zeno::vec3f {
+            geom->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "nrm", 0, [&](int idx, zeno::vec3f old_nrm)->zeno::vec3f {
                 auto n = zeno::vec_to_other<glm::vec3>(old_nrm);
                 n = mapplynrm(matrix, n);
                 auto newnrm = zeno::other_to_vec<3>(n);
@@ -765,8 +765,8 @@ namespace zeno
         zeno::vec3f direction
     )
     {
-        const auto& pos = input_object->m_impl->points_pos();
-        const int nface = input_object->m_impl->nfaces();
+        const auto& pos = input_object->points_pos();
+        const int nface = input_object->nfaces();
         std::vector<std::vector<int>> newFaces;
         std::vector<vec3f> new_pos = pos;
 
@@ -778,7 +778,7 @@ namespace zeno
         std::set<int> rem_points;
 
         for (int iFace = 0; iFace < nface; iFace++) {
-            std::vector<int> face_indice = input_object->m_impl->face_points(iFace);
+            std::vector<int> face_indice = input_object->face_points(iFace);
             std::vector<vec3f> face_pos(face_indice.size());
             for (int i = 0; i < face_indice.size(); i++)
             {
@@ -880,7 +880,7 @@ namespace zeno
 
         //去除被排除的部分
         for (auto iter = rem_points.rbegin(); iter != rem_points.rend(); iter++) {
-            spOutput->m_impl->remove_point(*iter);
+            spOutput->remove_point(*iter);
         }
         return spOutput;
     }
@@ -894,13 +894,13 @@ namespace zeno
         auto spOutput = create_GeometryObject(zeno::Topo_HalfEdge, input->is_base_triangle(), nPointCount, 0);
         if (seed == -1) seed = std::random_device{}();
 
-        const int nFaces = input->m_impl->nfaces();
-        const std::vector<vec3f>& pos = input->m_impl->points_pos();
+        const int nFaces = input->nfaces();
+        const std::vector<vec3f>& pos = input->points_pos();
         std::vector<float> cdf(nFaces);
         std::vector<vec3f> newPts(nPointCount);
 
         if (sampleRegion == "Volumn") {
-            const auto& bbox = geomBoundingBox(input->m_impl.get());
+            const auto& bbox = geomBoundingBox(input.get());
             //目前只考虑通过bbox直接采样，不考虑复杂的空间
             parallel_for((size_t)0, (size_t)nPointCount, [&](size_t i) {
                 wangsrng rng(i);
@@ -917,7 +917,7 @@ namespace zeno
             return spOutput;
         }
 
-        std::vector<std::vector<int>> faces = input->m_impl->face_indice();
+        std::vector<std::vector<int>> faces = input->face_indice();
         parallel_inclusive_scan_sum(faces.begin(), faces.end(), cdf.begin(), [&](std::vector<int> const& ind) {
             auto i1 = ind[0];
             auto i2 = ind[1];
@@ -1022,7 +1022,7 @@ namespace zeno
 
     ZENO_API std::unique_ptr<zeno::GeometryObject_Adapter> fuseGeometry(zeno::GeometryObject_Adapter* input, float threshold) {
 
-        std::vector<vec3f> points = input->m_impl->points_pos();
+        std::vector<vec3f> points = input->points_pos();
         _PointCloud cloud{ points };
         typedef nanoflann::KDTreeSingleIndexAdaptor<
             nanoflann::L2_Simple_Adaptor<float, _PointCloud>,
@@ -1069,7 +1069,7 @@ namespace zeno
             new_points.push_back(centroid);
         }
 
-        std::vector<std::vector<int>> faces = input->m_impl->face_indice();
+        std::vector<std::vector<int>> faces = input->face_indice();
         // 更新面数据
         std::vector<std::vector<int>> newFaces;
         for (const auto& face : faces) {
@@ -1096,7 +1096,7 @@ namespace zeno
             spOutput->add_face(_facePts);
         }
         spOutput->create_attr(ATTR_POINT, "pos", new_points);
-        copyAttribute(input->m_impl.get(), spOutput->m_impl.get(), ATTR_POINT, pointMapping, {"pos"});
+        copyAttribute(input.get(), spOutput.get(), ATTR_POINT, pointMapping, {"pos"});
         if (newFaces.size() == faces.size()) {
             //just a patch...
             spOutput->inheritAttributes(input, -1, -1, {}, 0, {});

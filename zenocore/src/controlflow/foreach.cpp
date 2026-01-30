@@ -33,9 +33,9 @@ namespace zeno {
             else if (itemethod == "By Container") {
                 //TODO: 目前只支持list，后续可支持dict
                 if (auto spList = dynamic_cast<ListObject*>(init_object)) {
-                    int n = spList->m_impl->size();
+                    int n = spList->size();
                     if (m_current_iteration >= 0 && m_current_iteration < n) {
-                        auto elemObj = spList->m_impl->get(m_current_iteration);
+                        auto elemObj = spList->get(m_current_iteration);
                         zany spClonedObj = elemObj->clone();
                         set_output("Output Object", std::move(spClonedObj));
                         return;
@@ -137,7 +137,7 @@ namespace zeno {
 
     void ForEachEnd::reset_forloop_settings() {
         if (m_collect_objs)
-            m_collect_objs->m_impl->clear();
+            m_collect_objs->clear();
         auto foreach_begin = get_foreach_begin();
         int start_value = zeno::reflect::any_cast<int>(ZImpl(get_defl_value("Start Value")));
         foreach_begin->update_iteration(start_value);
@@ -187,7 +187,7 @@ namespace zeno {
                 initobj = foreachbegin_impl->get_input_obj("Initial Object");
             }
             if (auto spList = dynamic_cast<ListObject*>(initobj)) {
-                int n = spList->m_impl->size();
+                int n = spList->size();
                 if (current_iter >= 0 && current_iter < n) {
                     return true;
                 }
@@ -251,9 +251,6 @@ namespace zeno {
                 if (auto spList = dynamic_cast<zeno::ListObject*>(iobj.get())) {
                     update_list_root_key(spList, ZImpl(get_uuid_path()));
                 }
-                else if (auto spDict = dynamic_cast<zeno::DictObject*>(iobj.get())) {
-                    update_dict_root_key(spDict, ZImpl(get_uuid_path()));
-                }
                 else {
                     iobj->update_key(stdString2zs(ZImpl(get_uuid_path())));
                 }
@@ -267,25 +264,18 @@ namespace zeno {
                 zany iobj = m_iterate_object->clone();
                 if (auto spList = dynamic_cast<zeno::ListObject*>(iobj.get())) {
                     update_list_root_key(spList, ZImpl(get_uuid_path()) + "\\iter" + std::to_string(current_iter));
-                    for (int i = 0; i < spList->m_impl->size(); i++) {
-                        auto cloneobj = spList->m_impl->get(i);
-                        m_collect_objs->m_impl->append(cloneobj->clone());
-                        m_collect_objs->m_impl->m_new_added.insert(zsString2Std(cloneobj->key()));
-                    }
-                }
-                else if (auto spDict = dynamic_cast<zeno::DictObject*>(iobj.get())) {
-                    update_dict_root_key(spDict, ZImpl(get_uuid_path()) + "\\iter" + std::to_string(current_iter));
-                    for (auto& [key, obj] : spDict->get()) {
-                        m_collect_objs->m_impl->append(obj->clone());
-                        m_collect_objs->m_impl->m_new_added.insert(zsString2Std(obj->key()));
+                    for (int i = 0; i < spList->size(); i++) {
+                        auto cloneobj = spList->get(i);
+                        m_collect_objs->append(cloneobj->clone());
+                        m_collect_objs->m_new_added.insert(zsString2Std(cloneobj->key()));
                     }
                 }
                 else {
                     std::string currIterKey = ZImpl(get_uuid_path()) + '\\' + zsString2Std(m_iterate_object->key())
                         + ":iter:" + std::to_string(current_iter);
                     iobj->update_key(stdString2zs(currIterKey));
-                    m_collect_objs->m_impl->append(iobj->clone());
-                    m_collect_objs->m_impl->m_new_added.insert(currIterKey);
+                    m_collect_objs->append(iobj->clone());
+                    m_collect_objs->m_new_added.insert(currIterKey);
                 }
 
                 //应该要在最后一步合并吧
@@ -294,7 +284,7 @@ namespace zeno {
                 }
                 else {
                     if (m_collect_objs->size() != 0) {
-                        if (auto geo = dynamic_cast<zeno::GeometryObject_Adapter*>(m_collect_objs->m_impl->get(0))) {
+                        if (auto geo = dynamic_cast<zeno::GeometryObject_Adapter*>(m_collect_objs->get(0))) {
                             auto mergedObj = zeno::mergeObjects(m_collect_objs.get());
                             set_output("Output Object", std::move(mergedObj));
                             return;
@@ -323,35 +313,30 @@ namespace zeno {
     void ForEachEnd::adjustCollectObjInfo() {
         std::function<void(IObject*)> flattenList = [&flattenList, this](IObject* obj) {
             if (auto _spList = dynamic_cast<zeno::ListObject*>(obj)) {
-                for (int i = 0; i < _spList->m_impl->size(); ++i) {
-                    flattenList(_spList->m_impl->get(i));
-                }
-            }
-            else if (auto _spDict = dynamic_cast<zeno::DictObject*>(obj)) {
-                for (auto& [key, obj] : _spDict->get()) {
-                    flattenList(obj);
+                for (int i = 0; i < _spList->size(); ++i) {
+                    flattenList(_spList->get(i));
                 }
             }
             else {
-                m_collect_objs->m_impl->m_new_removed.insert(zsString2Std(obj->key()));
+                m_collect_objs->m_new_removed.insert(zsString2Std(obj->key()));
             }
         };
 #if 0
         for (auto it = m_last_collect_objs.begin(); it != m_last_collect_objs.end();) {
             zeno::String _key = (*it)->key();
             std::string _skey = zsString2Std(_key);
-            if (m_collect_objs->m_impl->m_new_added.find(_skey) == m_collect_objs->m_impl->m_new_added.end()) {
+            if (m_collect_objs->m_new_added.find(_skey) == m_collect_objs->m_new_added.end()) {
                 flattenList(*it);
                 it = m_last_collect_objs.erase(it);
             }
             else {
-                m_collect_objs->m_impl->m_modify.insert(_skey);
-                m_collect_objs->m_impl->m_new_added.erase(_skey);
+                m_collect_objs->m_modify.insert(_skey);
+                m_collect_objs->m_new_added.erase(_skey);
                 ++it;
             }
         }
         m_last_collect_objs.clear();
-        m_last_collect_objs = m_collect_objs->m_impl->get();
+        m_last_collect_objs = m_collect_objs->get();
 #endif
 
         bool output_list = get_input2_bool("Output List");

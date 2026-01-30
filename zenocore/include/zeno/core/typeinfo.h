@@ -25,7 +25,6 @@ using namespace zeno::types;
 
 
 registerObjectTypeHash(IObject, IObject)
-registerObjectTypeHash(DictObject, Dict)
 registerObjectTypeHash(ListObject, List)
 registerObjectTypeHash(PrimitiveObject, Primitive)
 registerObjectTypeHash(CameraObject, Camera)

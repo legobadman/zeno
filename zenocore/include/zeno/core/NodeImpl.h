@@ -10,7 +10,6 @@
 #include <string>
 #include <set>
 #include <map>
-#include <zeno/types/DictObject.h>
 #include <zeno/types/ListObject.h>
 #include <zeno/extra/GlobalState.h>
 #include <zeno/formula/syntax_tree.h>
@@ -375,7 +374,6 @@ namespace zeno
         void doApply(CalcContext* pContext);
         void doApply_Parameter(std::string const& name, CalcContext* pContext); //引入数值输入参数，并不计算整个节点
         zeno::reflect::Any processPrimitive(PrimitiveParam* in_param);
-        std::unique_ptr<DictObject> processDict(ObjectParam* in_param, CalcContext* pContext);
         std::unique_ptr<ListObject> processList(ObjectParam* in_param, CalcContext* pContext);
         bool receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, ObjectParam* out_param);
         float resolve(const std::string& formulaOrKFrame, const ParamType type);

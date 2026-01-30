@@ -7,7 +7,6 @@ namespace zeno
 {
     struct NodeImpl;
     struct ListObject;
-    struct DictObject;
     struct PrimitiveObject;
     struct GeometryObject_Adapter;
     struct GlobalState;
@@ -30,7 +29,6 @@ namespace zeno
         std::unique_ptr<GeometryObject_Adapter> clone_input_Geometry(const zeno::String& param);
         GeometryObject_Adapter* get_input_Geometry(const zeno::String& param);
         ListObject* get_input_ListObject(const zeno::String& param);
-        DictObject* get_input_DictObject(const zeno::String& param);
         int get_input2_int(const zeno::String& param);
         float get_input2_float(const zeno::String& param);
         String get_input2_string(const zeno::String& param);

@@ -14,7 +14,6 @@
 #include <zeno/core/Graph.h>
 #include <zeno/extra/SubnetNode.h>
 #include <zeno/extra/GlobalComm.h>
-#include <zeno/types/DictObject.h>
 #include <zeno/types/ListObject.h>
 #include <zeno/utils/interfaceutil.h>
 #include "reflect/reflection.generated.hpp"
@@ -46,7 +45,6 @@ namespace zeno {
         else if (type == "prim" || type == "PrimitiveObject" || type == "primitive") { return gParamType_Primitive; }
         else if (type == "geometry") { return gParamType_Geometry; }
         else if (type == "list" || type == "ListObject") { return gParamType_List; }
-        else if (type == "dict" || type == "DictObject" || type == "dict") { return gParamType_Dict; }
         else if (type == "colorvec3f") { return gParamType_Vec3f; }
         else if (type == "color") { return gParamType_Heatmap; }
         else if (type == "curve") { return gParamType_Curve; }
@@ -255,15 +253,6 @@ namespace zeno {
 
     bool ListHasPrimObj(zeno::ListObject* list) {
         for (auto elem : list->get()) {
-            if (dynamic_cast<PrimitiveObject*>(elem)) {
-                return false;
-            }
-        }
-        return true;
-    }
-
-    bool DictHasPrimObj(zeno::DictObject* dict) {
-        for (auto& [key, elem] : dict->get()) {
             if (dynamic_cast<PrimitiveObject*>(elem)) {
                 return false;
             }
@@ -1906,27 +1895,25 @@ namespace zeno {
         listobj->update_key(stdString2zs(newkey));
 
         std::set<std::string> mmodify, mnew, mremove;
-        for (const auto& uuid : listobj->m_impl->m_modify) {
+        for (const auto& uuid : listobj->m_modify) {
             auto it = uuid.find_first_of('\\');
             mmodify.insert(it == std::string::npos ? uuid : key + uuid.substr(it));
         }
-        for (const auto& uuid : listobj->m_impl->m_new_added) {
+        for (const auto& uuid : listobj->m_new_added) {
             auto it = uuid.find_first_of('\\');
             mnew.insert(it == std::string::npos ? uuid : key + uuid.substr(it));
         }
-        for (auto& uuid : listobj->m_impl->m_new_removed) {
+        for (auto& uuid : listobj->m_new_removed) {
             auto it = uuid.find_first_of('\\');
             mremove.insert(it == std::string::npos ? uuid : key + uuid.substr(it));
         }
-        mmodify.swap(listobj->m_impl->m_modify);
-        mnew.swap(listobj->m_impl->m_new_added);
-        mremove.swap(listobj->m_impl->m_new_removed);
-        for (auto obj : listobj->m_impl->get()) {
+        mmodify.swap(listobj->m_modify);
+        mnew.swap(listobj->m_new_added);
+        mremove.swap(listobj->m_new_removed);
+        for (auto obj : listobj->get()) {
             if (auto plist = dynamic_cast<ListObject*>(obj)) {
                 update_list_root_key(plist, key);
-            } else if (auto pdict = dynamic_cast<DictObject*>(obj)) {
-                update_dict_root_key(pdict, key);
-            } else {
+            } selse {
                 std::string objkey = zsString2Std(obj->key());
                 auto it = objkey.find_first_of('\\');
                 newkey = it == std::string::npos ? objkey : (key + objkey.substr(it));
@@ -1942,27 +1929,22 @@ namespace zeno {
             pObject->update_key(newKey);
         }
         if (ListObject* pList = dynamic_cast<ListObject*>(pObject)) {
-            for (auto& elemObj : pList->m_impl->m_objects) {
+            for (auto& elemObj : pList->m_objects) {
                 add_prefix_key(elemObj.get(), prefix);
             }
             std::set<std::string> modify, removed, added;
-            for (auto id : pList->m_impl->m_new_added) {
+            for (auto id : pList->m_new_added) {
                 added.insert(prefix + '\\' + id);
             }
-            for (auto id : pList->m_impl->m_modify) {
+            for (auto id : pList->m_modify) {
                 modify.insert(prefix + '\\' + id);
             }
-            for (auto id : pList->m_impl->m_new_removed) {
+            for (auto id : pList->m_new_removed) {
                 removed.insert(prefix + '\\' + id);
             }
-            pList->m_impl->m_new_added = added;
-            pList->m_impl->m_modify = modify;
-            pList->m_impl->m_new_removed = removed;
-        }
-        else if (DictObject* pDict = dynamic_cast<DictObject*>(pObject)) {
-            for (auto& [key, spObject] : pDict->lut) {
-                add_prefix_key(spObject.get(), prefix);
-            }
+            pList->m_new_added = added;
+            pList->m_modify = modify;
+            pList->m_new_removed = removed;
         }
     }
 
@@ -1971,46 +1953,24 @@ namespace zeno {
             auto newList = create_ListObject();
             zeno::String newKey = stdString2zs(prefix) + '\\' + pList->key();
             newList->update_key(newKey);
-            for (const auto& uuid : pList->m_impl->m_modify) {
+            for (const auto& uuid : pList->m_modify) {
                 std::string _key = prefix + '\\' + uuid;
-                newList->m_impl->m_modify.insert(_key);
+                newList->m_modify.insert(_key);
             }
-            for (const auto& uuid : pList->m_impl->m_new_added) {
+            for (const auto& uuid : pList->m_new_added) {
                 std::string _key = prefix + '\\' + uuid;
-                newList->m_impl->m_new_added.insert(_key);
+                newList->m_new_added.insert(_key);
             }
-            for (const auto& uuid : pList->m_impl->m_new_removed) {
+            for (const auto& uuid : pList->m_new_removed) {
                 std::string _key = prefix + '\\' + uuid;
-                newList->m_impl->m_new_removed.insert(_key);
+                newList->m_new_removed.insert(_key);
             }
 
-            for (auto& spObject : pList->m_impl->m_objects) {
+            for (auto& spObject : pList->m_objects) {
                 auto newObj = clone_by_key(spObject.get(), prefix);
-                newList->m_impl->m_objects.push_back(std::move(newObj));
+                newList->m_objects.push_back(std::move(newObj));
             }
             return newList;
-        }
-        else if (DictObject* pDict = dynamic_cast<DictObject*>(pObject)) {
-            //不修改自身
-            auto newDict = create_DictObject();
-            //DictObject* newDict = create_DictObject();
-            newDict->update_key(stdString2zs(prefix) + '\\' + pDict->key());
-
-            for (const auto& uuid : pDict->m_modify) {
-                newDict->m_modify.insert(prefix + '\\' + uuid);
-            }
-            for (const auto& uuid : pDict->m_new_added) {
-                newDict->m_new_added.insert(prefix + '\\' + uuid);
-            }
-            for (const auto& uuid : pDict->m_new_removed) {
-                newDict->m_new_removed.insert(prefix + '\\' + uuid);
-            }
-            for (auto& [key, spObject] : pDict->lut) {
-                std::string new_key = prefix + '\\' + key;
-                auto newObj = clone_by_key(spObject.get(), prefix);
-                newDict->lut.insert(std::make_pair(key, std::move(newObj)));
-            }
-            return newDict;
         }
         else {
             auto spClonedObj = pObject->clone();
@@ -2067,43 +2027,6 @@ namespace zeno {
         std::ostreambuf_iterator<char> oit(ofs);
         std::copy(buffer.begin(), buffer.end(), oit);
         ofs.close();
-    }
-
-    void update_dict_root_key(DictObject* dictobj, const std::string& key)
-    {
-        std::string dictkey = zsString2Std(dictobj->key());
-        auto it = dictkey.find_first_of('\\');
-        std::string newkey = it == std::string::npos ? key : (key + dictkey.substr(it));
-        dictobj->update_key(stdString2zs(newkey));
-
-        std::set<std::string> mmodify, mnew, mremove;
-        for (const auto& uuid : dictobj->m_modify) {
-            auto it = uuid.find_first_of('\\');
-            mmodify.insert(it == std::string::npos ? uuid : key + uuid.substr(it));
-        }
-        for (const auto& uuid : dictobj->m_new_added) {
-            auto it = uuid.find_first_of('\\');
-            mnew.insert(it == std::string::npos ? uuid : key + uuid.substr(it));
-        }
-        for (auto& uuid : dictobj->m_new_removed) {
-            auto it = uuid.find_first_of('\\');
-            mremove.insert(it == std::string::npos ? uuid : key + uuid.substr(it));
-        }
-        mmodify.swap(dictobj->m_modify);
-        mnew.swap(dictobj->m_new_added);
-        mremove.swap(dictobj->m_new_removed);
-        for (auto& [str, obj] : dictobj->lut) {
-            if (auto plist = dynamic_cast<ListObject*>(obj.get())) {
-                update_list_root_key(plist, key);
-            } else if (auto pdict = dynamic_cast<DictObject*>(obj.get())) {
-                update_dict_root_key(pdict, key);
-            } else {
-                std::string objkey = zsString2Std(obj->key());
-                auto it = objkey.find_first_of('\\');
-                newkey = it == std::string::npos ? objkey : (key + objkey.substr(it));
-                obj->update_key(stdString2zs(newkey));
-            }
-        }
     }
 
     bool getParamInfo(const CustomUI& customui, std::vector<ParamPrimitive>& inputs, std::vector<ParamPrimitive>& outputs) {

@@ -3663,7 +3663,7 @@ namespace zeno
 #endif
         //
 
-        for (auto const& prim : list->m_impl->get<PrimitiveObject>()) {
+        for (auto const& prim : list->get<PrimitiveObject>()) {
 #if defined(_OPENMP)
             nTotalVerts += prim->verts.size();
             nTotalPts += prim->points.size();
@@ -3694,7 +3694,7 @@ namespace zeno
             outprim->add_attr<int>(tagAttr);
         }
 
-        for (auto const& prim : list->m_impl->get<PrimitiveObject>()) {
+        for (auto const& prim : list->get<PrimitiveObject>()) {
             //const auto base = outprim->size();
             prim->foreach_attr([&](auto const& key, auto const& arr) {
                 using T = std::decay_t<decltype(arr[0])>;

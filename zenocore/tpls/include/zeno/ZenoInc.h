@@ -10,7 +10,6 @@
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/ListObject.h>
 #include <zeno/types/FunctionObject.h>
-#include <zeno/types/DictObject.h>
 #include <zeno/types/GenericObject.h>
 #include <zeno/types/DummyObject.h>
 #include <zeno/core/Graph.h>

@@ -867,10 +867,10 @@ namespace zeno
                         const auto& val = vec[0];
 
                         if constexpr (std::is_same_v<E, glm::vec3> || std::is_same_v<E, zeno::vec3f> || std::is_same_v<E, zeno::vec3i>) {
-                            ptnum = spGeo->m_impl->add_point(zeno::vec3f(val[0], val[1], val[2]));
+                            ptnum = spGeo->add_point(zeno::vec3f(val[0], val[1], val[2]));
                         } else if constexpr (std::is_same_v<E, zfxintarr> || std::is_same_v<E, zfxfloatarr>) {
                             if (val.size() == 3) {
-                                ptnum = spGeo->m_impl->add_point(zeno::vec3f(val[0], val[1], val[2]));
+                                ptnum = spGeo->add_point(zeno::vec3f(val[0], val[1], val[2]));
                             } else {
                                 throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of add_point is not matched.");
                             }
@@ -892,7 +892,7 @@ namespace zeno
             else if (args.empty()) {
                 if (auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get())) {
                     //暂时只考虑一个点
-                    int ptnum = spGeo->m_impl->add_point(zeno::vec3f(0, 0, 0));
+                    int ptnum = spGeo->add_point(zeno::vec3f(0, 0, 0));
                     if (pContext->runover == ATTR_POINT) {
                         filter.resize(filter.size() + 1, 1);
                     }
@@ -916,7 +916,7 @@ namespace zeno
             if (auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get())) {
                 int faceid = get_zfxvec_front_elem<int>(args[0].value);
                 int pointid = get_zfxvec_front_elem<int>(args[1].value);
-                int vertid = spGeo->m_impl->add_vertex(faceid, pointid);
+                int vertid = spGeo->add_vertex(faceid, pointid);
                 if (pContext->runover == ATTR_VERTEX) {
                     filter.resize(filter.size() + 1, 1);
                 }
@@ -952,7 +952,7 @@ namespace zeno
 
                 /* 删除pointnum的点，如果成功，就返回原来下一个点的pointnum(应该就是pointnum)，失败就返回-1 */
                 if (auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get())) {
-                    bSucceed = spGeo->m_impl->remove_vertex(faceid, vertid);
+                    bSucceed = spGeo->remove_vertex(faceid, vertid);
                 }
 
                 if (bSucceed) {
@@ -998,7 +998,7 @@ namespace zeno
                 remPoints.pop_front();
                 bSucceed = false;
                 if (auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get())) {
-                    bSucceed = spGeo->m_impl->remove_point(currrem);
+                    bSucceed = spGeo->remove_point(currrem);
                 }
                 if (bSucceed) {
                     if (pContext->runover == ATTR_POINT) {
@@ -1077,7 +1077,7 @@ namespace zeno
 
                 /* 删除pointnum的点，如果成功，就返回原来下一个点的pointnum(应该就是pointnum)，失败就返回-1 */
                 if (auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get())) {
-                    bSucceed = spGeo->m_impl->remove_point(currrem);
+                    bSucceed = spGeo->remove_point(currrem);
                 }
                 if (bSucceed) {
                     if (pContext->runover == ATTR_POINT) {
@@ -1144,7 +1144,7 @@ namespace zeno
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             const auto& points = get_zfxvec_front_elem<std::vector<int>>(args[0].value);
-            int ret = spGeo->m_impl->add_face(points);
+            int ret = spGeo->add_face(points);
             if (pContext->runover == ATTR_FACE) {
                 filter.resize(filter.size() + 1, 1);
             }
@@ -1205,7 +1205,7 @@ namespace zeno
                     }, arg.value);
             }
 
-            bSucceed = spGeo->m_impl->remove_faces(remfaces, bIncludePoints);
+            bSucceed = spGeo->remove_faces(remfaces, bIncludePoints);
             if (bSucceed) {
                 if (pContext->runover == ATTR_FACE) {
                     //要调整filter，移除掉第currrem位置的元素
@@ -1244,7 +1244,7 @@ namespace zeno
             else if (group == "geometry") grp = ATTR_GEO;
 
             AttrVar defl = zfxVarToAttrVar(args[2]);
-            int ret = spGeo->m_impl->create_attr(grp, name, defl);
+            int ret = spGeo->create_attr(grp, name, defl);
             return initVarFromZvar(ret);
         }
 
@@ -1255,7 +1255,7 @@ namespace zeno
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
             AttrVar defl = zfxVarToAttrVar(args[1]);
-            int ret = spGeo->m_impl->create_face_attr(name, defl);
+            int ret = spGeo->create_face_attr(name, defl);
             return initVarFromZvar(ret);
         }
 
@@ -1266,7 +1266,7 @@ namespace zeno
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
             AttrVar defl = zfxVarToAttrVar(args[1]);
-            int ret = spGeo->m_impl->create_point_attr(name, defl);
+            int ret = spGeo->create_point_attr(name, defl);
             return initVarFromZvar(ret);
         }
 
@@ -1277,7 +1277,7 @@ namespace zeno
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
             AttrVar defl = zfxVarToAttrVar(args[1]);
-            int ret = spGeo->m_impl->create_vertex_attr(name, defl);
+            int ret = spGeo->create_vertex_attr(name, defl);
             return initVarFromZvar(ret);
         }
 
@@ -1288,7 +1288,7 @@ namespace zeno
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
             AttrVar defl = zfxVarToAttrVar(args[1]);
-            int ret = spGeo->m_impl->create_geometry_attr(name, defl);
+            int ret = spGeo->create_geometry_attr(name, defl);
             return initVarFromZvar(ret);
         }
 
@@ -1308,7 +1308,7 @@ namespace zeno
             else if (group == "geometry") grp = ATTR_GEO;
 
             AttrVar defl = zfxVarToAttrVar(args[2]);
-            int ret = spGeo->m_impl->set_attr(grp, name, defl);
+            int ret = spGeo->set_attr(grp, name, defl);
             return initVarFromZvar(ret);
         }
 
@@ -1319,7 +1319,7 @@ namespace zeno
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
             AttrVar defl = zfxVarToAttrVar(args[1]);
-            int ret = spGeo->m_impl->set_vertex_attr(name, defl);
+            int ret = spGeo->set_vertex_attr(name, defl);
             return initVarFromZvar(ret);
         }
 
@@ -1328,7 +1328,7 @@ namespace zeno
                 auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
                 std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
                 AttrVar defl = zfxVarToAttrVar(args[1]);
-                int ret = spGeo->m_impl->set_point_attr(name, defl);
+                int ret = spGeo->set_point_attr(name, defl);
                 return initVarFromZvar(ret);
             } else if (args.size() == 3) {
                 auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
@@ -1348,7 +1348,7 @@ namespace zeno
                                 std::is_same_v<T, vec4f> ||
                                 std::is_same_v<T, std::string>
                                 ) {
-                                spGeo->m_impl->set_elem(ATTR_POINT, name, argdix, argdefl);
+                                spGeo->set_elem(ATTR_POINT, name, argdix, argdefl);
                             }
                         }, defl);
                     } else if constexpr (std::is_same_v<T, std::vector<int>>) {
@@ -1364,7 +1364,7 @@ namespace zeno
                                     std::is_same_v<T, vec4f> ||
                                     std::is_same_v<T, std::string>
                                     ) {
-                                    spGeo->m_impl->set_elem(ATTR_POINT, name, i, argdefl);
+                                    spGeo->set_elem(ATTR_POINT, name, i, argdefl);
                                 }
                             }, defl);
                         }
@@ -1373,7 +1373,7 @@ namespace zeno
                     }
                 }, idx);
 
-                //int ret = spGeo->m_impl->set_attr_elem(ATTR_POINT, name, 0, args[2]);
+                //int ret = spGeo->set_attr_elem(ATTR_POINT, name, 0, args[2]);
                 return initVarFromZvar(0);
             } else {
                 throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of set_point_attr is not matched.");
@@ -1388,7 +1388,7 @@ namespace zeno
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
             AttrVar defl = zfxVarToAttrVar(args[1]);
-            int ret = spGeo->m_impl->set_face_attr(name, defl);
+            int ret = spGeo->set_face_attr(name, defl);
             return initVarFromZvar(ret);
         }
 
@@ -1399,7 +1399,7 @@ namespace zeno
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
             AttrVar defl = zfxVarToAttrVar(args[1]);
-            int ret = spGeo->m_impl->set_geometry_attr(name, defl);
+            int ret = spGeo->set_geometry_attr(name, defl);
             return initVarFromZvar(ret);
         }
 
@@ -1417,7 +1417,7 @@ namespace zeno
             else if (group == "face") grp = ATTR_FACE;
             else if (group == "geometry") grp = ATTR_GEO;
 
-            bool hasattr = spGeo->m_impl->has_attr(grp, name);
+            bool hasattr = spGeo->has_attr(grp, name);
             return initVarFromZvar(hasattr);
         }
 
@@ -1427,7 +1427,7 @@ namespace zeno
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
-            bool hasattr = spGeo->m_impl->has_vertex_attr(name);
+            bool hasattr = spGeo->has_vertex_attr(name);
             return initVarFromZvar(hasattr);
         }
 
@@ -1437,7 +1437,7 @@ namespace zeno
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
-            bool hasattr = spGeo->m_impl->has_point_attr(name);
+            bool hasattr = spGeo->has_point_attr(name);
             return initVarFromZvar(hasattr);
         }
 
@@ -1447,7 +1447,7 @@ namespace zeno
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
-            bool hasattr = spGeo->m_impl->has_face_attr(name);
+            bool hasattr = spGeo->has_face_attr(name);
             return initVarFromZvar(hasattr);
         }
 
@@ -1457,7 +1457,7 @@ namespace zeno
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
-            bool hasattr = spGeo->m_impl->has_geometry_attr(name);
+            bool hasattr = spGeo->has_geometry_attr(name);
             return initVarFromZvar(hasattr);
         }
 
@@ -1475,7 +1475,7 @@ namespace zeno
             else if (group == "face") grp = ATTR_FACE;
             else if (group == "geometry") grp = ATTR_GEO;
 
-            int ret = spGeo->m_impl->delete_attr(grp, name);
+            int ret = spGeo->delete_attr(grp, name);
             return initVarFromZvar(ret);
         }
 
@@ -1485,7 +1485,7 @@ namespace zeno
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
-            int ret = spGeo->m_impl->delete_vertex_attr(name);
+            int ret = spGeo->delete_vertex_attr(name);
             return initVarFromZvar(ret);
         }
 
@@ -1495,7 +1495,7 @@ namespace zeno
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
-            int ret = spGeo->m_impl->delete_point_attr(name);
+            int ret = spGeo->delete_point_attr(name);
             return initVarFromZvar(ret);
         }
 
@@ -1505,7 +1505,7 @@ namespace zeno
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
-            int ret = spGeo->m_impl->delete_face_attr(name);
+            int ret = spGeo->delete_face_attr(name);
             return initVarFromZvar(ret);
         }
 
@@ -1515,7 +1515,7 @@ namespace zeno
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
-            int ret = spGeo->m_impl->delete_geometry_attr(name);
+            int ret = spGeo->delete_geometry_attr(name);
             return initVarFromZvar(ret);
         }
 
@@ -1527,7 +1527,7 @@ namespace zeno
                 if (std::regex_search(ref, FunctionManager::refPattern)) {
                     auto spObj = getObjFromRef(ref, pContext);
                     if (auto spGeo = dynamic_cast<GeometryObject_Adapter*>(spObj)) {
-                        return initVarFromZvar(spGeo->m_impl->npoints());
+                        return initVarFromZvar(spGeo->npoints());
                     } else {
                         throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "npoints function refers an empty output object.");
                     }
@@ -1536,7 +1536,7 @@ namespace zeno
                 }
             } else {
                 auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
-                int ret = spGeo->m_impl->npoints();
+                int ret = spGeo->npoints();
                 return initVarFromZvar(ret);
             }
         }
@@ -1546,7 +1546,7 @@ namespace zeno
                 throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of nfaces is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
-            int ret = spGeo->m_impl->nfaces();
+            int ret = spGeo->nfaces();
             return initVarFromZvar(ret);
         }
 
@@ -1555,7 +1555,7 @@ namespace zeno
                 throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the number of arguments of nvertices is not matched.");
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
-            int ret = spGeo->m_impl->nvertices();
+            int ret = spGeo->nvertices();
             return initVarFromZvar(ret);
         }
 
@@ -1566,7 +1566,7 @@ namespace zeno
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int pointid = get_zfxvec_front_elem<int>(args[0].value);
-            std::vector<int> ret = spGeo->m_impl->point_faces(pointid);
+            std::vector<int> ret = spGeo->point_faces(pointid);
             return initVarFromZvar(ret);
         }
 
@@ -1576,7 +1576,7 @@ namespace zeno
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int pointid = get_zfxvec_front_elem<int>(args[0].value);
-            int ret = spGeo->m_impl->point_vertex(pointid);
+            int ret = spGeo->point_vertex(pointid);
             return initVarFromZvar(ret);
         }
 
@@ -1586,7 +1586,7 @@ namespace zeno
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int pointid = get_zfxvec_front_elem<int>(args[0].value);
-            std::vector<int> ret = spGeo->m_impl->point_vertices(pointid);
+            std::vector<int> ret = spGeo->point_vertices(pointid);
             return initVarFromZvar(ret);
         }
 
@@ -1598,7 +1598,7 @@ namespace zeno
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int faceid = get_zfxvec_front_elem<int>(args[0].value);
             int vertid = get_zfxvec_front_elem<int>(args[1].value);
-            int ret = spGeo->m_impl->face_point(faceid, vertid);
+            int ret = spGeo->face_point(faceid, vertid);
             return initVarFromZvar(ret);
         }
 
@@ -1608,7 +1608,7 @@ namespace zeno
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             return call_unary_numeric_func<std::vector<int>>([&](int faceid)->std::vector<int> {
-                return spGeo->m_impl->face_points(faceid);
+                return spGeo->face_points(faceid);
                 }, args[0], filter);
         }
 
@@ -1619,7 +1619,7 @@ namespace zeno
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int faceid = get_zfxvec_front_elem<int>(args[0].value);
             int vertid = get_zfxvec_front_elem<int>(args[1].value);
-            int ret = spGeo->m_impl->face_vertex(faceid, vertid);
+            int ret = spGeo->face_vertex(faceid, vertid);
             return initVarFromZvar(ret);
         }
 
@@ -1629,7 +1629,7 @@ namespace zeno
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int faceid = get_zfxvec_front_elem<int>(args[0].value);
-            int ret = spGeo->m_impl->face_vertex_count(faceid);
+            int ret = spGeo->face_vertex_count(faceid);
             return initVarFromZvar(ret);
         }
 
@@ -1639,7 +1639,7 @@ namespace zeno
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int face_id = get_zfxvec_front_elem<int>(args[0].value);
-            std::vector<int> ret = spGeo->m_impl->face_vertices(face_id);
+            std::vector<int> ret = spGeo->face_vertices(face_id);
             return initVarFromZvar(ret);
         }
 
@@ -1651,7 +1651,7 @@ namespace zeno
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int faceid = get_zfxvec_front_elem<int>(args[0].value);
             int vertid = get_zfxvec_front_elem<int>(args[1].value);
-            int ret = spGeo->m_impl->vertex_index(faceid, vertid);
+            int ret = spGeo->vertex_index(faceid, vertid);
             return initVarFromZvar(ret);
         }
 
@@ -1661,7 +1661,7 @@ namespace zeno
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int linear_vertex_id = get_zfxvec_front_elem<int>(args[0].value);
-            int ret = spGeo->m_impl->vertex_next(linear_vertex_id);
+            int ret = spGeo->vertex_next(linear_vertex_id);
             return initVarFromZvar(ret);
         }
 
@@ -1671,7 +1671,7 @@ namespace zeno
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int linear_vertex_id = get_zfxvec_front_elem<int>(args[0].value);
-            int ret = spGeo->m_impl->vertex_prev(linear_vertex_id);
+            int ret = spGeo->vertex_prev(linear_vertex_id);
             return initVarFromZvar(ret);
         }
 
@@ -1681,7 +1681,7 @@ namespace zeno
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int linear_vertex_id = get_zfxvec_front_elem<int>(args[0].value);
-            int ret = spGeo->m_impl->vertex_point(linear_vertex_id);
+            int ret = spGeo->vertex_point(linear_vertex_id);
             return initVarFromZvar(ret);
         }
 
@@ -1691,7 +1691,7 @@ namespace zeno
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int linear_vertex_id = get_zfxvec_front_elem<int>(args[0].value);
-            int ret = spGeo->m_impl->vertex_face(linear_vertex_id);
+            int ret = spGeo->vertex_face(linear_vertex_id);
             return initVarFromZvar(ret);
         }
 
@@ -1701,7 +1701,7 @@ namespace zeno
 
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             int linear_vertex_id = get_zfxvec_front_elem<int>(args[0].value);
-            int ret = spGeo->m_impl->vertex_face_index(linear_vertex_id);
+            int ret = spGeo->vertex_face_index(linear_vertex_id);
             return initVarFromZvar(ret);
         }
 
@@ -1721,7 +1721,7 @@ namespace zeno
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             assert(spGeo);
             ZfxVariable var;
-            var.value = getAttrs(spGeo->m_impl.get(), grp, name);
+            var.value = getAttrs(spGeo.get(), grp, name);
             return var;
         }
 
@@ -1733,7 +1733,7 @@ namespace zeno
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             assert(spGeo);
             ZfxVariable var;
-            var.value = getAttrs(spGeo->m_impl.get(), ATTR_VERTEX, name);
+            var.value = getAttrs(spGeo.get(), ATTR_VERTEX, name);
             return var;
         }
 
@@ -1746,7 +1746,7 @@ namespace zeno
             assert(spGeo);
 
             ZfxVariable ret;
-            const auto& attrs = getAttrs(spGeo->m_impl.get(), ATTR_POINT, name);
+            const auto& attrs = getAttrs(spGeo.get(), ATTR_POINT, name);
             if (args.size() == 2) {
                 //取索引
                 //TODO: 调getElem，就不用整个attrs都拿出来，因为可能在循环下调用的
@@ -1792,7 +1792,7 @@ namespace zeno
                 throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"unimpl case in `get_face_attr`");
             }
             else {
-                var.value = getAttrs(spGeo->m_impl.get(), ATTR_FACE, name);
+                var.value = getAttrs(spGeo.get(), ATTR_FACE, name);
             }
             return var;
         }
@@ -1804,7 +1804,7 @@ namespace zeno
             std::string name = get_zfxvec_front_elem<std::string>(args[0].value);
             auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
             ZfxVariable var;
-            var.value = getAttrs(spGeo->m_impl.get(), ATTR_GEO, name);
+            var.value = getAttrs(spGeo.get(), ATTR_GEO, name);
             return var;
         }
 
@@ -2091,7 +2091,7 @@ namespace zeno
             if (funcname == "get_bboxmin") {
                 auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
                 assert(spGeo);
-                std::pair<vec3f, vec3f> ret = geomBoundingBox(spGeo->m_impl.get());
+                std::pair<vec3f, vec3f> ret = geomBoundingBox(spGeo.get());
                 glm::vec3 bmin(ret.first[0], ret.first[1], ret.first[2]);
                 return initVarFromZvar(bmin);
             }
@@ -2107,7 +2107,7 @@ namespace zeno
                 }
 
                 if (auto spGeo = dynamic_cast<GeometryObject_Adapter*>(targetObj)) {
-                    std::pair<vec3f, vec3f> ret = geomBoundingBox(spGeo->m_impl.get());
+                    std::pair<vec3f, vec3f> ret = geomBoundingBox(spGeo.get());
                     glm::vec3 bmin(ret.first[0], ret.first[1], ret.first[2]);
                     return initVarFromZvar(bmin);
                 }
@@ -2118,7 +2118,7 @@ namespace zeno
             if (funcname == "get_bboxmax") {
                 auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
                 assert(spGeo);
-                std::pair<vec3f, vec3f> ret = geomBoundingBox(spGeo->m_impl.get());
+                std::pair<vec3f, vec3f> ret = geomBoundingBox(spGeo.get());
                 glm::vec3 bmax(ret.second[0], ret.second[1], ret.second[2]);
                 return initVarFromZvar(bmax);
             }
@@ -2136,7 +2136,7 @@ namespace zeno
                     //this geometry.
                     auto spGeo = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
                     assert(spGeo);
-                    points = spGeo->m_impl->points_pos();
+                    points = spGeo->points_pos();
                 }
                 else {
                     //todo: other geometry

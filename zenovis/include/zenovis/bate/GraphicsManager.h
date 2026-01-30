@@ -32,13 +32,6 @@ struct GraphicsManager {
             }
             return true;
         }
-        else if (auto spDict = dynamic_cast<zeno::DictObject*>(obj)) {
-            for (auto& [key, spObject] : spDict->get()) {
-                bool ret = add_object(spObject);
-                assert(ret);
-            }
-            return true;
-        }
 
         const std::string& key = zsString2Std(obj->key());
         if (!obj || key.empty())
@@ -83,13 +76,6 @@ struct GraphicsManager {
             }
             return true;
         }
-        if (auto spDict = dynamic_cast<zeno::DictObject*>(spObj)) {
-            for (auto& [key, spObject] : spDict->get()) {
-                bool ret = remove_object(spObject);
-                assert(ret);
-            }
-            return true;
-        }
         const std::string& key = zsString2Std(spObj->key());
         auto& graphics_ = graphics.m_curr.m_curr;
         auto iter = graphics_.find(key);
@@ -115,44 +101,12 @@ struct GraphicsManager {
                 if (auto _spList = dynamic_cast<zeno::ListObject*>(spObject)) {
                     process_listobj(_spList, bProcessAll);
                 }
-                else if (auto _spDict = dynamic_cast<zeno::DictObject*>(spObject)) {
-                    process_dictobj(_spDict);
-                }
                 else {
                     add_object(spObject);
                 }
             }
         }
         for (auto& key : spList->m_impl->m_new_removed) {
-            graphics_.erase(key);
-        }
-        return true;
-    }
-
-    bool process_dictobj(zeno::DictObject* spDict) {
-        for (auto& [key, spObject] : spDict->get()) {
-            assert(spObject);
-            std::string const& skey = zsString2Std(spObject->key());
-            if (spDict->m_new_added.find(skey) != spDict->m_new_added.end() ||
-                spDict->m_modify.find(skey) != spDict->m_modify.end()) {
-                bool ret = false;
-                if (auto _spList = dynamic_cast<zeno::ListObject*>(spObject)) {
-                    ret = process_listobj(_spList);
-                }
-                else if (auto _spDict = dynamic_cast<zeno::DictObject*>(spObject)) {
-                    ret = process_dictobj(_spDict);
-                }
-                else {
-                    ret = add_object(spObject);
-                }
-                assert(ret);
-            }
-        }
-        for (auto& key : spDict->m_new_removed) {
-            auto& graphics_ = graphics.m_curr.m_curr;
-            auto iter = graphics_.find(key);
-            if (iter == graphics_.end())
-                continue;
             graphics_.erase(key);
         }
         return true;
@@ -233,22 +187,6 @@ struct GraphicsManager {
                         }
 
                         process_listobj(_spList);
-                    }
-                    else if (auto _spDict = dynamic_cast<zeno::DictObject*>(spObject)) {
-                        {//可能有和dictobj同名但不是dict类型的对象存在，需先清除
-                            auto& graphics_ = graphics.m_curr.m_curr;
-                            std::string dictkey = zsString2Std(_spDict->key());
-                            const auto& it = dictkey.find('\\');
-                            const std::string& key = it == std::string::npos ? dictkey : dictkey.substr(0, it);
-                            for (auto it = graphics_.begin(); it != graphics_.end(); ) {
-                                if (it->first == key)
-                                    it = graphics_.erase(it);
-                                else
-                                    ++it;
-                            }
-                        }
-
-                        process_dictobj(_spDict);
                     }
                     else {
                         //可能有和obj同名但是list类型或dict类型的对象存在，需先清除

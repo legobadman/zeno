@@ -26,7 +26,6 @@ registerObjectTypeUIInfo(BCurve, BCurve, "#FF00FF")
 registerObjectTypeUIInfo(Heatmap, Heatmap, "#FF00FF")
 
 registerObjectTypeUIInfo(IObject, IObject, "#708090")
-registerObjectTypeUIInfo(DictObject, Dict, "#A28EB9")
 registerObjectTypeUIInfo(ListObject, List, "#802A2A")
 registerObjectTypeUIInfo(PrimitiveObject, Primitive, "#AAAAAA")
 registerObjectTypeUIInfo(GeometryObject, Geometry, "#BF633C")
