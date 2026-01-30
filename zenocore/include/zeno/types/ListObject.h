@@ -60,10 +60,6 @@ public:
     bool has_change_info() const;
     bool empty() const;
 
-    std::vector<int> get2_int() const;
-    std::vector<float> get2_float() const;
-    std::vector<std::string> get2_string() const;
-
     template <class T = IObject>
     std::vector<T*> get() const {
         std::vector<T*> res;
@@ -78,15 +74,6 @@ public:
         std::vector<T*> res;
         for (auto const& val : m_objects) {
             res.push_back(safe_dynamic_cast<T>(val.get()));
-        }
-        return res;
-    }
-
-    template <class T>
-    std::vector<T> get2() const {
-        std::vector<T> res;
-        for (auto const& val : m_objects) {
-            res.push_back(objectToLiterial<T>(val));
         }
         return res;
     }

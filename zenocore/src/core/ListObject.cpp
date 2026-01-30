@@ -51,18 +51,6 @@ namespace zeno
         return m_objects.empty();
     }
 
-    std::vector<int> ListObject::get2_int() const {
-        return get2<int>();
-    }
-
-    std::vector<float> ListObject::get2_float() const {
-        return get2<float>();
-    }
-
-    std::vector<std::string> ListObject::get2_string() const {
-        return get2<std::string>();
-    }
-
     void ListObject::update_key(const char* key) {
         if (!key || strlen(key) == 0) return;
         for (int i = 0; i < m_objects.size(); i++) {

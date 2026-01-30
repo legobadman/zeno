@@ -3,6 +3,7 @@
 
 #include <cstddef>
 #include <zvec.h>
+#include <zenum.h>
 
 namespace zeno {
 
