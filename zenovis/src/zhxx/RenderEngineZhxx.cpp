@@ -14,9 +14,9 @@ struct GraphicsManager {
 
     struct ZxxGraphic : zeno::disable_copy {
         std::string key;
-        std::shared_ptr<zeno::IObject> objholder;
+        std::shared_ptr<zeno::IObject2> objholder;
 
-        explicit ZxxGraphic(std::string key_, std::shared_ptr<zeno::IObject> const &obj)
+        explicit ZxxGraphic(std::string key_, std::shared_ptr<zeno::IObject2> const &obj)
             : key(std::move(key_)), objholder(obj) {
             zenvis::zxx_load_object(key, obj.get());
         }

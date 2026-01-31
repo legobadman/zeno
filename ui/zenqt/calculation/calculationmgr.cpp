@@ -255,7 +255,7 @@ void CalculationMgr::run_and_clean() {
 #if 0 //TODO: 完善记录机制
     auto& objman = sess.objsMan;
     for (auto it = objman->m_rec_geoms.begin(); it != objman->m_rec_geoms.end(); it++) {
-        auto pGeom = (zeno::GeometryObject_Adapter*)(*it);
+        auto pGeom = (zeno::GeometryObject*)(*it);
         int j;
         j = 0;
     }

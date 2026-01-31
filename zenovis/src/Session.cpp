@@ -23,9 +23,9 @@ namespace zenovis {
 struct Session::Impl {
     std::unique_ptr<Scene> scene = std::make_unique<Scene>();
 
-    //std::unordered_map<std::shared_ptr<zeno::IObject>, std::unique_ptr<IGraphic>>
+    //std::unordered_map<std::shared_ptr<zeno::IObject2>, std::unique_ptr<IGraphic>>
         //new_graphics;
-    //std::unordered_map<std::shared_ptr<zeno::IObject>, std::unique_ptr<IGraphic>>
+    //std::unordered_map<std::shared_ptr<zeno::IObject2>, std::unique_ptr<IGraphic>>
         //graphics;
 
     //std::vector<std::function<void()>> render_tasks;

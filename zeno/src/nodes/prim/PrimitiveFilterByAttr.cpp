@@ -1,7 +1,7 @@
 #include "zeno/types/StringObject.h"
 #include <zeno/zeno.h>
 #include <zeno/types/PrimitiveObject.h>
-#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/GeometryObject.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/utils/vec.h>
 #include <cstring>

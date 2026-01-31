@@ -42,7 +42,7 @@ static void triggerView(const QString& nodepath, bool bView) {
     if (spNode) {
         auto pObject = spNode->get_default_output_object();
         if (pObject) {
-            update.spObject = pObject->clone();
+            update.spObject = zeno::zany2(pObject->clone());
         }
     }
     if (update.reason == zeno::Update_Remove)
@@ -490,9 +490,8 @@ QmlParamType::Value GraphModel::getParamType(const QString& node, bool bInput, c
     case zeno::types::gParamType_Float:     return QmlParamType::Float;
     case zeno::types::gParamType_Vec3f:     return QmlParamType::Vec3f;
     case gParamType_List:       return QmlParamType::List;
-    case gParamType_Dict:       return QmlParamType::Dict;
     case gParamType_Geometry:   return QmlParamType::Geometry;
-    case gParamType_IObject:    return QmlParamType::IObject;
+    case gParamType_IObject2:    return QmlParamType::IObject;
     default:
         return QmlParamType::Unknown;
     }

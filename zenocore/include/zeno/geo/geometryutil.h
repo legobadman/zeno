@@ -29,7 +29,7 @@ namespace zeno
         Keep_Above
     };
 
-    std::pair<vec3f, vec3f> GetGeomBoundingBox(GeometryObject* geo);
+    ZENO_API std::pair<vec3f, vec3f> GetGeomBoundingBox(GeometryObject* geo);
     ZENO_API bool geomBoundingBox(IGeometryObject* geo, Vec3f& bbmin, Vec3f& bbmax);
     ZENO_API IGeometryObject* mergeObjects(
         IListObject* spList,

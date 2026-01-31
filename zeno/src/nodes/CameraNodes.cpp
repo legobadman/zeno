@@ -4,7 +4,7 @@
 #include <zeno/types/UserData.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/utils/eulerangle.h>
-#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/GeometryObject.h>
 #include <glm/vec4.hpp>
 #include <glm/mat4x4.hpp>
 #include <glm/glm.hpp>

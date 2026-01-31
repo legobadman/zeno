@@ -294,13 +294,10 @@ zeno::reflect::Any UiHelper::qvarToAnyByType(const QVariant& var, const zeno::Pa
     case gParamType_List: {
 
     }
-    case gParamType_Dict: {
-
-    }
     case gParamType_Heatmap: {
 
     }
-    case gParamType_IObject: {
+    case gParamType_IObject2: {
 
     }
     case gParamType_Primitive: {
@@ -1062,9 +1059,8 @@ QString UiHelper::getTypeDesc(zeno::ParamType type)
     case zeno::types::gParamType_Vec3f:     return "vec3f";
     case zeno::types::gParamType_Vec4f:     return "vec4f";
     case gParamType_List:      return "list";
-    case gParamType_Dict:      return "dict";
     case gParamType_Heatmap:       return "color";
-    case gParamType_IObject: return "object";
+    case gParamType_IObject2: return "object";
     case gParamType_Primitive:      return "prim";
     case Param_Null:
     default:
@@ -1742,7 +1738,6 @@ QVariant UiHelper::parseStringByType(const QString& defaultValue, zeno::ParamTyp
         break;
     }
     case gParamType_Primitive:
-    case gParamType_Dict:
     case gParamType_List:
             //Param_Color,  //need this?
         break;

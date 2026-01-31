@@ -1,6 +1,7 @@
 #include <zenovis/Scene.h>
 #include <zenovis/Camera.h>
 #include <zeno/core/Session.h>
+#include <zeno/utils/helper.h>
 #include <zeno/extra/GlobalComm.h>
 #include <zeno/funcs/ObjectGeometryInfo.h>
 #include <zeno/utils/envconfig.h>
@@ -91,7 +92,7 @@ void* Scene::getOptixImg(int& w, int& h)
 #endif
 }
 
-void Scene::convertListObjs(zeno::IObject* objToBeConvert, std::map<std::string, zeno::IObject*>& allListItems)
+void Scene::convertListObjs(zeno::IObject2* objToBeConvert, std::map<std::string, zeno::IObject2*>& allListItems)
 {
     if (auto lst = dynamic_cast<zeno::ListObject*>(objToBeConvert)) {
         for (int i = 0; i < lst->size(); i++)
@@ -101,12 +102,12 @@ void Scene::convertListObjs(zeno::IObject* objToBeConvert, std::map<std::string,
     if (!objToBeConvert)
         return;
     else {
-        std::string objkey = zsString2Std(objToBeConvert->key());
+        std::string objkey = zeno::get_object_key(objToBeConvert);
         allListItems.insert(std::make_pair(objkey, objToBeConvert));
     }
 }
 
-void zenovis::Scene::convertListObjs(zeno::IObject* objToBeConvert, std::vector<std::pair<std::string, zeno::IObject*>>& allListItems)
+void zenovis::Scene::convertListObjs(zeno::IObject2* objToBeConvert, std::vector<std::pair<std::string, zeno::IObject2*>>& allListItems)
 {
     if (auto lst = dynamic_cast<zeno::ListObject*>(objToBeConvert)) {
         for (int i = 0; i < lst->size(); i++)
@@ -116,7 +117,7 @@ void zenovis::Scene::convertListObjs(zeno::IObject* objToBeConvert, std::vector<
     if (!objToBeConvert)
         return;
     else {
-        std::string objkey = zsString2Std(objToBeConvert->key());
+        std::string objkey = zeno::get_object_key(objToBeConvert);
         allListItems.emplace_back(objkey, objToBeConvert);
     }
 }

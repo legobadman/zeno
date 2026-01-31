@@ -488,7 +488,7 @@ void DisplayWidget::onRenderRequest(QString nodeuuidpath) {
     if (spNode) {
         auto pObject = spNode->get_default_output_object();
         if (pObject) {
-            info.spObject = pObject->clone();
+            info.spObject.reset(pObject->clone());
         }
     }
     infos.emplace_back(std::move(info));

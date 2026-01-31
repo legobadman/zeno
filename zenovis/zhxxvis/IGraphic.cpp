@@ -56,7 +56,7 @@ struct GraLight : IGraphic {
 }
 
 
-static std::unique_ptr<IGraphic> makeGraphic(zeno::IObject *obj) {
+static std::unique_ptr<IGraphic> makeGraphic(zeno::IObject2 *obj) {
     std::string path = "/unused/param";  // never mind
     if (auto p = dynamic_cast<zeno::PrimitiveObject *>(obj)) {
         return makeGraphicPrimitive(p, path);
@@ -108,7 +108,7 @@ void clear_graphics() {
     graphics[name] = std::move(ig);
 }*/
 
-void zxx_load_object(std::string const &key, zeno::IObject *obj) {
+void zxx_load_object(std::string const &key, zeno::IObject2 *obj) {
     auto p = makeGraphic(obj);
     if (p) current_frame_data()->graphics[key] = std::move(p);
 }

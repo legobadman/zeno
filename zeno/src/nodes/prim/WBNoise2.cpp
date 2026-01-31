@@ -1,7 +1,7 @@
 #include <zeno/core/NodeImpl.h>
 #include <zeno/core/IObject.h>
 #include <zeno/types/PrimitiveObject.h>
-#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/GeometryObject.h>
 #include <zeno/types/GeometryObject.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>

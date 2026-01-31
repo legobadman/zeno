@@ -3,6 +3,7 @@
 #include <zeno/types/UserData.h>
 #include <zeno/core/Session.h>
 #include <zeno/geo/geometryutil.h>
+#include <zeno/utils/helper.h>
 #include "util/uihelper.h"
 #include "zenomainwindow.h"
 #include "viewport/viewportwidget.h"
@@ -64,13 +65,13 @@ namespace zeno {
         auto user_data = dynamic_cast<UserData*>(object->userData());
         zeno::vec3f bmin, bmax;
         if (user_data->has("_bboxMin") && user_data->has("_bboxMax")) {
-            bmin = user_data->getLiterial<zeno::vec3f>("_bboxMin");
-            bmax = user_data->getLiterial<zeno::vec3f>("_bboxMax");
+            bmin = user_data->get2<zeno::vec3f>("_bboxMin");
+            bmax = user_data->get2<zeno::vec3f>("_bboxMax");
         }
         else {
-            std::tie(bmin, bmax) = zeno::geomBoundingBox(object->m_impl.get());
-            user_data->setLiterial("_bboxMin", bmin);
-            user_data->setLiterial("_bboxMax", bmax);
+            std::tie(bmin, bmax) = zeno::GetGeomBoundingBox(object);
+            user_data->set2("_bboxMin", bmin);
+            user_data->set2("_bboxMax", bmax);
         }
         auto m = zeno::vec_to_other<glm::vec3>(bmax);
         auto n = zeno::vec_to_other<glm::vec3>(bmin);
@@ -282,7 +283,7 @@ namespace zeno {
         auto spObj = m_objects[obj_name];
         auto user_data = dynamic_cast<UserData*>(spObj->userData());
 
-        auto translate_vec3 = user_data->getLiterial<zeno::vec3f>("_translate");
+        auto translate_vec3 = user_data->get2<zeno::vec3f>("_translate");
         QVector<double> translate = {
             translate_vec3[0],
             translate_vec3[1],
@@ -292,7 +293,7 @@ namespace zeno {
             "translation",
             translate);
 
-        auto scaling_vec3 = user_data->getLiterial<zeno::vec3f>("_scale");
+        auto scaling_vec3 = user_data->get2<zeno::vec3f>("_scale");
         QVector<double> scaling = {
             scaling_vec3[0],
             scaling_vec3[1],
@@ -302,7 +303,7 @@ namespace zeno {
             "scaling",
             scaling);
 
-        auto rotate_vec4 = user_data->getLiterial<zeno::vec4f>("_rotate");
+        auto rotate_vec4 = user_data->get2<zeno::vec4f>("_rotate");
         QVector<double> rotate = {
             rotate_vec4[0],
             rotate_vec4[1],
@@ -329,7 +330,7 @@ namespace zeno {
         auto spObj = m_objects[obj_name];
         ZASSERT_EXIT(spObj);
         auto user_data = dynamic_cast<UserData*>(spObj->userData());
-        auto translate_data = user_data->getLiterial<zeno::vec3f>("_translate");
+        auto translate_data = user_data->get2<zeno::vec3f>("_translate");
         QVector<double> translate = {
             translate_data[0],
             translate_data[1],
@@ -339,7 +340,7 @@ namespace zeno {
             "translation",
             translate);
         // update scaling
-        auto scaling_data = user_data->getLiterial<zeno::vec3f>("_scale");
+        auto scaling_data = user_data->get2<zeno::vec3f>("_scale");
         QVector<double> scaling = {
             scaling_data[0],
             scaling_data[1],
@@ -349,7 +350,7 @@ namespace zeno {
             "scaling",
             scaling);
         // update rotate
-        auto rotate_data = user_data->getLiterial<zeno::vec4f>("_rotate");
+        auto rotate_data = user_data->get2<zeno::vec4f>("_rotate");
         QVector<double> rotate = {
             rotate_data[0],
             rotate_data[1],
@@ -372,25 +373,25 @@ namespace zeno {
                 auto user_data = dynamic_cast<UserData*>(spObj->userData());
 
                 if (m_operation == TRANSLATE) {
-                    auto trans = user_data->getLiterial<zeno::vec3f>("_translate");
+                    auto trans = user_data->get2<zeno::vec3f>("_translate");
                     trans += other_to_vec<3>(m_trans);
-                    user_data->setLiterial("_translate", trans);
+                    user_data->set2("_translate", trans);
                 }
 
                 if (m_operation == ROTATE) {
-                    auto rotate = user_data->getLiterial<zeno::vec4f>("_rotate");
+                    auto rotate = user_data->get2<zeno::vec4f>("_rotate");
                     auto pre_q = glm::quat(rotate[3], rotate[0], rotate[1], rotate[2]);
                     auto dif_q = glm::quat(m_rotate[3], m_rotate[0], m_rotate[1], m_rotate[2]);
                     auto res_q = glm::toQuat(glm::toMat4(dif_q) * glm::toMat4(pre_q));
                     rotate = vec4f(res_q.x, res_q.y, res_q.z, res_q.w);
-                    user_data->setLiterial("_rotate", rotate);
+                    user_data->set2("_rotate", rotate);
                 }
 
                 if (m_operation == SCALE) {
-                    auto scale = user_data->getLiterial<zeno::vec3f>("_scale");
+                    auto scale = user_data->get2<zeno::vec3f>("_scale");
                     for (int i = 0; i < 3; i++)
                         scale[i] *= m_scale[i];
-                    user_data->setLiterial("_scale", scale);
+                    user_data->set2("_scale", scale);
                 }
             }
 #if 0
@@ -650,12 +651,12 @@ namespace zeno {
         if (name.empty())
             return;
 
-        GeometryObject_Adapter* transformObj = nullptr;
+        GeometryObject* transformObj = nullptr;
 
         //auto& objsMan = zeno::getSession().objsMan;
         //m_objnodeinfo = objsMan->getObjectAndViewNode(name);
 
-        auto transObj = dynamic_cast<GeometryObject_Adapter*>(m_objnodeinfo.transformingObj);
+        auto transObj = dynamic_cast<GeometryObject*>(m_objnodeinfo.transformingObj);
         if (!transObj) {
             //todo: maybe the transforming obj is a memeber of list object.
             return;
@@ -670,10 +671,10 @@ namespace zeno {
 
         std::string trans_name;
 
-        GeometryObject_Adapter* object = nullptr;
+        GeometryObject* object = nullptr;
         if (nodecls != "Transform") {
-            object = dynamic_cast<GeometryObject_Adapter*>(transObj);
-            trans_name = zsString2Std(object->key());
+            object = dynamic_cast<GeometryObject*>(transObj);
+            trans_name = zeno::get_object_key(object);
         }
         else {
             object = transObj;
@@ -683,22 +684,22 @@ namespace zeno {
         auto user_data = dynamic_cast<UserData*>(object->userData());
         if (!user_data->has("_pivot")) {
             zeno::vec3f bmin, bmax;
-            std::tie(bmin, bmax) = zeno::geomBoundingBox(object->m_impl.get());
+            std::tie(bmin, bmax) = zeno::GetGeomBoundingBox(object);
             zeno::vec3f translate = { 0, 0, 0 };
-            user_data->setLiterial("_translate", translate);
+            user_data->set2("_translate", translate);
             zeno::vec4f rotate = { 0, 0, 0, 1 };
-            user_data->setLiterial("_rotate", rotate);
+            user_data->set2("_rotate", rotate);
             zeno::vec3f scale = { 1, 1, 1 };
-            user_data->setLiterial("_scale", scale);
+            user_data->set2("_scale", scale);
             auto bboxCenter = (bmin + bmax) / 2;
             user_data->set2("_pivot", bboxCenter);
             if (object->has_attr(ATTR_POINT, "pos") && !object->has_attr(ATTR_POINT, "_origin_pos")) {
-                const auto& pos = object->m_impl->get_attrs<zeno::vec3f>(ATTR_POINT, "pos");
+                const auto& pos = object->get_attrs<zeno::vec3f>(ATTR_POINT, "pos");
                 object->create_attr(ATTR_POINT, "_origin_pos", pos);
             }
             if (object->has_attr(ATTR_POINT, "nrm") && !object->has_attr(ATTR_POINT, "_origin_nrm")) {
                 
-                const auto& nrm = object->m_impl->get_attrs<zeno::vec3f>(ATTR_POINT, "nrm");
+                const auto& nrm = object->get_attrs<zeno::vec3f>(ATTR_POINT, "nrm");
                 object->create_attr(ATTR_POINT, "_origin_nrm", nrm);
             }
         }
@@ -722,9 +723,9 @@ namespace zeno {
             user_data->del("_bboxMax");
 
             // get transform info
-            auto translate = zeno::vec_to_other<glm::vec3>(user_data->getLiterial<zeno::vec3f>("_translate"));
-            auto rotate = zeno::vec_to_other<glm::vec4>(user_data->getLiterial<zeno::vec4f>("_rotate"));
-            auto scale = zeno::vec_to_other<glm::vec3>(user_data->getLiterial<zeno::vec3f>("_scale"));
+            auto translate = zeno::vec_to_other<glm::vec3>(user_data->get2<zeno::vec3f>("_translate"));
+            auto rotate = zeno::vec_to_other<glm::vec4>(user_data->get2<zeno::vec4f>("_rotate"));
+            auto scale = zeno::vec_to_other<glm::vec3>(user_data->get2<zeno::vec3f>("_scale"));
             auto pre_quaternion = glm::quat(rotate[3], rotate[0], rotate[1], rotate[2]);
             auto pre_rotate_matrix = glm::toMat4(pre_quaternion);
 
@@ -737,9 +738,9 @@ namespace zeno {
 
             if (spObj->has_attr(ATTR_POINT, "_origin_pos")) {
                 // transform pos
-                const auto& pos = spObj->m_impl->get_attrs<zeno::vec3f>(ATTR_POINT, "pos");
-                const auto& opos = spObj->m_impl->get_attrs<zeno::vec3f>(ATTR_POINT, "_origin_pos");
-                spObj->m_impl->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "pos", 0, [&](int idx, zeno::vec3f old_pos)->zeno::vec3f {
+                const auto& pos = spObj->get_attrs<zeno::vec3f>(ATTR_POINT, "pos");
+                const auto& opos = spObj->get_attrs<zeno::vec3f>(ATTR_POINT, "_origin_pos");
+                spObj->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "pos", 0, [&](int idx, zeno::vec3f old_pos)->zeno::vec3f {
                     auto p = zeno::vec_to_other<glm::vec3>(old_pos);
                     auto t = transform_matrix * glm::vec4(p, 1.0f);
                     auto pt = glm::vec3(t) / t.w;
@@ -749,9 +750,9 @@ namespace zeno {
             }
             if (spObj->has_attr(ATTR_POINT, "_origin_nrm")) {
                 // transform nrm
-                const auto& nrm = spObj->m_impl->get_attrs<zeno::vec3f>(ATTR_POINT, "nrm");
-                const auto& onrm = spObj->m_impl->get_attrs<zeno::vec3f>(ATTR_POINT, "_origin_nrm");
-                spObj->m_impl->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "nrm", 0, [&](int idx, zeno::vec3f old_nrm)->zeno::vec3f {
+                const auto& nrm = spObj->get_attrs<zeno::vec3f>(ATTR_POINT, "nrm");
+                const auto& onrm = spObj->get_attrs<zeno::vec3f>(ATTR_POINT, "_origin_nrm");
+                spObj->foreach_attr_update<zeno::vec3f>(ATTR_POINT, "nrm", 0, [&](int idx, zeno::vec3f old_nrm)->zeno::vec3f {
                     auto n = zeno::vec_to_other<glm::vec3>(old_nrm);
                     glm::mat3 norm_matrix(transform_matrix);
                     norm_matrix = glm::transpose(glm::inverse(norm_matrix));
@@ -780,7 +781,7 @@ namespace zeno {
             transNode = spGraph->createNode("PrimitiveTransform");
             ZASSERT_EXIT(transNode);
 
-            spObj->update_key(stdString2zs(transNode->get_uuid()));
+            spObj->update_key(transNode->get_uuid().c_str());
 
             //把连线关系,view等设置更改。
             EdgeInfo edge;
@@ -801,21 +802,21 @@ namespace zeno {
 
             //把obj设置到新的transform节点的output端。
             std::string outputparam = transNode->get_viewobject_output_param();
-            transNode->set_output(outputparam, spObj->clone());
+            transNode->set_output(outputparam, zany2(spObj->clone()));
         }
 
         {
             //1.直接填写transform的信息
             auto user_data = dynamic_cast<UserData*>(spObj->userData());
-            auto trans = user_data->getLiterial<zeno::vec3f>("_translate");
+            auto trans = user_data->get2<zeno::vec3f>("_translate");
             trans += other_to_vec<3>(m_trans);
 
-            auto scale = user_data->getLiterial<zeno::vec3f>("_scale");
+            auto scale = user_data->get2<zeno::vec3f>("_scale");
             for (int i = 0; i < 3; i++)
                 scale[i] *= m_scale[i];
-            user_data->setLiterial("_scale", scale);
+            user_data->set2("_scale", scale);
 
-            auto rotate = user_data->getLiterial<zeno::vec4f>("_rotate");
+            auto rotate = user_data->get2<zeno::vec4f>("_rotate");
             auto pre_q = glm::quat(rotate[3], rotate[0], rotate[1], rotate[2]);
             auto dif_q = glm::quat(m_rotate[3], m_rotate[0], m_rotate[1], m_rotate[2]);
             auto res_q = glm::toQuat(glm::toMat4(dif_q) * glm::toMat4(pre_q));

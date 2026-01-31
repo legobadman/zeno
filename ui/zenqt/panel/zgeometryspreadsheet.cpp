@@ -1,6 +1,6 @@
 ﻿#include "zgeometryspreadsheet.h"
 #include "../layout/docktabcontent.h"
-#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/GeometryObject.h>
 #include <zeno/types/MaterialObject.h>
 #include "model/geometrymodel.h"
 #include "zenoapplication.h"
@@ -436,7 +436,7 @@ BaseAttributeView::BaseAttributeView(QWidget* parent)
     setLayout(pMainLayout);
 }
 
-void BaseAttributeView::setGeometryObject(GraphModel* subgraph, QModelIndex nodeidx, zeno::GeometryObject_Adapter* object, QString nodeName)
+void BaseAttributeView::setGeometryObject(GraphModel* subgraph, QModelIndex nodeidx, zeno::GeometryObject* object, QString nodeName)
 {
     m_geometry = object;
     if (nodeidx.isValid()) {
@@ -537,7 +537,7 @@ void BaseAttributeView::onNodeDataChanged(const QModelIndex& topLeft, const QMod
                 clearModel();
             }
             else if (currStatus == zeno::Node_RunSucceed) {
-                auto pObject = m_nodeIdx.data(QtRole::ROLE_OUTPUT_OBJS).value<zeno::IObject*>();
+                auto pObject = m_nodeIdx.data(QtRole::ROLE_OUTPUT_OBJS).value<zeno::IObject2*>();
 
                 if (!pObject) {
                     m_stackViews->setCurrentIndex(m_stackViews->count() - 1);
@@ -547,7 +547,7 @@ void BaseAttributeView::onNodeDataChanged(const QModelIndex& topLeft, const QMod
                         m_stackViews->setCurrentIndex(m_stackViews->count() - 2);
                         return;
                     }
-                    if (auto spGeom = dynamic_cast<zeno::GeometryObject_Adapter*>(pObject)) {
+                    if (auto spGeom = dynamic_cast<zeno::GeometryObject*>(pObject)) {
                         setGeometryObject(QVariantPtr<GraphModel>::asPtr(m_nodeIdx.data(QtRole::ROLE_GRAPH)), m_nodeIdx, spGeom, m_nodeIdx.data(QtRole::ROLE_NODE_NAME).toString());
                     }
                 }
@@ -1201,7 +1201,8 @@ void ListObjView::addListObjectItems(QStandardItem* parentItem, zeno::ListObject
 
     for (size_t i = 0; i < listObj->size(); ++i) {
         if (auto obj = listObj->get(i)) {
-            QString keyName = obj->m_key.empty() ? QString("Item %1").arg(i) : QString::fromStdString(zsString2Std(obj->m_key));
+            auto objkey = zeno::get_object_key(obj);
+            QString keyName = objkey.empty() ? QString("Item %1").arg(i) : QString::fromStdString(objkey);
 
             // 构建当前项的索引路径
             QVector<int> currentIndices = parentIndices;
@@ -1279,7 +1280,7 @@ void ListObjView::onItemClicked(const QModelIndex& index)
     if (indices.isEmpty()) return;
 
     // 根据索引路径从根对象中重新查找对象
-    zeno::IObject* currentObj = m_currentListObject;
+    zeno::IObject2* currentObj = m_currentListObject;
     for (int i = 0; i < indices.size() && currentObj; i++) {
         int idx = indices[i];
 
@@ -1306,8 +1307,8 @@ void ListObjView::onItemClicked(const QModelIndex& index)
                 showObjectDialog(this, m_materialObjView, "Material Object Details");
             }
         } else {
-            zeno::GeometryObject_Adapter* curObj;
-            if (auto geoObj = dynamic_cast<zeno::GeometryObject_Adapter*>(currentObj)) {
+            zeno::GeometryObject* curObj;
+            if (auto geoObj = dynamic_cast<zeno::GeometryObject*>(currentObj)) {
                 curObj = geoObj;
                 if (m_baseAttributeView) {
                     m_baseAttributeView->setGeometryObject(m_model, QModelIndex(), curObj, item->text());
@@ -1321,7 +1322,10 @@ void ListObjView::onItemClicked(const QModelIndex& index)
                 }
             }
             else {
-                auto qsJson = QString::fromStdString(currentObj->serialize_json());
+                char buf[1024];
+                currentObj->serialize_json(buf, sizeof(buf));
+                std::string serdata(buf);
+                auto qsJson = QString::fromStdString(serdata);
                 if (qsJson.isEmpty()) {
                     
                 }
@@ -1422,7 +1426,7 @@ ZGeometrySpreadsheet::~ZGeometrySpreadsheet() {
 void ZGeometrySpreadsheet::setGeometry(
         GraphModel* subgraph,
         QModelIndex nodeidx,
-        zeno::zany pObject
+        zeno::zany2 pObject
 ) {
     if (!pObject) {
         //unavailable page
@@ -1431,14 +1435,14 @@ void ZGeometrySpreadsheet::setGeometry(
     }
 
     m_clone_obj = std::move(pObject);
-    zeno::IObject* ptrObject = m_clone_obj.get();
+    zeno::IObject2* ptrObject = m_clone_obj.get();
     const QString& nodename = nodeidx.data(QtRole::ROLE_NODE_NAME).toString();
     bool isImage = m_clone_obj->userData()->has("isImage");
 
     for (int i = 0; i < m_views->count(); i++) {
         QWidget* wid = m_views->widget(i);
         if (auto baseAttrView = qobject_cast<BaseAttributeView*>(wid)) {
-            auto geoObj = dynamic_cast<zeno::GeometryObject_Adapter*>(m_clone_obj.get());
+            auto geoObj = dynamic_cast<zeno::GeometryObject*>(m_clone_obj.get());
             baseAttrView->setGeometryObject(subgraph, nodeidx, geoObj, nodename);
         }
         else if (auto sceneObjView = qobject_cast<SceneObjView*>(wid)) {
@@ -1454,7 +1458,7 @@ void ZGeometrySpreadsheet::setGeometry(
             materialObjView->setMaterialObject(subgraph, nodeidx, materialObj, nodename);
         }
         else if (auto imagepanel = qobject_cast<ZenoImagePanel*>(wid)) {
-            auto geoObj = dynamic_cast<zeno::GeometryObject_Adapter*>(m_clone_obj.get());
+            auto geoObj = dynamic_cast<zeno::GeometryObject*>(m_clone_obj.get());
             if (isImage) {
                 imagepanel->setObject(m_clone_obj.get());
             }
@@ -1469,29 +1473,15 @@ void ZGeometrySpreadsheet::setGeometry(
         return;
     }
 
-    if (auto geoObj = dynamic_cast<zeno::GeometryObject_Adapter*>(m_clone_obj.get())) {
+    if (auto geoObj = dynamic_cast<zeno::GeometryObject*>(m_clone_obj.get())) {
         m_views->setCurrentIndex(2);
     }
     else if (auto sceneObj = dynamic_cast<zeno::SceneObject*>(m_clone_obj.get())) {
         m_views->setCurrentIndex(3);
     }
     else if (auto listObj = dynamic_cast<zeno::ListObject*>(m_clone_obj.get())) {
-        //还要检查一下是不是数值
         if (listObj->size() > 0) {
-            if (dynamic_cast<zeno::NumericObject*>(listObj->get(0))) {
-                QString outputInfos;
-                for (auto pNumObj : listObj->get()) {
-                    const auto& jsonStr = pNumObj->serialize_json();
-                    auto qsJson = QString::fromStdString(jsonStr);
-                    outputInfos += QString::fromStdString(zsString2Std(pNumObj->key())) + ":" + qsJson;
-                    outputInfos += "\n";
-                }
-                if (auto textedit = qobject_cast<QPlainTextEdit*>(m_views->widget(6))) {
-                    textedit->setPlainText(outputInfos);
-                    m_views->setCurrentIndex(6);
-                    return;
-                }
-            }
+
         }
         m_views->setCurrentIndex(4);
     }
@@ -1499,8 +1489,10 @@ void ZGeometrySpreadsheet::setGeometry(
         m_views->setCurrentIndex(5);
     }
     else {
-        const auto& jsonStr = m_clone_obj->serialize_json();
-        auto qsJson = QString::fromStdString(jsonStr);
+        char buf[1024];
+        m_clone_obj->serialize_json(buf, sizeof(buf));
+        std::string serdata(buf);
+        auto qsJson = QString::fromStdString(serdata);
         if (qsJson.isEmpty()) {
             m_views->setCurrentIndex(1);
         }

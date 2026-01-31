@@ -1,7 +1,7 @@
 #include <zeno/zeno.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/PrimitiveObject.h>
-#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/GeometryObject.h>
 #include <zeno/utils/logger.h>
 #include <cstdio>
 #include <thread>

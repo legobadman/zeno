@@ -4,7 +4,6 @@
 #if 1
 
 #include "zenoimagepanel.h"
-#include "PrimAttrTableModel.h"
 #include "viewport/zenovis.h"
 #include "zeno/utils/format.h"
 #include <zeno/types/UserData.h>
@@ -27,7 +26,7 @@ void ZenoImagePanel::clear() {
     pStatusBar->clear();
 }
 
-void ZenoImagePanel::setObject(zeno::IObject* pObject) {
+void ZenoImagePanel::setObject(zeno::IObject2* pObject) {
     if (!pObject)
         return;
     auto ud = pObject->userData();
@@ -35,8 +34,8 @@ void ZenoImagePanel::setObject(zeno::IObject* pObject) {
         return;
     }
     bool enableGamma = pGamma->checkState() == Qt::Checked;
-    if (auto geom = dynamic_cast<zeno::GeometryObject_Adapter*>(pObject)) {
-        auto obj = geom->toPrimitiveObject();
+    if (auto geom = dynamic_cast<zeno::GeometryObject*>(pObject)) {
+        auto obj = geom->toPrimitive();
         int width = ud->get_int("w");
         int height = ud->get_int("h");
         if (image_view) {
@@ -106,8 +105,8 @@ void ZenoImagePanel::reload(const zeno::render_reload_info& info) {
                 if (ud->get_int("isImage", 0) == 0 || ud->get_bool("isImage", false) == false) {
                     return;
                 }
-                if (auto geom = dynamic_cast<zeno::GeometryObject_Adapter*>(spObject)) {
-                    auto obj = geom->toPrimitiveObject();
+                if (auto geom = dynamic_cast<zeno::GeometryObject*>(spObject)) {
+                    auto obj = geom->toPrimitive();
                     int width = ud->get_int("w");
                     int height = ud->get_int("h");
                     if (image_view) {
@@ -259,8 +258,8 @@ ZenoImagePanel::ZenoImagePanel(QWidget *parent) : QWidget(parent) {
             return;
         }
         found = true;
-        if (auto geom = dynamic_cast<zeno::GeometryObject_Adapter*>(spObject)) {
-            auto obj = geom->toPrimitiveObject();
+        if (auto geom = dynamic_cast<zeno::GeometryObject*>(spObject)) {
+            auto obj = geom->toPrimitive();
             int width = ud->get_int("w");
             int height = ud->get_int("h");
             int w = int(zeno::clamp(x, 0, width - 1));

@@ -37,7 +37,7 @@ struct CameraData {
     std::optional<vec3f> pivot = std::nullopt;
 };
 
-struct CameraObject : ICameraObject, CameraData {
+struct ZENO_API CameraObject : ICameraObject, CameraData {
 
 public: //IObject2
     IObject2* clone() const override {

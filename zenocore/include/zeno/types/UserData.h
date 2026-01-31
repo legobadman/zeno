@@ -5,11 +5,12 @@
 #include <any>
 #include <reflect/container/any>
 #include <iobject2.h>
+#include <zeno/utils/api.h>
 #include <zvec.h>
 
 namespace zeno {
 
-struct UserData : IUserData2 {
+struct ZENO_API UserData : IUserData2 {
     std::map<std::string, zeno::reflect::Any> m_data;
 
     UserData() = default;

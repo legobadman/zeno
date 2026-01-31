@@ -18,6 +18,7 @@
 #include <zeno/utils/variantswitch.h>
 #include <zeno/utils/wangsrng.h>
 #include <zeno/utils/tuple_hash.h>
+#include <zeno/utils/Exception.h>
 #include <stdexcept>
 #include <filesystem>
 #include <random>
@@ -200,6 +201,207 @@ namespace zeno
             }
         }
         prim->quads.clear();
+    }
+
+    void primCalcNormal(zeno::PrimitiveObject* prim, float flip, zeno::String nrmAttr)
+    {
+        const std::string sNrmAttr = zsString2Std(nrmAttr);
+        auto& nrm = prim->add_attr<zeno::vec3f>(sNrmAttr);
+        auto& pos = prim->verts.values;
+
+#if defined(_OPENMP) && defined(__GNUG__)
+#pragma omp parallel for
+#endif
+        for (size_t i = 0; i < nrm.size(); i++) {
+            nrm[i] = zeno::vec3f(0);
+        }
+
+#if defined(_OPENMP) && defined(__GNUG__)
+        auto atomicCas = [](int* dest, int expected, int desired) {
+            __atomic_compare_exchange_n(const_cast<int volatile*>(dest), &expected,
+                desired, false, __ATOMIC_ACQ_REL,
+                __ATOMIC_RELAXED);
+            return expected;
+            };
+        auto atomicFloatAdd = [&](float* dst, float val) {
+            static_assert(sizeof(float) == sizeof(int), "sizeof float != sizeof int");
+            int oldVal = reinterpret_bits<int>(*dst);
+            int newVal = reinterpret_bits<int>(reinterpret_bits<float>(oldVal) + val), readVal{};
+            while ((readVal = atomicCas((int*)dst, oldVal, newVal)) != oldVal) {
+                oldVal = readVal;
+                newVal = reinterpret_bits<int>(reinterpret_bits<float>(readVal) + val);
+            }
+            return reinterpret_bits<float>(oldVal);
+            };
+#endif
+
+#if defined(_OPENMP) && defined(__GNUG__)
+#pragma omp parallel for
+#endif
+        for (size_t i = 0; i < prim->tris.size(); i++) {
+            auto ind = prim->tris[i];
+            auto n = cross(pos[ind[1]] - pos[ind[0]], pos[ind[2]] - pos[ind[0]]);
+
+#if defined(_OPENMP) && defined(__GNUG__)
+            for (int j = 0; j != 3; ++j) {
+                auto& n_i = nrm[ind[j]];
+                for (int d = 0; d != 3; ++d)
+                    atomicFloatAdd(&n_i[d], n[d]);
+            }
+#else
+            nrm[ind[0]] += n;
+            nrm[ind[1]] += n;
+            nrm[ind[2]] += n;
+#endif
+        }
+
+#if defined(_OPENMP) && defined(__GNUG__)
+#pragma omp parallel for
+#endif
+        for (size_t i = 0; i < prim->quads.size(); i++) {
+            auto ind = prim->quads[i];
+            std::array<vec3f, 4> ns = {
+                cross(pos[ind[1]] - pos[ind[0]], pos[ind[2]] - pos[ind[0]]),
+                cross(pos[ind[2]] - pos[ind[1]], pos[ind[3]] - pos[ind[1]]),
+                cross(pos[ind[3]] - pos[ind[2]], pos[ind[0]] - pos[ind[2]]),
+                cross(pos[ind[0]] - pos[ind[3]], pos[ind[1]] - pos[ind[3]]),
+            };
+
+#if defined(_OPENMP) && defined(__GNUG__)
+            for (int j = 0; j != 4; ++j) {
+                auto& n_i = nrm[ind[j]];
+                for (int d = 0; d != 3; ++d)
+                    atomicFloatAdd(&n_i[d], ns[j][d]);
+            }
+#else
+            for (int j = 0; j != 4; ++j) {
+                nrm[ind[j]] += ns[j];
+            }
+#endif
+        }
+
+#if defined(_OPENMP) && defined(__GNUG__)
+#pragma omp parallel for
+#endif
+        for (size_t i = 0; i < prim->polys.size(); i++) {
+            auto [beg, len] = prim->polys[i];
+
+            auto ind = [loops = prim->loops.data(), beg = beg, len = len](int t) -> int {
+                if (t >= len) t -= len;
+                return loops[beg + t];
+                };
+            for (int j = 0; j < len; ++j) {
+                auto nsj = cross(pos[ind(j + 1)] - pos[ind(j)], pos[ind(j + 2)] - pos[ind(j)]);
+#if defined(_OPENMP) && defined(__GNUG__)
+                auto& n_i = nrm[ind(j)];
+                for (int d = 0; d != 3; ++d)
+                    atomicFloatAdd(&n_i[d], nsj[d]);
+#else
+                nrm[ind(j)] += nsj;
+#endif
+            }
+        }
+
+#if defined(_OPENMP) && defined(__GNUG__)
+#pragma omp parallel for
+#endif
+        for (size_t i = 0; i < nrm.size(); i++) {
+            nrm[i] = flip * normalizeSafe(nrm[i]);
+        }
+    }
+
+    std::unique_ptr<PrimitiveObject> readImageFile(zeno::String const& path) {
+        int w, h, n;
+        stbi_set_flip_vertically_on_load(true);
+        std::string native_path = std::filesystem::u8path(zsString2Std(path)).string();
+        float* data = stbi_loadf(native_path.c_str(), &w, &h, &n, 0);
+        if (!data) {
+            throw zeno::Exception("cannot open image file at path: " + native_path);
+        }
+        scope_exit delData = [=] { stbi_image_free(data); };
+        auto img = std::make_unique<PrimitiveObject>();
+        img->verts.resize(w * h);
+        if (n == 3) {
+            std::memcpy(img->verts.data(), data, w * h * n * sizeof(float));
+        }
+        else if (n == 4) {
+            auto& alpha = img->verts.add_attr<float>("alpha");
+            for (int i = 0; i < w * h; i++) {
+                img->verts[i] = { data[i * 4 + 0], data[i * 4 + 1], data[i * 4 + 2] };
+                alpha[i] = data[i * 4 + 3];
+            }
+        }
+        else if (n == 2) {
+            for (int i = 0; i < w * h; i++) {
+                img->verts[i] = { data[i * 2 + 0], data[i * 2 + 1], 0 };
+            }
+        }
+        else if (n == 1) {
+            for (int i = 0; i < w * h; i++) {
+                img->verts[i] = vec3f(data[i]);
+            }
+        }
+        else {
+            throw zeno::Exception("too much number of channels");
+        }
+        img->userData()->set_int("isImage", 1);
+        img->userData()->set_int("w", w);
+        img->userData()->set_int("h", h);
+        return img;
+    }
+
+    std::unique_ptr<PrimitiveObject> readPFMFile(zeno::String const& path) {
+        int nx = 0;
+        int ny = 0;
+        std::ifstream file(zsString2Std(path), std::ios::binary);
+        std::string format;
+        file >> format;
+        file >> nx >> ny;
+        float scale = 0;
+        file >> scale;
+        file.ignore(1);
+
+        auto img = std::make_unique<PrimitiveObject>();
+        int size = nx * ny;
+        img->resize(size);
+        file.read(reinterpret_cast<char*>(img->verts.data()), sizeof(vec3f) * nx * ny);
+
+        img->userData()->set_int("isImage", 1);
+        img->userData()->set_int("w", nx);
+        img->userData()->set_int("h", ny);
+        return img;
+    }
+
+    void write_pfm(const std::string& path, int w, int h, vec3f* rgb) {
+        std::string header = zeno::format("PF\n{} {}\n-1.0\n", w, h);
+        std::vector<char> data(header.size() + w * h * sizeof(vec3f));
+        memcpy(data.data(), header.data(), header.size());
+        memcpy(data.data() + header.size(), rgb, w * h * sizeof(vec3f));
+        file_put_binary(data, path);
+    }
+
+    void write_pfm(const zeno::String& path, PrimitiveObject* image) {
+        auto ud = image->userData();
+        int w = ud->get_int("w");
+        int h = ud->get_int("h");
+        write_pfm(zsString2Std(path), w, h, image->verts->data());
+    }
+
+    void write_jpg(const zeno::String& path, PrimitiveObject* image) {
+        int w = image->userData()->get_int("w");
+        int h = image->userData()->get_int("h");
+        std::vector<uint8_t> colors;
+        for (auto i = 0; i < w * h; i++) {
+            auto rgb = zeno::pow(image->verts[i], 1.0f / 2.2f);
+            int r = zeno::clamp(int(rgb[0] * 255.99), 0, 255);
+            int g = zeno::clamp(int(rgb[1] * 255.99), 0, 255);
+            int b = zeno::clamp(int(rgb[2] * 255.99), 0, 255);
+            colors.push_back(r);
+            colors.push_back(g);
+            colors.push_back(b);
+        }
+        stbi_flip_vertically_on_write(1);
+        stbi_write_jpg(path.c_str(), w, h, 3, colors.data(), 100);
     }
 
     ZENO_API std::pair<vec3f, vec3f> primBoundingBox(PrimitiveObject* prim) {
@@ -837,112 +1039,7 @@ namespace zeno
         }
     }
 
-    void primCalcNormal(zeno::PrimitiveObject* prim, float flip, zeno::String nrmAttr)
-    {
-        const std::string sNrmAttr = zsString2Std(nrmAttr);
-        auto& nrm = prim->add_attr<zeno::vec3f>(sNrmAttr);
-        auto& pos = prim->verts.values;
-
-#if defined(_OPENMP) && defined(__GNUG__)
-#pragma omp parallel for
-#endif
-        for (size_t i = 0; i < nrm.size(); i++) {
-            nrm[i] = zeno::vec3f(0);
-        }
-
-#if defined(_OPENMP) && defined(__GNUG__)
-        auto atomicCas = [](int* dest, int expected, int desired) {
-            __atomic_compare_exchange_n(const_cast<int volatile*>(dest), &expected,
-                desired, false, __ATOMIC_ACQ_REL,
-                __ATOMIC_RELAXED);
-            return expected;
-        };
-        auto atomicFloatAdd = [&](float* dst, float val) {
-            static_assert(sizeof(float) == sizeof(int), "sizeof float != sizeof int");
-            int oldVal = reinterpret_bits<int>(*dst);
-            int newVal = reinterpret_bits<int>(reinterpret_bits<float>(oldVal) + val), readVal{};
-            while ((readVal = atomicCas((int*)dst, oldVal, newVal)) != oldVal) {
-                oldVal = readVal;
-                newVal = reinterpret_bits<int>(reinterpret_bits<float>(readVal) + val);
-            }
-            return reinterpret_bits<float>(oldVal);
-        };
-#endif
-
-#if defined(_OPENMP) && defined(__GNUG__)
-#pragma omp parallel for
-#endif
-        for (size_t i = 0; i < prim->tris.size(); i++) {
-            auto ind = prim->tris[i];
-            auto n = cross(pos[ind[1]] - pos[ind[0]], pos[ind[2]] - pos[ind[0]]);
-
-#if defined(_OPENMP) && defined(__GNUG__)
-            for (int j = 0; j != 3; ++j) {
-                auto& n_i = nrm[ind[j]];
-                for (int d = 0; d != 3; ++d)
-                    atomicFloatAdd(&n_i[d], n[d]);
-            }
-#else
-            nrm[ind[0]] += n;
-            nrm[ind[1]] += n;
-            nrm[ind[2]] += n;
-#endif
-        }
-
-#if defined(_OPENMP) && defined(__GNUG__)
-#pragma omp parallel for
-#endif
-        for (size_t i = 0; i < prim->quads.size(); i++) {
-            auto ind = prim->quads[i];
-            std::array<vec3f, 4> ns = {
-                cross(pos[ind[1]] - pos[ind[0]], pos[ind[2]] - pos[ind[0]]),
-                cross(pos[ind[2]] - pos[ind[1]], pos[ind[3]] - pos[ind[1]]),
-                cross(pos[ind[3]] - pos[ind[2]], pos[ind[0]] - pos[ind[2]]),
-                cross(pos[ind[0]] - pos[ind[3]], pos[ind[1]] - pos[ind[3]]),
-            };
-
-#if defined(_OPENMP) && defined(__GNUG__)
-            for (int j = 0; j != 4; ++j) {
-                auto& n_i = nrm[ind[j]];
-                for (int d = 0; d != 3; ++d)
-                    atomicFloatAdd(&n_i[d], ns[j][d]);
-            }
-#else
-            for (int j = 0; j != 4; ++j) {
-                nrm[ind[j]] += ns[j];
-            }
-#endif
-        }
-
-#if defined(_OPENMP) && defined(__GNUG__)
-#pragma omp parallel for
-#endif
-        for (size_t i = 0; i < prim->polys.size(); i++) {
-            auto [beg, len] = prim->polys[i];
-
-            auto ind = [loops = prim->loops.data(), beg = beg, len = len](int t) -> int {
-                if (t >= len) t -= len;
-                return loops[beg + t];
-            };
-            for (int j = 0; j < len; ++j) {
-                auto nsj = cross(pos[ind(j + 1)] - pos[ind(j)], pos[ind(j + 2)] - pos[ind(j)]);
-#if defined(_OPENMP) && defined(__GNUG__)
-                auto& n_i = nrm[ind(j)];
-                for (int d = 0; d != 3; ++d)
-                    atomicFloatAdd(&n_i[d], nsj[d]);
-#else
-                nrm[ind(j)] += nsj;
-#endif
-            }
-        }
-
-#if defined(_OPENMP) && defined(__GNUG__)
-#pragma omp parallel for
-#endif
-        for (size_t i = 0; i < nrm.size(); i++) {
-            nrm[i] = flip * normalizeSafe(nrm[i]);
-        }
-    }
+    
 
     void primWireframe(PrimitiveObject* prim, bool removeFaces, bool toEdges) {
         struct segment_less {
@@ -1726,99 +1823,9 @@ namespace zeno
         return img;
     }
 
-    std::unique_ptr<PrimitiveObject> readImageFile(zeno::String const& path) {
-        int w, h, n;
-        stbi_set_flip_vertically_on_load(true);
-        std::string native_path = std::filesystem::u8path(zsString2Std(path)).string();
-        float* data = stbi_loadf(native_path.c_str(), &w, &h, &n, 0);
-        if (!data) {
-            throw zeno::Exception("cannot open image file at path: " + native_path);
-        }
-        scope_exit delData = [=] { stbi_image_free(data); };
-        auto img = std::make_unique<PrimitiveObject>();
-        img->verts.resize(w * h);
-        if (n == 3) {
-            std::memcpy(img->verts.data(), data, w * h * n * sizeof(float));
-        }
-        else if (n == 4) {
-            auto& alpha = img->verts.add_attr<float>("alpha");
-            for (int i = 0; i < w * h; i++) {
-                img->verts[i] = { data[i * 4 + 0], data[i * 4 + 1], data[i * 4 + 2] };
-                alpha[i] = data[i * 4 + 3];
-            }
-        }
-        else if (n == 2) {
-            for (int i = 0; i < w * h; i++) {
-                img->verts[i] = { data[i * 2 + 0], data[i * 2 + 1], 0 };
-            }
-        }
-        else if (n == 1) {
-            for (int i = 0; i < w * h; i++) {
-                img->verts[i] = vec3f(data[i]);
-            }
-        }
-        else {
-            throw zeno::Exception("too much number of channels");
-        }
-        img->userData()->set_int("isImage", 1);
-        img->userData()->set_int("w", w);
-        img->userData()->set_int("h", h);
-        return img;
-    }
+    
 
-    std::unique_ptr<PrimitiveObject> readPFMFile(zeno::String const& path) {
-        int nx = 0;
-        int ny = 0;
-        std::ifstream file(zsString2Std(path), std::ios::binary);
-        std::string format;
-        file >> format;
-        file >> nx >> ny;
-        float scale = 0;
-        file >> scale;
-        file.ignore(1);
-
-        auto img = std::make_unique<PrimitiveObject>();
-        int size = nx * ny;
-        img->resize(size);
-        file.read(reinterpret_cast<char*>(img->verts.data()), sizeof(vec3f) * nx * ny);
-
-        img->userData()->set_int("isImage", 1);
-        img->userData()->set_int("w", nx);
-        img->userData()->set_int("h", ny);
-        return img;
-    }
-
-    void write_pfm(const std::string& path, int w, int h, vec3f* rgb) {
-        std::string header = zeno::format("PF\n{} {}\n-1.0\n", w, h);
-        std::vector<char> data(header.size() + w * h * sizeof(vec3f));
-        memcpy(data.data(), header.data(), header.size());
-        memcpy(data.data() + header.size(), rgb, w * h * sizeof(vec3f));
-        file_put_binary(data, path);
-    }
-
-    void write_pfm(const zeno::String& path, PrimitiveObject* image) {
-        auto ud = image->userData();
-        int w = ud->get_int("w");
-        int h = ud->get_int("h");
-        write_pfm(zsString2Std(path), w, h, image->verts->data());
-    }
-
-    void write_jpg(const zeno::String& path, PrimitiveObject* image) {
-        int w = image->userData()->get_int("w");
-        int h = image->userData()->get_int("h");
-        std::vector<uint8_t> colors;
-        for (auto i = 0; i < w * h; i++) {
-            auto rgb = zeno::pow(image->verts[i], 1.0f / 2.2f);
-            int r = zeno::clamp(int(rgb[0] * 255.99), 0, 255);
-            int g = zeno::clamp(int(rgb[1] * 255.99), 0, 255);
-            int b = zeno::clamp(int(rgb[2] * 255.99), 0, 255);
-            colors.push_back(r);
-            colors.push_back(g);
-            colors.push_back(b);
-        }
-        stbi_flip_vertically_on_write(1);
-        stbi_write_jpg(path.c_str(), w, h, 3, colors.data(), 100);
-    }
+   
 
     static void primRevampVerts(PrimitiveObject* prim, std::vector<int> const& revamp) {
         prim->foreach_attr<AttrAcceptAll>([&](auto const& key, auto& arr) {

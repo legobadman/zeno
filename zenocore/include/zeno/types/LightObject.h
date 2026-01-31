@@ -54,7 +54,7 @@ struct LightData {
     bool isEnabled{true};
 };
 
-struct LightObject : ILightObject, LightData {
+struct ZENO_API LightObject : ILightObject, LightData {
 
 public: //IObject2
     IObject2* clone() const override {

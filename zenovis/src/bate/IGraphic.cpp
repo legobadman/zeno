@@ -1,8 +1,7 @@
 #include <zenovis/Scene.h>
-#include <zeno/core/IObject.h>
-#include <zeno/types/IGeometryObject.h>
+#include <zeno/core/common.h>
+#include <zeno/types/GeometryObject.h>
 #include <zeno/types/PrimitiveObject.h>
-#include <zeno/types/StringObject.h>
 #include <zeno/types/ListObject.h>
 #include <zeno/types/CameraObject.h>
 #include <zeno/types/LightObject.h>
@@ -31,11 +30,11 @@ int IGraphicHandler::handleHover(glm::vec3 ori, glm::vec3 dir)
     return hover_mode;
 }
 
-std::unique_ptr<IGraphic> makeGraphic(Scene *scene, zeno::IObject *obj) {
+std::unique_ptr<IGraphic> makeGraphic(Scene *scene, zeno::IObject2 *obj) {
     MakeGraphicVisitor visitor;
     visitor.in_scene = scene;
 
-    if (auto p = dynamic_cast<zeno::GeometryObject_Adapter*>(obj)) {
+    if (auto p = dynamic_cast<zeno::GeometryObject*>(obj)) {
         visitor.visit(p);
     }
     else {

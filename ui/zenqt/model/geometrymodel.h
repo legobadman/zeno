@@ -7,7 +7,7 @@
 #include <QAbstractTableModel>
 #include <map>
 #include <vector>
-#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/GeometryObject.h>
 #include <zeno/types/UserData.h>
 #include <QAbstractListModel>
 #include <unordered_map>
@@ -40,88 +40,88 @@ class VertexModel : public QAbstractTableModel
 {
     Q_OBJECT
 public:
-    VertexModel(zeno::GeometryObject_Adapter* pObject, QObject* parent = nullptr);
+    VertexModel(zeno::GeometryObject* pObject, QObject* parent = nullptr);
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     int columnCount(const QModelIndex& parent) const override;
     bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
-    void setGeoObject(zeno::GeometryObject_Adapter* spObject);
+    void setGeoObject(zeno::GeometryObject* spObject);
 
 private:
     QMap<int, AttributeInfo> m_colMap;
     int m_nvertices;
-    zeno::GeometryObject_Adapter* m_geomery;
+    zeno::GeometryObject* m_geomery;
 };
 
 class PointModel : public QAbstractTableModel
 {
     Q_OBJECT
 public:
-    PointModel(zeno::GeometryObject_Adapter* pObject, QObject* parent = nullptr);
+    PointModel(zeno::GeometryObject* pObject, QObject* parent = nullptr);
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     bool setData(const QModelIndex& index, const QVariant& value, int role = Qt::EditRole) override;
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     int columnCount(const QModelIndex& parent) const override;
     bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
-    void setGeoObject(zeno::GeometryObject_Adapter* pObject);
+    void setGeoObject(zeno::GeometryObject* pObject);
 
 private:
     QMap<int, AttributeInfo> m_colMap;
     int m_npoints;
-    zeno::GeometryObject_Adapter* m_geomery;
+    zeno::GeometryObject* m_geomery;
 };
 
 class FaceModel : public QAbstractTableModel
 {
     Q_OBJECT
 public:
-    FaceModel(zeno::GeometryObject_Adapter* pObject, QObject* parent = nullptr);
+    FaceModel(zeno::GeometryObject* pObject, QObject* parent = nullptr);
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     int columnCount(const QModelIndex& parent) const override;
     bool removeRows(int row, int count, const QModelIndex& parent = QModelIndex()) override;
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
 
-    void setGeoObject(zeno::GeometryObject_Adapter* pObject);
+    void setGeoObject(zeno::GeometryObject* pObject);
 
 private:
     QMap<int, AttributeInfo> m_colMap;
     int m_nfaces;
-    zeno::GeometryObject_Adapter* m_geomery;
+    zeno::GeometryObject* m_geomery;
 };
 
 class GeomDetailModel : public QAbstractTableModel
 {
     Q_OBJECT
 public:
-    GeomDetailModel(zeno::GeometryObject_Adapter* pObject, QObject* parent = nullptr);
+    GeomDetailModel(zeno::GeometryObject* pObject, QObject* parent = nullptr);
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     int rowCount(const QModelIndex& parent = QModelIndex()) const override { return 1; }
     int columnCount(const QModelIndex& parent) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
-    void setGeoObject(zeno::GeometryObject_Adapter* pObject);
+    void setGeoObject(zeno::GeometryObject* pObject);
 
 private:
     QMap<int, AttributeInfo> m_colMap;
-    zeno::GeometryObject_Adapter* m_geomery;
+    zeno::GeometryObject* m_geomery;
 };
 
 class GeomUserDataModel : public QAbstractTableModel
 {
     Q_OBJECT
 public:
-    GeomUserDataModel(zeno::GeometryObject_Adapter* pObject, QObject* parent = nullptr);
+    GeomUserDataModel(zeno::GeometryObject* pObject, QObject* parent = nullptr);
     QVariant data(const QModelIndex& index, int role = Qt::DisplayRole) const override;
     int rowCount(const QModelIndex& parent = QModelIndex()) const override;
     int columnCount(const QModelIndex& parent) const override;
     QVariant headerData(int section, Qt::Orientation orientation, int role = Qt::DisplayRole) const override;
-    void setGeoObject(zeno::GeometryObject_Adapter* pObject);
+    void setGeoObject(zeno::GeometryObject* pObject);
 
 private:
-    QVariant GeomUserDataModel::userDataToString(const zeno::zany& object) const;
+    QVariant GeomUserDataModel::userDataToString(const zeno::reflect::Any& object) const;
     zeno::UserData* userData() const;
 };
 

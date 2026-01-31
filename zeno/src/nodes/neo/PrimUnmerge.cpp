@@ -1,7 +1,7 @@
 #include <zeno/zeno.h>
 #include <zeno/geo/commonutil.h>
 #include <zeno/types/PrimitiveObject.h>
-#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/GeometryObject.h>
 #include <zeno/funcs/PrimitiveUtils.h>
 #include <zeno/types/ListObject_impl.h>
 #include <zeno/types/StringObject.h>

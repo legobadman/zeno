@@ -2,7 +2,7 @@
 // Created by zh on 2025/7/9.
 //
 #include <zeno/zeno.h>
-#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/GeometryObject.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/types/CameraObject.h>
 #include <zeno/utils/bit_operations.h>

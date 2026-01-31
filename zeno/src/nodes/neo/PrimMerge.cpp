@@ -3,7 +3,7 @@
 #include <zeno/para/parallel_for.h>
 #include <zeno/types/ListObject_impl.h>
 #include <zeno/types/PrimitiveObject.h>
-#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/GeometryObject.h>
 #include <zeno/types/StringObject.h>
 #include <zeno/types/UserData.h>
 #include <zeno/utils/log.h>

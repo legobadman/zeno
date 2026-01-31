@@ -475,7 +475,7 @@ void ZEditParamLayoutDlg::initUI()
     m_ui->cbObjectType->addItem(tr("Geometry"), (quint64)gParamType_Geometry);
     m_ui->cbObjectType->addItem(tr("List"), (quint64)gParamType_List);
     m_ui->cbObjectType->addItem(tr("Material"), (quint64)gParamType_Material);
-    m_ui->cbObjectType->addItem(tr("Object"), (quint64)gParamType_IObject);
+    m_ui->cbObjectType->addItem(tr("Object"), (quint64)gParamType_IObject2);
     m_ui->cbObjectType->hide();
 
     m_ui->cbOutputPrim->addItem(tr("Integer"), (quint64)gParamType_Int);

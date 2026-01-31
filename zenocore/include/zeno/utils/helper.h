@@ -66,8 +66,8 @@ namespace zeno {
         size_t bufSize
     );
 
-    std::string get_object_key(IObject2* pObject);
-    std::string get_object_key(const zany2& spObject);
+    ZENO_API std::string get_object_key(IObject2* pObject);
+    ZENO_API std::string get_object_key(const zany2& spObject);
 
     bool isObjectType(const zeno::reflect::RTTITypeInfo& type, bool& isConstPtr);
     bool isObjectType(ParamType type);

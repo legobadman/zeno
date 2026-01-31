@@ -19,7 +19,7 @@ namespace zeno {
 // auto &functor = prim->userData().get<GenericObject< std::function<void(int, std::string)> >>("functor")->get();
 // functor(42, "yes");
 //
-
+#if 0
 template <class T = std::any>
 struct GenericObject : IObjectClone<GenericObject<T>> {
     T value;
@@ -60,5 +60,5 @@ struct GenericObject : IObjectClone<GenericObject<T>> {
         value = std::move(x);
     }
 };
-
+#endif
 }

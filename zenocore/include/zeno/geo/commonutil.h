@@ -10,12 +10,16 @@ namespace zeno
 {
     ZENO_API void primTriangulate(PrimitiveObject* prim, bool with_uv = true, bool has_lines = true, bool with_attr = true);
     ZENO_API void primTriangulateQuads(PrimitiveObject* prim);
+    ZENO_API void primCalcNormal(zeno::PrimitiveObject* prim, float flip = 1.0f, String nrmAttr = "nrm");
 
+    ZENO_API std::unique_ptr<PrimitiveObject> readImageFile(zeno::String const& path);
+    ZENO_API std::unique_ptr<PrimitiveObject> readPFMFile(zeno::String const& path);
+    ZENO_API void write_pfm(const zeno::String& path, PrimitiveObject* image);
+    ZENO_API void write_jpg(const zeno::String& path, PrimitiveObject* image);
 #if 0
     ZENO_API std::unique_ptr<zeno::PrimitiveObject> PrimMerge(ZsVector<zeno::PrimitiveObject*> const& primList, String const& tagAttr = "", bool tag_on_vert = true, bool tag_on_face = false);
     ZENO_API void primPolygonate(PrimitiveObject* prim, bool with_uv = true);
     ZENO_API void primFlipFaces(PrimitiveObject* prim, bool only_face = false);
-    ZENO_API void primCalcNormal(zeno::PrimitiveObject* prim, float flip = 1.0f, String nrmAttr = "nrm");
     ZENO_API zeno::ZsVector<std::unique_ptr<PrimitiveObject>> get_prims_from_list(ListObject* spList);
     ZENO_API zeno::ZsVector<std::unique_ptr<PrimitiveObject>> PrimUnmergeFaces(PrimitiveObject* prim, String tagAttr);
     ZENO_API void primKillDeadVerts(PrimitiveObject* prim);
@@ -44,10 +48,7 @@ namespace zeno
     ZENO_API void primWireframe(PrimitiveObject* prim, bool removeFaces = false, bool toEdges = false);
     ZENO_API std::unique_ptr<PrimitiveObject> readImageFile(zeno::String const& path);
     ZENO_API std::unique_ptr<PrimitiveObject> readExrFile(zeno::String const& path);
-    ZENO_API std::unique_ptr<PrimitiveObject> readImageFile(zeno::String const& path);
-    ZENO_API std::unique_ptr<PrimitiveObject> readPFMFile(zeno::String const& path);
-    ZENO_API void write_pfm(const zeno::String& path, PrimitiveObject* image);
-    ZENO_API void write_jpg(const zeno::String& path, PrimitiveObject* image);
+    
     ZENO_API void primFilterVerts(PrimitiveObject* prim, std::string tagAttr, int tagValue, bool isInversed = false, std::string revampAttrO = {}, std::string method = "verts", int* aux = nullptr, int aux_size = 0, bool use_aux = false);
     ZENO_API std::vector<std::unique_ptr<PrimitiveObject>> primUnmergeVerts(PrimitiveObject* prim, std::string tagAttr);
     ZENO_API void primSimplifyTag(PrimitiveObject* prim, std::string tagAttr);

@@ -1,4 +1,4 @@
-#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/GeometryObject.h>
 #include <zeno/types/CurveType.h>
 #include <zeno/types/UserData.h>
 #include <zeno/zeno.h>

@@ -4,7 +4,7 @@
 
 #include <zeno/zeno.h>
 #include <zeno/types/PrimitiveObject.h>
-#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/GeometryObject.h>
 #include <zeno/types/UserData.h>
 #include <zeno/utils/log.h>
 #include <glm/gtx/quaternion.hpp>

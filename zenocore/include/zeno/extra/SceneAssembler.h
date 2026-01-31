@@ -8,6 +8,7 @@
 #include <glm/glm.hpp>
 #include <deque>
 #include <zeno/utils/helper.h>
+#include <zeno/utils/interfaceutil.h>
 #include "zeno/types/PrimitiveObject.h"
 #include <zeno/types/GeometryObject.h>
 #include <zeno/types/ListObject_impl.h>
@@ -18,8 +19,41 @@
 
 using Json = nlohmann::json;
 namespace zeno {
-struct JsonObject : IObjectClone<JsonObject> {
+struct JsonObject : IObject2 {
     Json json;
+public: //IObject2
+    IObject2* clone() const override {
+        return new JsonObject(*this);
+    }
+    ZObjectType type() const override {
+        return ZObj_Material;
+    }
+    size_t key(char* buf, size_t buf_size) const override
+    {
+        const char* s = m_key.c_str();
+        size_t len = m_key.size();   // 不含 '\0'
+        if (buf && buf_size > 0) {
+            size_t copy = (len < buf_size - 1) ? len : (buf_size - 1);
+            memcpy(buf, s, copy);
+            buf[copy] = '\0';
+        }
+        return len;
+    }
+    void update_key(const char* key) override {
+        m_key = key;
+    }
+    size_t serialize_json(char* buf, size_t buf_size) const override {
+        return 0;
+    }
+    IUserData2* userData() override {
+        return &m_userDat;
+    }
+    void Delete() override {
+        delete this;
+    } 
+private:
+    std::string m_key;
+    UserData m_userDat;
 };
 
 struct SceneTreeNode {
@@ -33,13 +67,13 @@ struct SceneObject : IObject2 {
     std::unordered_map <std::string, SceneTreeNode> scene_tree;
     std::unordered_map <std::string, std::vector<glm::mat4>> node_to_matrix;
     std::unordered_map <std::string, std::vector<int>> node_to_id;
-    std::unordered_map<std::string, std::unique_ptr<GeometryObject_Adapter>> geom_list;
+    std::unordered_map<std::string, std::unique_ptr<GeometryObject>> geom_list;
 
     std::string root_name;
     bool bNeedUpdateDescriptor = true;  //update descriptor目前和updatemesh是等价的。
     bool bResetOptixScene = false;      //zeno3无法不断更新Mesh，cuda会报不知名的异常，只能重新清理场景
 
-    zany2 clone() const override {
+    IObject2* clone() const override {
         auto newSceneObj = std::make_unique<SceneObject>();
         newSceneObj->m_key = m_key;
         newSceneObj->scene_tree = scene_tree;
@@ -49,10 +83,11 @@ struct SceneObject : IObject2 {
         newSceneObj->bNeedUpdateDescriptor = bNeedUpdateDescriptor;
         newSceneObj->bResetOptixScene = bResetOptixScene;
         for (auto& [key, geom] : geom_list) {
-            auto new_geom = safe_uniqueptr_cast<GeometryObject_Adapter>(geom->clone());
-            newSceneObj->geom_list.emplace(key, std::move(new_geom));
+            auto new_geom = static_cast<GeometryObject*>(geom->clone());
+            newSceneObj->geom_list.emplace(key, 
+                std::move(std::unique_ptr<GeometryObject>(new_geom)));
         }
-        return newSceneObj;
+        return newSceneObj.release();
     }
 
     // return value is in world space
@@ -181,11 +216,12 @@ struct SceneObject : IObject2 {
         }
         for (auto &[k, p]: geom_list) {
             auto new_key = get_new_root_name(root_name, new_root_name, k);
-            auto new_geom = safe_uniqueptr_cast<GeometryObject_Adapter>(p->clone());
+            auto new_geom = static_cast<GeometryObject*>(p->clone());
             new_geom->userData()->set_string("ObjectName", stdString2zs(new_key));
-            if (!p->key().empty())
-                new_geom->update_key(get_object_key(p).c_str());
-            new_scene_obj->geom_list[new_key] = std::move(new_geom);
+            auto geomkey = zeno::get_object_key(p.get());
+            if (!geomkey.empty())
+                new_geom->update_key(geomkey.c_str());
+            new_scene_obj->geom_list[new_key].reset(new_geom);
         }
         new_scene_obj->root_name = new_root_name;
         std::string xform_name = new_root_name + "_m";
@@ -364,9 +400,10 @@ struct SceneObject : IObject2 {
                     prim->loops.values = node_to_id[stn.matrix];
                 }
 
-                std::string primkey = zsString2Std(this->key()) + "\\" + std::to_string(scene->size());
+                auto thiskey = zeno::get_object_key(this);
+                std::string primkey = thiskey + "\\" + std::to_string(scene->size());
                 prim->update_key(stdString2zs(primkey));
-                scene->push_back(std::move(prim));
+                scene->push_back(prim.release());
             }
         }
         if (bNeedUpdateDescriptor)
@@ -381,7 +418,9 @@ struct SceneObject : IObject2 {
             for (const auto& [path, geom] : geom_list) {
                 BasicRenderInstances[path]["Geom"] = path;
                 BasicRenderInstances[path]["Material"] = "Default";
-                auto vol_mat = zsString2Std(geom->userData()->get_string("vol_mat", ""));
+
+                UserData* pUd = static_cast<UserData*>(geom->userData());
+                auto vol_mat = pUd->get2<std::string>("vol_mat", "");
                 if (vol_mat.size()) {
                     BasicRenderInstances[path]["Material"] = vol_mat;
                 }
@@ -409,9 +448,10 @@ struct SceneObject : IObject2 {
                 json["DynamicRenderGroups"] = RenderGroups;
             }
             ud->set_string("Scene", stdString2zs(std::string(json.dump())));
-            std::string objkey = zsString2Std(this->key()) + "\\" + std::to_string(scene->size());
+            auto thiskey = get_object_key(this);
+            std::string objkey = thiskey + "\\" + std::to_string(scene->size());
             scene_descriptor->update_key(stdString2zs(objkey));
-            scene->push_back(std::move(scene_descriptor));
+            scene->push_back(scene_descriptor.release());
         }
         return scene;
     }
@@ -485,34 +525,70 @@ struct SceneObject : IObject2 {
     std::unique_ptr<zeno::ListObject> to_list() {
         auto scene = std::make_unique<zeno::ListObject>();
         for (auto& [abc_path, p] : geom_list) {
-            assert(!p->key().empty());
+            auto pkey = get_object_key(p.get());
+            assert(!pkey.empty());
             scene->push_back(p->clone());
         }
 
         auto st = std::make_unique<PrimitiveObject>();
         st->userData()->set_string("json", stdString2zs(to_json()));
         st->userData()->set_string("ResourceType", stdString2zs(std::string("SceneTree")));
-        std::string objkey = zsString2Std(this->key()) + "\\" + std::to_string(scene->size());
+        
+        auto thiskey = get_object_key(this);
+        std::string objkey = thiskey + "\\" + std::to_string(scene->size());
         st->update_key(stdString2zs(objkey));
 
-        scene->push_back(std::move(st));
+        scene->push_back(st.release());
         scene->update_key(get_object_key(this).c_str()); //以后如果想追踪的话就会回到Scene最后所在的节点
         return scene;
     }
+
+public: //IObject2
+    ZObjectType type() const override {
+        return ZObj_Material;
+    }
+    size_t key(char* buf, size_t buf_size) const override
+    {
+        const char* s = m_key.c_str();
+        size_t len = m_key.size();   // 不含 '\0'
+        if (buf && buf_size > 0) {
+            size_t copy = (len < buf_size - 1) ? len : (buf_size - 1);
+            memcpy(buf, s, copy);
+            buf[copy] = '\0';
+        }
+        return len;
+    }
+    void update_key(const char* key) override {
+        m_key = key;
+    }
+    size_t serialize_json(char* buf, size_t buf_size) const override {
+        return 0;
+    }
+    IUserData2* userData() override {
+        return &m_userDat;
+    }
+    void Delete() override {
+        delete this;
+    }
+
+private:
+    std::string m_key;
+    UserData m_userDat;
 };
 
 static std::unique_ptr<SceneObject> get_scene_tree_from_list2(ListObject* list_obj) {
     auto scene_tree = std::make_unique<SceneObject>();
     for (auto i = 0; i < list_obj->size(); i++) {
-        auto ud = list_obj->m_objects[i]->userData();
-        auto resource_type = ud->get_string("ResourceType", "None");
+        auto ud = static_cast<UserData*>(list_obj->m_objects[i]->userData());
+        auto resource_type = ud->get2<std::string>("ResourceType", "None");
         if (resource_type == "SceneTree") {
-            scene_tree->from_json(zsString2Std(ud->get_string("json")));
+            scene_tree->from_json(ud->get2<std::string>("json"));
         }
         else if (resource_type == "Mesh") {
-            auto prim = safe_uniqueptr_cast<GeometryObject_Adapter>(list_obj->m_objects[i]->clone());
-            auto object_name = zsString2Std(prim->userData()->get_string("ObjectName"));
-            scene_tree->geom_list[object_name] = std::move(prim);
+            auto prim = static_cast<GeometryObject*>(list_obj->m_objects[i]->clone());
+            auto _ud = static_cast<UserData*>(prim->userData());
+            auto object_name = _ud->get2<std::string>("ObjectName");
+            scene_tree->geom_list[object_name].reset(prim);
         }
     }
     return scene_tree;

@@ -1,6 +1,6 @@
 ﻿#include <zeno/zeno.h>
 //#include <zeno/types/GeometryObject.h>
-#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/GeometryObject.h>
 #include <zeno/geo/geometryutil.h>
 #include <zeno/utils/interfaceutil.h>
 #include "glm/gtc/matrix_transform.hpp"

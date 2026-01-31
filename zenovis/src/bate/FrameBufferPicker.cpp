@@ -7,7 +7,7 @@
 #include <zenovis/opengl/shader.h>
 #include <zenovis/opengl/texture.h>
 #include <zenovis/opengl/vao.h>
-#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/GeometryObject.h>
 #include <zeno/types/GeometryObject.h>
 #include <unordered_map>
 #include <fstream>
@@ -284,15 +284,15 @@ struct FrameBufferPicker : IPicker {
 
         // construct prim set
         // use focus_prim if focus_prim_name is not empty else all prims
-        vector<std::pair<string, zeno::IObject*>> prims, prims_shared;
-        std::map<std::string, zeno::IObject*> tmp;
+        vector<std::pair<string, zeno::IObject2*>> prims, prims_shared;
+        std::map<std::string, zeno::IObject2*> tmp;
         //TODO: get all view objs
         //zeno::getSession().objsMan->export_all_view_objs(tmp);
         for (auto& [key, obj] : tmp)
             scene->convertListObjs(obj, prims_shared);
 
         if (!focus_prim_name.empty()) {
-            zeno::IObject* focus_prim = nullptr;
+            zeno::IObject2* focus_prim = nullptr;
             for (const auto& [k, v] : prims_shared) {
                 if (focus_prim_name == k)
                     focus_prim = v;
@@ -503,9 +503,9 @@ struct FrameBufferPicker : IPicker {
                 id_table[id + 1] = it->first;
             }
 
-            auto geo = dynamic_cast<zeno::GeometryObject_Adapter*>(it->second);
+            auto geo = dynamic_cast<zeno::GeometryObject*>(it->second);
             if (geo) {
-                const std::vector<vec3f>& pos = geo->m_impl->points_pos();
+                const std::vector<vec3f>& pos = geo->points_pos();
                 vao->bind();
                 vbo->bind_data(pos.data(), pos.size() * sizeof(pos[0]));
                 vbo->attribute(0, sizeof(float) * 0, sizeof(float) * 3, GL_FLOAT, 3);
@@ -524,7 +524,7 @@ struct FrameBufferPicker : IPicker {
                     scene->camera->set_program_uniforms(obj_shader);
                     CHECK_GL(glUniform1ui(glGetUniformLocation(obj_shader->pro, "gObjectIndex"), id + 1));
                     // draw prim
-                    std::vector<vec3i> tris = geo->m_impl->tri_indice();
+                    std::vector<vec3i> tris = geo->tri_indice();
                     ebo->bind_data(tris.data(), tris.size() * sizeof(tris[0]));
                     CHECK_GL(glDrawElements(GL_TRIANGLES, tris.size() * 3, GL_UNSIGNED_INT, 0));
                     ebo->unbind();

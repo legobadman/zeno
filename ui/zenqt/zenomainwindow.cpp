@@ -2319,7 +2319,7 @@ void ZenoMainWindow::onNodesSelected(GraphModel* subgraph, const QModelIndexList
                     ZASSERT_EXIT(idx.isValid());
                     std::string objPath = idx.data(QtRole::ROLE_OBJPATH).toString().toStdString();
                     if (auto spNode = zeno::getSession().getNodeByPath(objPath)) {
-                        zeno::zany spOut = spNode->clone_default_output_object();
+                        zeno::zany2 spOut = spNode->clone_default_output_object();
                         if (spOut) {
                             panel->setGeometry(subgraph, idx, std::move(spOut));
                         }

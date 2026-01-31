@@ -1,7 +1,7 @@
 #include <zeno/zeno.h>
 #include <zeno/funcs/ParseObjectFromUi.h>
 #include <zeno/types/PrimitiveObject.h>
-#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/GeometryObject.h>
 #include <zeno/para/parallel_for.h>
 #include <zeno/utils/safe_at.h>
 #include <zeno/utils/zeno_p.h>

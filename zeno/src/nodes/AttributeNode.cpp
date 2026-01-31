@@ -1,5 +1,5 @@
 #include <zeno/zeno.h>
-#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/GeometryObject.h>
 
 
 namespace zeno {

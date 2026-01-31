@@ -4,7 +4,7 @@
 #define __ZGEOMETRY_SPREADSHEET_H__
 
 #include <QtWidgets>
-#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/GeometryObject.h>
 
 namespace zeno {
     struct SceneTreeNode;
@@ -42,7 +42,7 @@ class BaseAttributeView : public QWidget
     Q_OBJECT
 public:
     BaseAttributeView(QWidget* parent = nullptr);
-    void setGeometryObject(GraphModel* subgraph, QModelIndex nodeidx, zeno::GeometryObject_Adapter* object, QString nodeName);
+    void setGeometryObject(GraphModel* subgraph, QModelIndex nodeidx, zeno::GeometryObject* object, QString nodeName);
     void clearModel();
 
 public slots:
@@ -61,7 +61,7 @@ private:
     QPersistentModelIndex m_nodeIdx;
 
     QStackedWidget* m_stackViews;
-    zeno::GeometryObject_Adapter* m_geometry;
+    zeno::GeometryObject* m_geometry;
 };
 
 // 三个浮动widget类的声明
@@ -183,12 +183,12 @@ class ZGeometrySpreadsheet : public QWidget
 public:
     ZGeometrySpreadsheet(QWidget* parent = nullptr);
     ~ZGeometrySpreadsheet();
-    void setGeometry(GraphModel* subgraph, QModelIndex nodeidx, zeno::zany pObject);
+    void setGeometry(GraphModel* subgraph, QModelIndex nodeidx, zeno::zany2 pObject);
     void clearModel();
-    zeno::IObject* getObject() const { return m_clone_obj.get(); }
+    zeno::IObject2* getObject() const { return m_clone_obj.get(); }
 
 private:
-    zeno::zany m_clone_obj;
+    zeno::zany2 m_clone_obj;
     QStackedWidget* m_views;
 };
 

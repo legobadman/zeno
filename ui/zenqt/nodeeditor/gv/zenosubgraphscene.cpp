@@ -1005,21 +1005,21 @@ void ZenoSubGraphScene::onTempLinkClosed()
 
             if (!fixedInput)
             {
-                if (gParamType_Dict == outSockIdx.data(QtRole::ROLE_PARAM_TYPE).value<quint64>())
-                {
-                    ZenoSocketItem* pOutSocket = m_tempLink->getFixedSocket();
-                    const QString& outKey = pOutSocket->innerKey();
-                    if (!outKey.isEmpty()) {
-                        newEdge.outKey = outKey.toStdString();
-                    }
-                }
+                //if (gParamType_Dict == outSockIdx.data(QtRole::ROLE_PARAM_TYPE).value<quint64>())
+                //{
+                //    ZenoSocketItem* pOutSocket = m_tempLink->getFixedSocket();
+                //    const QString& outKey = pOutSocket->innerKey();
+                //    if (!outKey.isEmpty()) {
+                //        newEdge.outKey = outKey.toStdString();
+                //    }
+                //}
             }
 
             zeno::ParamType outParamType = outSockIdx.data(QtRole::ROLE_PARAM_TYPE).toLongLong();
             zeno::ParamType inParamType = inSockIdx.data(QtRole::ROLE_PARAM_TYPE).toLongLong();
             if (inParamType == gParamType_List) {
                 //如果输出是list或者object，要询问作为子元素还是整体
-                if (outParamType == gParamType_List || outParamType == gParamType_IObject) {
+                if (outParamType == gParamType_List || outParamType == gParamType_IObject2) {
                     QMessageBox msgBox;
                     msgBox.setWindowFlags(msgBox.windowFlags() & ~Qt::WindowCloseButtonHint);
                     msgBox.setText(tr("add to list as a child element?"));

@@ -37,6 +37,7 @@
 #include <zeno/core/NodeImpl.h>
 #include <zeno/core/ObjectRecorder.h>
 #include <zeno/core/NodeRegister.h>
+#include <zeno/utils/helper.h>
 
 
 ZToolBarButton::ZToolBarButton(bool bCheckable, const QString& icon, const QString& iconOn)
@@ -526,9 +527,6 @@ void DockContent_Editor::initConnections()
     connect(pSnapGrid, &ZToolBarButton::toggled, this, [=](bool bChecked) {
         auto& sess = zeno::getSession();
         auto& objrec = sess.m_recorder;
-        if (objrec->m_geoms.empty()) {
-            return;
-        }
         if (m_pEditor->welComPageShowed())
             return;
         ZenoSettingsManager::GetInstance().setValue(zsSnapGrid, bChecked);
@@ -1184,7 +1182,7 @@ void DockContent_View::initConnections()
             if (spNode) {
                 auto pObject = spNode->get_default_output_object();
                 if (pObject) {
-                    update.spObject = pObject->clone();
+                    update.spObject.reset(pObject->clone());
                 }
             }
             info.objs.push_back(update);

@@ -12,7 +12,7 @@
 #include <zeno/types/MatrixObject.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/types/PrimitiveObject.h>
-#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/GeometryObject.h>
 #include <zeno/zeno.h>
 #include <zeno/utils/eulerangle.h>
 #include <zeno/utils/string.h>

@@ -3,7 +3,7 @@
 
 #include "zenoapplication.h"
 #include <viewport/zenovis.h>
-#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/GeometryObject.h>
 #include "model/graphsmanager.h"
 #include "nodesync.h"
 #include <QtWidgets>
@@ -94,7 +94,7 @@ private:
     }
 
 private:
-    std::unordered_map<std::string, GeometryObject_Adapter*> m_objects;
+    std::unordered_map<std::string, GeometryObject*> m_objects;
     std::set<std::string> m_objectsKeys;
 
     ObjectNodeInfo m_objnodeinfo;

@@ -82,14 +82,15 @@ inline auto objectToLiterial(const std::unique_ptr<IObject2>& ptr, std::string c
         return std::get<glm::mat4>(safe_dynamic_cast<MatrixObject>(ptr.get(), msg)->m);
     }
     else {
-        return std::visit([&] (auto const &val) -> T {
+        return -1;
+        /*return std::visit([&] (auto const &val) -> T {
             using T1 = std::decay_t<decltype(val)>;
             if constexpr (std::is_constructible_v<T, T1>) {
                 return T(val);
             } else {
                 throw makeError<TypeError>(typeid(T), typeid(T1), msg);
             }
-        }, safe_dynamic_cast<NumericObject>(ptr.get(), msg)->get());
+        }, safe_dynamic_cast<NumericObject>(ptr.get(), msg)->get());*/
     }
 }
 

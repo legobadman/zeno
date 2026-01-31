@@ -2,7 +2,7 @@
 #include <zeno/types/CurveType.h>
 #include <zeno/types/UserData.h>
 #include <zeno/zeno.h>
-#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/GeometryObject.h>
 #include "magic_enum.hpp"
 
 namespace zeno {

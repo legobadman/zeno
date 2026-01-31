@@ -2,7 +2,7 @@
 
 #include <memory>
 #include <vector>
-#include <zeno/core/IObject.h>
+#include <zeno/core/common.h>
 #include <zeno/core/data.h>
 #include <zeno/utils/disable_copy.h>
 #include <zeno/utils/vec.h>
@@ -52,10 +52,10 @@ struct Scene : zeno::disable_copy {
     static void loadGLAPI(void *procaddr);
     void* getOptixImg(int &w, int &h);
 
-    void convertListObjs(zeno::IObject* objToBeConvert,           //仅展平对象
-        std::vector<std::pair<std::string, zeno::IObject*>>& allListItems);
-    void convertListObjs(zeno::IObject* objToBeConvert,           //仅展平对象
-        std::map<std::string, zeno::IObject*>& allListItems);
+    void convertListObjs(zeno::IObject2* objToBeConvert,           //仅展平对象
+        std::vector<std::pair<std::string, zeno::IObject2*>>& allListItems);
+    void convertListObjs(zeno::IObject2* objToBeConvert,           //仅展平对象
+        std::map<std::string, zeno::IObject2*>& allListItems);
     void set_select_mode(PICK_MODE _select_mode);
     PICK_MODE get_select_mode();
 private:

@@ -1,7 +1,7 @@
 #include <zeno/utils/api.h>
 #include <zeno/zeno.h>
 #include <zeno/types/PrimitiveObject.h>
-#include <zeno/types/IGeometryObject.h>
+#include <zeno/types/GeometryObject.h>
 #include <zeno/types/PrimitiveUtils.h>
 #include <zeno/types/NumericObject.h>
 #include <zeno/para/parallel_reduce.h>

@@ -6,7 +6,7 @@
 #include <tuple>
 #include <vector>
 #include <set>
-#include <zeno/core/IObject.h>
+#include <zeno/core/common.h>
 #include <zeno/utils/disable_copy.h>
 #include <zeno/utils/vec.h>
 #include <zenovis/Scene.h>

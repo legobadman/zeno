@@ -1,7 +1,7 @@
 #pragma once
 
 
-#include <zeno/core/IObject.h>
+#include <zeno/core/common.h>
 #include <reflect/container/any>
 #include "uicommon.h"
 #include <QObject>
@@ -12,7 +12,7 @@ Q_DECLARE_METATYPE(zeno::NodeData)
 Q_DECLARE_METATYPE(zeno::ParamPrimitive)
 Q_DECLARE_METATYPE(zeno::EdgeInfo)
 Q_DECLARE_METATYPE(zeno::zvariant)
-Q_DECLARE_METATYPE(zeno::IObject*)
+Q_DECLARE_METATYPE(zeno::IObject2*)
 Q_DECLARE_METATYPE(zeno::reflect::Any)
 Q_DECLARE_METATYPE(zeno::render_update_info);
 Q_DECLARE_METATYPE(zeno::render_reload_info)

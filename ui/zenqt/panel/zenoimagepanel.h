@@ -104,7 +104,7 @@ public:
     ZenoImagePanel(QWidget* parent = nullptr);
     void clear();
     void reload(const zeno::render_reload_info& info);
-    void setObject(zeno::IObject* pObject);
+    void setObject(zeno::IObject2* pObject);
 
 private:
     zeno::render_reload_info m_info;
