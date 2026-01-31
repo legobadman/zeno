@@ -1,6 +1,8 @@
 #include <zeno/core/common.h>
 #include <zeno/types/ObjectDef.h>
 #include <zeno/core/reflectdef.h>
+#include <zeno/container/zstring.h>
+#include <zeno/container/zvector.h>
 #include <glm/glm.hpp>
 #include "reflect/metadata.hpp"
 #include "reflect/registry.hpp"
@@ -73,13 +75,13 @@ REFLECT_REGISTER_RTTI_TYPE_WITH_NAME(zeno::vecvar, VecEdit)
 REFLECT_REGISTER_RTTI_TYPE_WITH_NAME(zeno::PrimVar, PrimVariant)
 
 //只能定义基类指针
-//REFLECT_REGISTER_RTTI_TYPE_MANUAL(std::shared_ptr<IObject>)
-//REFLECT_REGISTER_RTTI_TYPE_MANUAL(std::shared_ptr<const IObject>)
+//REFLECT_REGISTER_RTTI_TYPE_MANUAL(std::shared_ptr<IObject2>)
+//REFLECT_REGISTER_RTTI_TYPE_MANUAL(std::shared_ptr<const IObject2>)
 //不能对子类指针实施反射，因为Any在转换的过程中无法转为基类指针，同时也得为所有子模块所有类型构造反射，不方便
 //REFLECT_REGISTER_OBJECT(zeno::PrimitiveObject, Primitive)
 //REFLECT_REGISTER_OBJECT(zeno::CameraObject, Camera)
 //REFLECT_REGISTER_OBJECT(zeno::LightObject, Light)
-//REFLECT_REGISTER_OBJECT(zeno::IObject, IObject)
+//REFLECT_REGISTER_OBJECT(zeno::IObject2, IObject2)
 //REFLECT_REGISTER_OBJECT(zeno::ListObject, List)
 //REFLECT_REGISTER_OBJECT(zeno::MeshObject, Mesh)
 //REFLECT_REGISTER_OBJECT(zeno::ParticlesObject, Particles)

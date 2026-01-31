@@ -2,8 +2,10 @@
 
 #ifndef __CUDACC_RTC__ 
 
-#include <zeno/core/IObject.h>
+#include <iobject2.h>
 #include <zeno/utils/vec.h>
+#include <zenum.h>
+#include <zeno/types/UserData.h>
 
 #else
 
@@ -52,19 +54,53 @@ struct LightData {
     bool isEnabled{true};
 };
 
-struct LightObject : IObjectClone<LightObject>, LightData {
+struct LightObject : ILightObject, LightData {
 
+public: //IObject2
+    IObject2* clone() const override {
+        return new LightObject(*this);
+    }
+    ZObjectType type() const override {
+        return ZObj_Light;
+    }
+    size_t key(char* buf, size_t buf_size) const override
+    {
+        const char* s = m_key.c_str();
+        size_t len = m_key.size();   // ²»º¬ '\0'
+        if (buf && buf_size > 0) {
+            size_t copy = (len < buf_size - 1) ? len : (buf_size - 1);
+            memcpy(buf, s, copy);
+            buf[copy] = '\0';
+        }
+        return len;
+    }
+    void update_key(const char* key) override {
+        m_key = key;
+    }
+    size_t serialize_json(char* buf, size_t buf_size) const override {
+        return 0;
+    }
+    IUserData2* userData() override {
+        return &m_userDat;
+    }
     void Delete() override {
-        //delete this;
+        delete this;
     }
+private:
+    std::string m_key;
+    UserData m_userDat;
 
-    LightData const &get() const {
-        return static_cast<LightData const &>(*this);
-    }
-
-    void set(LightData const &lit) {
-        static_cast<LightData &>(*this) = lit;
-    }
+public:
+    LightData const& get() const;
+    void set(LightData const& lit);
+    Vec3f get_lightDir() const override;
+    float get_intensity() const override;
+    Vec3f get_shadowTint() const override;
+    float get_lightHight() const override;
+    float get_shadowSoftness() const override;
+    Vec3f get_lightColor() const override;
+    float get_lightScale() const override;
+    bool get_isEnabled() const override;
 };
 
 #endif

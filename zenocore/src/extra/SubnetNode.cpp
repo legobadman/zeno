@@ -19,8 +19,8 @@
 
 namespace zeno {
 
-SubnetNode::SubnetNode(INode* pNode)
-    : NodeImpl(pNode)
+SubnetNode::SubnetNode(INode2* pNode, void(*dtor)(INode2*))
+    : NodeImpl(pNode, dtor)
     , m_subgraph(std::make_shared<Graph>(""))
     , m_bLocked(true)
     , m_bClearSubnet(false)
@@ -368,7 +368,7 @@ void SubnetNode::apply() {
             //object type.
             if (iter->second.spObject) {
                 //要拷贝一下才能赋值到SubInput的port参数
-                zany spObject = iter->second.spObject->clone();
+                zany2 spObject(iter->second.spObject->clone());
                 spObject->update_key(stdString2zs(subinput->get_uuid_path()));
                 bool ret = subinput->set_output("port", std::move(spObject));
                 assert(ret);
@@ -391,7 +391,7 @@ void SubnetNode::apply() {
             }
             else {
                 subinput->set_output("port", std::make_unique<DummyObject>());
-                subinput->set_output("hasValue", std::make_unique<NumericObject>(false));
+                subinput->set_output_bool("hasValue", false);
             }
         }
     }
@@ -413,16 +413,17 @@ void SubnetNode::apply() {
         //suboutput的结果是放在Input的port上面（因为Suboutput放一个输出参数感觉怪怪的）
         bool bPrimoutput = suboutput->get_input_object_params().empty();
         if (!bPrimoutput && suboutput->is_nocache()) {
-            zany result = suboutput->move_input("port");
-            suboutput->mark_takeover();
-            result->update_key(stdString2zs(get_uuid_path()));
-            set_output(suboutput_node, std::move(result));
+            //TODO:
+            //zany2 result = suboutput->move_input("port");
+            //suboutput->mark_takeover();
+            //result->update_key(stdString2zs(get_uuid_path()));
+            //set_output(suboutput_node, std::move(result));
         }
         else {
-            zany result = suboutput->clone_input("port");
+            zany2 result(suboutput->clone_input_object("port"));
             if (result) {
                 bSetOutput = true;
-                zany spObject = result->clone();
+                zany2 spObject(result->clone());
                 if (!bPrimoutput) {
                     spObject->update_key(stdString2zs(get_uuid_path()));
                 }

@@ -2,6 +2,7 @@
 #include <zeno/core/defNode.h>
 
 
+#if 0
 namespace zeno {
 
     struct TimeShift2 : INode {
@@ -27,7 +28,7 @@ namespace zeno {
         {"create"},
     });
 
-#if 0
+
     struct ZDEFNODE() TimeShift : INode {
 
         ZPROPERTY(Role = zeno::Role_InputPrimitive, DisplayName = "clamp", Control = zeno::Combobox, ComboBoxItems = ("None", "Clamp to First", "Clamp to Last", "Clamp to Both"))
@@ -49,10 +50,11 @@ namespace zeno {
             }
         };
 
-        std::shared_ptr<IObject> apply(zany prim, int offset) {
+        std::shared_ptr<IObject2> apply(zany2 prim, int offset) {
             return prim;
         }
     };
-#endif
+
 }
+#endif
 

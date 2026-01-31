@@ -10,7 +10,7 @@ namespace zeno {
 
 struct ZENO_API SubnetNode : NodeImpl {
 
-    SubnetNode(INode* pNode);
+    SubnetNode(INode2* pNode, void (*dtor)(INode2*));
     ~SubnetNode();
 
     void apply() override;

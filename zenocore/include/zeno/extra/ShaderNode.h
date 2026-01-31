@@ -1,8 +1,7 @@
 #pragma once
 
-#include <zeno/core/INode.h>
-#include <zeno/core/IObject.h>
-#include <zeno/types/NumericObject.h>
+#include <inodeimpl.h>
+#include <iobject2.h>
 #include <zeno/types/TextureObject.h>
 #include <tinygltf/json.hpp>
 #include <vector>
@@ -13,13 +12,14 @@ namespace zeno {
 
 struct EmissionPass;
 
-struct ShaderNode : INode {
-    ZENO_API virtual void apply() override;
+struct ShaderNode : INode2 {
+    ZENO_API virtual void apply(INodeData* pNodeData) override;
     ZENO_API virtual int determineType(EmissionPass *em) = 0;
     ZENO_API virtual void emitCode(EmissionPass *em) = 0;
     ZENO_API virtual std::shared_ptr<ShaderNode> clone() const = 0;
 
     ZENO_API ShaderNode();
+    DEF_OVERRIDE_FOR_INODE
 };
 using ShaderDataTypeList = std::tuple<bool, int32_t, uint32_t, int64_t, uint64_t, float, vec2f, vec3f, vec4f>;
 

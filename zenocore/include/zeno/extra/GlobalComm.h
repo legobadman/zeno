@@ -1,6 +1,6 @@
 #pragma once
 
-#include <zeno/core/IObject.h>
+#include <zeno/core/common.h>
 #include <zeno/utils/PolymorphicMap.h>
 #include <zeno/utils/api.h>
 #include <memory>
@@ -15,8 +15,8 @@ namespace zeno {
 
 struct GlobalComm {
 
-    static void toDisk(std::string cachedir, int frameid, std::map<std::string, zany>& objs, bool cacheLightCameraOnly, bool cacheMaterialOnly, std::string fileName = "");
-    static bool fromDisk(std::string cachedir, int frameid, std::map<std::string, zany>& objs, std::string fileName = "");
+    static void toDisk(std::string cachedir, int frameid, const std::map<std::string, zany2>& objs, bool cacheLightCameraOnly, bool cacheMaterialOnly, std::string fileName = "");
+    static bool fromDisk(std::string cachedir, int frameid, std::map<std::string, zany2>& objs, std::string fileName = "");
 };
 
 }

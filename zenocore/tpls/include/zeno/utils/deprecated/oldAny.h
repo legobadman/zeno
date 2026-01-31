@@ -176,6 +176,6 @@ std::optional<T> silent_any_cast(Any const &a) {
     }
 }
 
-using zany = Any;  /* deprecated: use zeno::Any instead */
+using zany2 = Any;  /* deprecated: use zeno::Any instead */
 
 }

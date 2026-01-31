@@ -3,7 +3,6 @@
 #include <zeno/types/GeometryObject.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/types/MaterialObject.h>
-#include <zeno/types/StringObject.h>
 #include <zeno/types/CameraObject.h>
 #include <zeno/types/DummyObject.h>
 #include <zeno/types/LightObject.h>
@@ -39,7 +38,7 @@ namespace _implObjectCodec {
 
 
 #define _PER_OBJECT_TYPE(TypeName, ...) \
-std::shared_ptr<TypeName> decode##TypeName(const char *it); \
+std::unique_ptr<TypeName> decode##TypeName(const char *it); \
 bool encode##TypeName(TypeName const *obj, std::back_insert_iterator<std::vector<char>> it);
 ZENO_XMACRO_IObject(_PER_OBJECT_TYPE)
 #undef _PER_OBJECT_TYPE
@@ -48,7 +47,7 @@ ZENO_XMACRO_IObject(_PER_OBJECT_TYPE)
 
 using namespace _implObjectCodec;
 
-static std::shared_ptr<IObject> _decodeObjectImpl(const char *buf, size_t len) {
+static zany2 _decodeObjectImpl(const char *buf, size_t len) {
     if (len < sizeof(ObjectHeader)) {
         log_error("data too short, giving up");
         return nullptr;
@@ -70,7 +69,7 @@ ZENO_XMACRO_IObject(_PER_OBJECT_TYPE)
     }
 }
 
-zany decodeObject(const char *buf, size_t len) {
+zany2 decodeObject(const char *buf, size_t len) {
     auto &header = *(ObjectHeader *)buf;
     if (header.magicNumber != ObjectHeader::kMagicNumber) {
         log_error("object header magic number mismatch");
@@ -94,16 +93,16 @@ zany decodeObject(const char *buf, size_t len) {
         auto val = decodeObject(ptr, decolen);
         if (val) {
             UserData* pImpl = dynamic_cast<UserData*>(object->userData());
-            pImpl->set(key, std::move(val));
+            //pImpl->set(key, std::move(val));
         }
 
         ptr = nextptr;
     }
     //TODO:
-    return object->clone();
+    return zany2(object->clone());
 }
 
-static bool _encodeObjectImpl(IObject const *object, std::vector<char> &buf) {
+static bool _encodeObjectImpl(IObject2 const *object, std::vector<char> &buf) {
     auto it = std::back_inserter(buf);
     ObjectHeader header;
     header.magicNumber = ObjectHeader::kMagicNumber;
@@ -130,6 +129,8 @@ bool encodeObject(IObject2 *object, std::vector<char> &buf) {
         return false;
 
     std::vector<std::vector<char>> valbufs;
+    //userdata的实现不再是zany2，所以就不导出了，不然还得序列化any
+#if 0
     UserData* pUserData = dynamic_cast<UserData*>(object->userData());
     for (auto const &[key, val]: *pUserData) {
         std::vector<char> valbuf;
@@ -139,6 +140,7 @@ bool encodeObject(IObject2 *object, std::vector<char> &buf) {
         if (encodeObject(val.get(), valbuf))
             valbufs.push_back(std::move(valbuf));
     }
+#endif
     auto &header = *(ObjectHeader *)(buf.data() + oldsize);
     header.numUserData = valbufs.size();
     header.beginUserData = buf.size() - oldsize;

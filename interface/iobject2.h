@@ -157,6 +157,36 @@ struct IPrimitiveObject : IObject2 {
     //DEPRECATED!!!
 };
 
+struct ICameraObject : IObject2 {
+    virtual Vec3f get_pos() const = 0;
+    virtual bool set_pos(const Vec3f&) = 0;
+    virtual Vec3f get_up() const = 0;
+    virtual bool set_up(const Vec3f&) = 0;
+    virtual Vec3f get_view() const = 0;
+    virtual bool set_view(const Vec3f&) = 0;
+    virtual float get_fov() const = 0;
+    virtual bool set_fov(float) = 0;
+    virtual float get_fnear() const = 0;
+    virtual bool set_fnear(float) = 0;
+    virtual float get_ffar() const = 0;
+    virtual bool set_ffar(float) = 0;
+    virtual float get_aperture() const = 0;
+    virtual bool set_aperture(float) = 0;
+    virtual float get_focalPlaneDistance() const = 0;
+    virtual bool set_focalPlaneDistance(float) = 0;
+};
+
+struct ILightObject : IObject2 {
+    virtual Vec3f get_lightDir() const = 0;
+    virtual float get_intensity() const = 0;
+    virtual Vec3f get_shadowTint() const = 0;
+    virtual float get_lightHight() const = 0;
+    virtual float get_shadowSoftness() const = 0;
+    virtual Vec3f get_lightColor() const = 0;
+    virtual float get_lightScale() const = 0;
+    virtual bool get_isEnabled() const = 0;
+};
+
 struct IListObject : IObject2 {
     virtual size_t size() const = 0;
     virtual void resize(size_t sz) = 0;

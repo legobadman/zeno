@@ -26,7 +26,7 @@ bool __cdecl unRegisterNode(const char* name) {
 }
 
 extern "C" __declspec(dllexport)
-zeno::IGeometryObject* createGeometry(zeno::GeomTopoType type) {
+zeno::IGeometryObject* createEmptyGeometry(zeno::GeomTopoType type) {
 	//TODO
 	return nullptr;
 }
@@ -37,7 +37,7 @@ zeno::IGeometryObject* createGeometry(zeno::GeomTopoType type, bool bTriangle, i
 }
 
 extern "C" __declspec(dllexport)
-zeno::IGeometryObject* createGeometry(
+zeno::IGeometryObject* createGeometryByPointFace(
 	zeno::GeomTopoType type,
 	bool bTriangle,
 	const zeno::Vec3f* points,

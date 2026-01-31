@@ -1,7 +1,7 @@
 #pragma once
 
 #include <zeno/core/common.h>
-#include <zeno/core/IObject.h>
+#include <iobject2.h>
 #include <zeno/core/data.h>
 #include <zeno/types/AttrColumn.h>
 #include <zeno/types/PrimitiveObject.h>
@@ -36,7 +36,7 @@ namespace zeno {
         std::string self_id();
 #endif
 
-        void to_prim_attr(PrimitiveObject* spPrim, bool is_point_attr, bool is_triangle, std::string const& attr_name) {
+        void to_prim_attr(PrimitiveObject* spPrim, bool is_point_attr, bool is_triangle, std::string const& attr_name) const {
             if (attr_name.empty()) {
                 return;
             }

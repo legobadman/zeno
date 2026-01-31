@@ -23,23 +23,35 @@ namespace zeno
  Solver的apply目前与其他执行的节点处于同一线程，额外有监听线程与解算进程通信，监听线程可通知ui
  */
 
-class FlipSolver : public INode {
+class FlipSolver : public INode2 {
 public:
     FlipSolver();
     ~FlipSolver();
     NodeType type() const override;
+    void apply(INodeData* pNodeData) override;
+    void clearCalcResults() {}
+    void getIconResource(char* recv, size_t cap) {
+        const char* icon = ":/icons/node/fluid.svg";
+        strcpy(recv, icon);
+        recv[strlen(icon)] = '\0';
+    }
+    void getBackgroundClr(char* recv, size_t cap) {
+        const char* bg = "#246283";
+        strcpy(recv, bg);
+        recv[strlen(bg)] = '\0';
+    }
+    float time() const { return 1.0f; }
 
     void terminate_solve();
     void terminate_job();
-    void objs_cleaned();
+    void objs_cleaned(NodeImpl* m_pAdapter);
     void CloseIPCHandles();
     void initHandles();
-    zany checkCache(std::string cache_path, int frame);
-    std::string get_cachepath() const;
-    void clear_cache() const;
-    void on_dirty_changed(bool bOn, DirtyReason reason, bool bWholeSubnet, bool bRecursively);
-    void apply() override;
-    CustomUI export_customui() const override;
+    zany2 checkCache(std::string cache_path, int frame);
+    std::string get_cachepath(NodeImpl* m_pAdapter) const;
+    void clear_cache(NodeImpl* m_pAdapter) const;
+    void on_dirty_changed(NodeImpl* m_pAdapter, bool bOn, DirtyReason reason, bool bWholeSubnet, bool bRecursively);
+
     HANDLE get_pipe_read() const;
     HANDLE get_pipe_write() const;
     HANDLE get_sync_event() const;

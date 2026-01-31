@@ -1,6 +1,6 @@
 #include <zeno/core/Graph.h>
 #include <zeno/core/NodeImpl.h>
-#include <zeno/core/IObject.h>
+#include <iobject2.h>
 #include <zeno/core/INodeClass.h>
 #include <zeno/core/Session.h>
 #include <zeno/utils/safe_at.h>
@@ -8,8 +8,6 @@
 #include <zeno/core/Descriptor.h>
 #include <zeno/core/Assets.h>
 #include <zeno/core/NodeRegister.h>
-#include <zeno/types/NumericObject.h>
-#include <zeno/types/StringObject.h>
 #include <zeno/extra/GraphException.h>
 #include <zeno/funcs/LiterialConverter.h>
 #include <zeno/extra/GlobalError.h>
@@ -244,12 +242,12 @@ void Graph::bindNodeInput(std::string const &dn, std::string const &ds,
 }
 
 void Graph::setNodeInput(std::string const &id, std::string const &par,
-        zany const &val) {
+        zany2 const &val) {
     //todo: deprecated.
     //safe_at(nodes, id, "node name")->inputs[par] = val;
 }
 
-void Graph::setKeyFrame(std::string const &id, std::string const &par, zany const &val) {
+void Graph::setKeyFrame(std::string const &id, std::string const &par, zany2 const &val) {
     //todo: deprecated.
     /*
     safe_at(nodes, id, "node name")->inputs[par] = val;
@@ -257,7 +255,7 @@ void Graph::setKeyFrame(std::string const &id, std::string const &par, zany cons
     */
 }
 
-void Graph::setFormula(std::string const &id, std::string const &par, zany const &val) {
+void Graph::setFormula(std::string const &id, std::string const &par, zany2 const &val) {
     //todo: deprecated.
     /*
     safe_at(nodes, id, "node name")->inputs[par] = val;
@@ -266,10 +264,10 @@ void Graph::setFormula(std::string const &id, std::string const &par, zany const
 }
 
 
-std::map<std::string, zany> Graph::callSubnetNode(std::string const &id,
-        std::map<std::string, zany> inputs) const {
+std::map<std::string, zany2> Graph::callSubnetNode(std::string const &id,
+        std::map<std::string, zany2> inputs) const {
     //todo: deprecated.
-    return std::map<std::string, zany>();
+    return std::map<std::string, zany2>();
 }
 
 void Graph::addNodeOutput(std::string const& id, std::string const& par) {
@@ -835,7 +833,7 @@ NodeImpl* Graph::createNode(
             uuid = pNode->get_uuid();
         }
         else {
-            upNode = std::make_unique<NodeImpl>((INode*)nullptr);   //空壳
+            upNode = std::make_unique<NodeImpl>((INode2*)nullptr, nullptr);   //空壳
             pNode = upNode.get();
             pNode->initUuid(this, nodecls);
             uuid = pNode->get_uuid();
@@ -1260,7 +1258,7 @@ bool Graph::addLink(const EdgeInfo& edge) {
             std::vector<EdgeInfo> inParamLinks = inParam.links;
             if (inParamLinks.size() <= 1)
             {
-                //像IObject这种既可能是List也可能是子元素的，用coreapi没法区分，只能在外部指定key决定
+                //像IObject2这种既可能是List也可能是子元素的，用coreapi没法区分，只能在外部指定key决定
                 //是直连还是子元素
                 if (inParam.type == outParam.type) {
                     bConnectWithKey = false;
@@ -1277,7 +1275,7 @@ bool Graph::addLink(const EdgeInfo& edge) {
                 //如果指定了inKey，无论外面是不是List，必须作为子元素
                 bConnectWithKey = true;
             }
-            else if (inParam.type == outParam.type || outParam.type == gParamType_IObject) {
+            else if (inParam.type == outParam.type || outParam.type == gParamType_IObject2) {
                 //连一个list/obj进来，而且没有指定key，就认为是直连
                 bConnectWithKey = false;
             }

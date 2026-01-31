@@ -16,29 +16,39 @@
 
 namespace zeno
 {
-    struct ForEachBegin : INode
+    struct ForEachBegin : INode2
     {
-        INode* get_foreachend();
-        void apply() override;
-        int get_current_iteration();
-        void update_iteration(int new_iteration);
+        NodeImpl* get_foreachend(NodeImpl* m_pAdapter);
+        void apply(INodeData* ptrNodeData) override;
+        NodeType type() const override { return Node_Normal; }
+        void clearCalcResults() override {}
+        void getIconResource(char* recv, size_t cap) override {}
+        void getBackgroundClr(char* recv, size_t cap) override {}
+        float time() const override { return 1.0; }
+        int get_current_iteration(NodeImpl* m_pAdapter);
+        void update_iteration(NodeImpl* m_pAdapter, int new_iteration);
     };
 
-    struct ForEachEnd : INode
+    struct ForEachEnd : INode2
     {
+        NodeType type() const override { return Node_Normal; }
+        void getIconResource(char* recv, size_t cap) override {}
+        void getBackgroundClr(char* recv, size_t cap) override {}
+        float time() const override { return 1.0; }
+
         ForEachEnd();
-        ForEachBegin* get_foreach_begin();
-        void reset_forloop_settings();
-        bool is_continue_to_run(CalcContext* pContext);
-        void increment();
-        IObject* get_iterate_object();
-        void apply() override;
-        void apply_foreach(CalcContext* pContext);
-        void adjustCollectObjInfo();
+        NodeImpl* get_foreach_begin(NodeImpl* m_pAdapter);
+        void reset_forloop_settings(NodeImpl* m_pAdapter);
+        bool is_continue_to_run(NodeImpl* m_pAdapter, CalcContext* pContext);
+        void increment(NodeImpl* m_pAdapter);
+        IObject2* get_iterate_object();
+        void apply(INodeData* ptrNodeData) override;
+        void apply_foreach(INodeData* ptrNodeData, CalcContext* pContext);
+        void adjustCollectObjInfo(NodeImpl* ptrNodeData);
         void clearCalcResults() override;
 
-        zany m_iterate_object;
+        zany2 m_iterate_object;
         std::unique_ptr<ListObject> m_collect_objs;     //TODO: 如果foreach的对象是Dict，但这里收集的结果将会以list返回出去，以后再支持Dict的收集
-        //std::vector<IObject*> m_last_collect_objs;    //直接储存raw pointer危险
+        //std::vector<IObject2*> m_last_collect_objs;    //直接储存raw pointer危险
     };
 }

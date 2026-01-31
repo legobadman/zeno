@@ -2091,7 +2091,7 @@ namespace zeno
             if (funcname == "get_bboxmin") {
                 auto spGeo = dynamic_cast<GeometryObject*>(pContext->spObject.get());
                 assert(spGeo);
-                std::pair<vec3f, vec3f> ret = geomBoundingBox(spGeo);
+                std::pair<vec3f, vec3f> ret = GetGeomBoundingBox(spGeo);
                 glm::vec3 bmin(ret.first[0], ret.first[1], ret.first[2]);
                 return initVarFromZvar(bmin);
             }
@@ -2107,7 +2107,7 @@ namespace zeno
                 }
 
                 if (auto spGeo = dynamic_cast<GeometryObject*>(targetObj)) {
-                    std::pair<vec3f, vec3f> ret = geomBoundingBox(spGeo);
+                    std::pair<vec3f, vec3f> ret = GetGeomBoundingBox(spGeo);
                     glm::vec3 bmin(ret.first[0], ret.first[1], ret.first[2]);
                     return initVarFromZvar(bmin);
                 }
@@ -2118,7 +2118,7 @@ namespace zeno
             if (funcname == "get_bboxmax") {
                 auto spGeo = dynamic_cast<GeometryObject*>(pContext->spObject.get());
                 assert(spGeo);
-                std::pair<vec3f, vec3f> ret = geomBoundingBox(spGeo);
+                std::pair<vec3f, vec3f> ret = GetGeomBoundingBox(spGeo);
                 glm::vec3 bmax(ret.second[0], ret.second[1], ret.second[2]);
                 return initVarFromZvar(bmax);
             }

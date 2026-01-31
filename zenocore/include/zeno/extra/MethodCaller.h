@@ -3,7 +3,7 @@
 #include <string>
 #include <memory>
 #include <zeno/core/Graph.h>
-#include <zeno/core/IObject.h>
+#include <iobject2.h>
 #include <zeno/core/NodeImpl.h>
 #include <zeno/funcs/LiterialConverter.h>
 #include <zeno/types/FunctionObject.h>
@@ -13,21 +13,21 @@
 namespace zeno {
 #if 0
 struct MethodCaller {
-    std::function<std::map<std::string, zany>(std::map<std::string, zany> const &)> func;
-    std::map<std::string, zany> params;
+    std::function<std::map<std::string, zany2>(std::map<std::string, zany2> const &)> func;
+    std::map<std::string, zany2> params;
     bool called = false;
 
     MethodCaller(std::shared_ptr<DictObject> const &callbacks, std::string const &method)
         : func(safe_dynamic_cast<FunctionObject>(safe_at(callbacks->lut, method, "callbacks"), "callback")->func)
     {}
 
-    MethodCaller(std::shared_ptr<DictObject> const &callbacks, std::string const &method, std::map<std::string, zany> const &defl)
+    MethodCaller(std::shared_ptr<DictObject> const &callbacks, std::string const &method, std::map<std::string, zany2> const &defl)
         : func(!callbacks->lut.count(method) ?
-               [defl] (std::map<std::string, zany> const &) -> std::map<std::string, zany> { return defl; } :
+               [defl] (std::map<std::string, zany2> const &) -> std::map<std::string, zany2> { return defl; } :
                safe_dynamic_cast<FunctionObject>(callbacks->lut.at(method), "callback")->func)
     {}
 
-    MethodCaller &set(std::string const &id, std::shared_ptr<IObject> obj) {
+    MethodCaller &set(std::string const &id, std::shared_ptr<IObject2> obj) {
         params[id] = std::move(obj);
         return *this;
     }
@@ -38,7 +38,7 @@ struct MethodCaller {
         return *this;
     }
 
-    std::shared_ptr<IObject> get(std::string const &key) {
+    std::shared_ptr<IObject2> get(std::string const &key) {
         call();
         return safe_at(params, key, "return key `" + key + "` of method");
     }

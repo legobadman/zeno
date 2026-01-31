@@ -7,9 +7,9 @@ using namespace zeno;
 namespace PyZeno{
 LUT<Session> lutSession;
 LUT<Graph> lutGraph;
-LUT<IObject> lutObject;
+LUT<IObject2> lutObject;
 LastError lastError;
-std::map<std::string, std::shared_ptr<IObject>> tempNodeRes;
+std::map<std::string, std::shared_ptr<IObject2>> tempNodeRes;
 std::shared_ptr<Graph> currentGraph;
 }
 
@@ -52,7 +52,7 @@ ZENO_CAPI Zeno_Error Zeno_GraphLoadJson(Zeno_Graph graph_, const char *jsonStr_)
 
 ZENO_CAPI Zeno_Error Zeno_GraphCallTempNode(Zeno_Graph graph_, const char *nodeType_, const char *const *inputKeys_, const Zeno_Object *inputObjects_, size_t inputCount_, size_t *outputCountRet_) ZENO_CAPI_NOEXCEPT {
     return PyZeno::lastError.catched([=] {
-        std::map<std::string, std::shared_ptr<IObject>> inputs;
+        std::map<std::string, std::shared_ptr<IObject2>> inputs;
         for (size_t i = 0; i < inputCount_; i++) {
             inputs.emplace(inputKeys_[i], PyZeno::lutObject.access(inputObjects_[i]));
         }
@@ -354,7 +354,7 @@ ZENO_CAPI Zeno_Error Zeno_InvokeCFunctionPtr(void *ffiObjArg_, const char *typeN
 
 namespace zeno {
 
-ZENO_API Zeno_Object capiLoadObjectSharedPtr(std::shared_ptr<IObject> const &objPtr_) {
+ZENO_API Zeno_Object capiLoadObjectSharedPtr(std::shared_ptr<IObject2> const &objPtr_) {
     return PyZeno::lutObject.create(objPtr_);
 }
 
@@ -362,7 +362,7 @@ ZENO_API void capiEraseObjectSharedPtr(Zeno_Object object_) {
     PyZeno::lutObject.destroy(object_);
 }
 
-ZENO_API std::shared_ptr<IObject> capiFindObjectSharedPtr(Zeno_Object object_) {
+ZENO_API std::shared_ptr<IObject2> capiFindObjectSharedPtr(Zeno_Object object_) {
     return PyZeno::lutObject.access(object_);
 }
 

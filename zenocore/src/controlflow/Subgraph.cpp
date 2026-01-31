@@ -10,13 +10,17 @@
 namespace zeno {
 namespace {
 
-struct Subnet : INode {
-    virtual void apply() override {
+struct Subnet : INode2 {
+    virtual void apply(INodeData* ptrNodeData) override {
         /*zeno::SubnetNode::apply();*/
     }
     NodeType type() const override {
         return Node_SubgraphNode;
     }
+    void clearCalcResults() {}
+    void getIconResource(char* recv, size_t cap) {}
+    void getBackgroundClr(char* recv, size_t cap) {}
+    float time() const { return 1.0f; }
 };
 
 ZENDEFNODE(Subnet, {
@@ -26,28 +30,25 @@ ZENDEFNODE(Subnet, {
     {"subgraph"},
 });
 
-struct SubInput : zeno::INode {
-    void apply() override {
+struct SubInput : zeno::INode2 {
+    void apply(INodeData* ptrNodeData) override {
         //printf("!!! %s\n", typeid(*ZImpl(get_input("_IN_port"))).name());
         //set_output("port", ZImpl(get_input("_IN_port"))); 
         //set_output("hasValue", ZImpl(get_input("_IN_hasValue")));
     }
 
-    CustomUI export_customui() const override {
-        CustomUI ui;
-        ParamGroup group;
-        ParamTab tab;
-        tab.groups.emplace_back(std::move(group));
-        ui.inputPrims.emplace_back(std::move(tab));
-        for (auto param : ZImpl(get_output_primitive_params())) {
-            ui.outputPrims.emplace_back(param);
-        }
-        for (auto param : ZImpl(get_output_object_params())) {
-            ui.outputObjs.emplace_back(param);
-        }
-        ui.uistyle.background = "#5F5F5F";
-        return ui;
+    NodeType type() const {
+        return Node_SubgraphNode;
     }
+    void clearCalcResults() {}
+    void getIconResource(char* recv, size_t cap) {
+    }
+    void getBackgroundClr(char* recv, size_t cap) {
+        const char* bg = "#5F5F5F";
+        strcpy(recv, bg);
+        recv[strlen(bg)] = '\0';
+    }
+    float time() const { return 1.0f; }
 };
 
 ZENDEFNODE(SubInput, {
@@ -57,29 +58,23 @@ ZENDEFNODE(SubInput, {
     {"subgraph"},
 });
 
-struct SubOutput : zeno::INode {
-    void apply() override {
+struct SubOutput : zeno::INode2 {
+    void apply(INodeData* ptrNodeData) override {
     }
 
-    ZENO_API zany get_default_output_object() {
-        return clone_input("port");
+    NodeType type() const {
+        return Node_SubgraphNode;
     }
 
-    CustomUI export_customui() const override {
-        CustomUI ui;
-        ParamGroup group;
-        for (auto param : ZImpl(get_input_primitive_params())) {
-            group.params.emplace_back(param);
-        }
-        ParamTab tab;
-        tab.groups.emplace_back(std::move(group));
-        ui.inputPrims.emplace_back(std::move(tab));
-        for (auto param : ZImpl(get_input_object_params())) {
-            ui.inputObjs.emplace_back(param);
-        }
-        ui.uistyle.background = "#5F5F5F";
-        return ui;
+    void clearCalcResults() {}
+    void getIconResource(char* recv, size_t cap) {
     }
+    void getBackgroundClr(char* recv, size_t cap) {
+        const char* bg = "#5F5F5F";
+        strcpy(recv, bg);
+        recv[strlen(bg)] = '\0';
+    }
+    float time() const { return 1.0f; }
 };
 
 ZENDEFNODE(SubOutput, {

@@ -11,9 +11,13 @@ namespace zeno {
         zeno::NodeType type() const override {
             return zeno::Node_Normal;
         }
+        void clearCalcResults() override {}
         void apply(INodeData* ptrNodeData) override {
 
         }
+        void getIconResource(char* recv, size_t cap) override {}
+        void getBackgroundClr(char* recv, size_t cap) override {}
+        float time() const override { return 1.0; }
     };
 
     ZENDEFNODE_ABI(CustomNode2,

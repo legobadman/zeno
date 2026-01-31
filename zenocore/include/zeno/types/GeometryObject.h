@@ -5,7 +5,7 @@
 #include <string>
 #include <zeno/types/AttributeVector.h>
 #include <zeno/core/common.h>
-#include <zeno/core/IObject.h>
+#include <iobject2.h>
 #include <zeno/utils/api.h>
 #include <zeno/types/AttrVector.h>
 #include <zeno/types/PrimitiveObject.h>
@@ -31,7 +31,7 @@ namespace zeno
         GeometryObject(GeomTopoType type, bool bTriangle, int nPoints, const std::vector<std::vector<int>>& faces);
         GeometryObject(const GeometryObject& rhs);
         GeometryObject(PrimitiveObject* spPrim);
-        std::unique_ptr<PrimitiveObject> toPrimitive();
+        std::unique_ptr<PrimitiveObject> toPrimitive() const;
 
         void inheritAttributes(
             GeometryObject* rhs,
@@ -131,7 +131,7 @@ namespace zeno
     public:
         GeomTopoType topo_type() const override;
 
-        std::vector<vec3f> points_pos();
+        std::vector<vec3f> points_pos() const;
         size_t points_pos(Vec3f* buf, size_t buf_size) override;
 
         /* 添加元素 */

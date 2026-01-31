@@ -7,7 +7,7 @@
 namespace zeno {
 
 template <class Target = PrimitiveObject, class Func>
-static bool _cihou_list_input(IObject *obj, Func const &func) {
+static bool _cihou_list_input(IObject2 *obj, Func const &func) {
     if (auto lst = dynamic_cast<ListObject *>(obj)) {
         for (auto const &obj: lst->arr)
             _cihou_list_input(obj.get(), func);
@@ -21,7 +21,7 @@ static bool _cihou_list_input(IObject *obj, Func const &func) {
 }
 
 template <class Target = PrimitiveObject, class Func>
-static bool _cihou_list_input(std::shared_ptr<IObject> obj, Func const &func) {
+static bool _cihou_list_input(std::shared_ptr<IObject2> obj, Func const &func) {
     if (auto lst = std::dynamic_pointer_cast<ListObject>(obj)) {
         for (auto const &obj: lst->arr)
             _cihou_list_input(obj, func);

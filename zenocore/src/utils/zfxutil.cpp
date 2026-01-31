@@ -320,7 +320,7 @@ namespace zeno
             if (attrname[0] == '@')
                 attr_name = attrname.substr(1);
 
-            auto spGeom = dynamic_cast<zeno::GeometryObject_Adapter*>(pContext->spObject.get());
+            auto spGeom = dynamic_cast<zeno::GeometryObject*>(pContext->spObject.get());
             if (!spGeom)
                 throw makeError<UnimplError>("no geom");
 
@@ -467,7 +467,7 @@ namespace zeno
 
         template<class ElemType>
         static void set_attr_by_zfx(
-                GeometryObject_Adapter* spGeom,
+                GeometryObject* spGeom,
                 std::string attrname,
                 std::string channel,
                 const ZfxVariable& var,
@@ -605,7 +605,7 @@ namespace zeno
             if (!channel.empty() && channel != "x" && channel != "y" && channel != "z" && channel != "w") {
                 throw makeError<UnimplError>("Unknown channel name");
             }
-            auto spGeom = dynamic_cast<GeometryObject_Adapter*>(pContext->spObject.get());
+            auto spGeom = dynamic_cast<GeometryObject*>(pContext->spObject.get());
 
             GeoAttrType type = spGeom->get_attr_type(group, attrname);
             if (type == ATTR_TYPE_UNKNOWN) {//attrname可能是其他类型,尝试设置为其他类型

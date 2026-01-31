@@ -27,7 +27,7 @@ std::unordered_set<std::string> lightCameraNodes({
     });
 std::set<std::string> matNodeNames = {"ShaderFinalize", "ShaderVolume", "ShaderVolumeHomogeneous"};
 
-void GlobalComm::toDisk(std::string cachedir, int frameid, std::map<std::string, zany>& objs, bool cacheLightCameraOnly, bool cacheMaterialOnly, std::string fileName) {
+void GlobalComm::toDisk(std::string cachedir, int frameid, const std::map<std::string, zany2>& objs, bool cacheLightCameraOnly, bool cacheMaterialOnly, std::string fileName) {
     if (cachedir.empty()) return;
     std::filesystem::path dir = std::filesystem::u8path(cachedir + "/" + std::to_string(1000000 + frameid).substr(1));
     if (!std::filesystem::exists(dir) && !std::filesystem::create_directories(dir))
@@ -145,10 +145,9 @@ void GlobalComm::toDisk(std::string cachedir, int frameid, std::map<std::string,
         std::copy_n((const char *)poses[i].data(), poses[i].size() * sizeof(size_t), oit);
         std::copy(bufCaches[i].begin(), bufCaches[i].end(), oit);
     }
-    objs.clear();
 }
 
-bool GlobalComm::fromDisk(std::string cachedir, int frameid, std::map<std::string, zany>& objs, std::string fileName) {
+bool GlobalComm::fromDisk(std::string cachedir, int frameid, std::map<std::string, zany2>& objs, std::string fileName) {
     if (cachedir.empty())
         return false;
     objs.clear();

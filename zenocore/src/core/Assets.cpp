@@ -611,7 +611,7 @@ ZENO_API std::unique_ptr<NodeImpl> AssetsMgr::newInstance(
     assert(assets.sharedGraph);
 
     //也许不需要coreNode(也就是subnet)
-    std::unique_ptr<SubnetNode> pNode = std::make_unique<SubnetNode>(nullptr);
+    std::unique_ptr<SubnetNode> pNode = std::make_unique<SubnetNode>(nullptr, nullptr);
 
     pNode->initUuid(pGraph, assetName);
     std::shared_ptr<Graph> assetGraph;

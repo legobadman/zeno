@@ -14,7 +14,7 @@
 #include <reflect/container/any>
 #include <reflect/type.hpp>
 #include <zeno/types/CurveObject.h>
-#include <zeno/core/IObject.h>
+#include <iobject2.h>
 #include <zeno/extra/GlobalError.h>
 
 
@@ -483,7 +483,7 @@ namespace zeno {
         std::variant<NumericValue, ShaderNodePath> data;
     };
 
-    using SharedObjects = std::map<std::string, std::shared_ptr<zeno::IObject>>;
+    using SharedObjects = std::map<std::string, std::shared_ptr<zeno::IObject2>>;
 
     struct RenderObjsInfo {
         SharedObjects newObjs;
@@ -500,8 +500,8 @@ namespace zeno {
     struct NodeImpl;
 
     struct ObjectNodeInfo {
-        std::optional<IObject*> rootObj;        //list/dict case.
-        IObject* transformingObj;
+        std::optional<IObject2*> rootObj;        //list/dict case.
+        IObject2* transformingObj;
         NodeImpl* spViewNode;
     };
 

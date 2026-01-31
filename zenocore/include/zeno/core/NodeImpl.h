@@ -1,8 +1,8 @@
 #pragma once
 
 #include <zeno/utils/api.h>
-#include <zeno/core/IObject.h>
-#include <zeno/core/INode.h>
+#include <iobject2.h>
+#include <inodedata.h>
 #include <zeno/utils/safe_dynamic_cast.h>
 #include <zeno/funcs/LiterialConverter.h>
 #include <variant>
@@ -61,7 +61,6 @@ namespace zeno
     public:
         INodeClass* nodeClass = nullptr;
 
-        NodeImpl(INode* pNode);
         NodeImpl(INode2* pNode, void (*dtor)(INode2*));
         virtual ~NodeImpl();
 
@@ -95,7 +94,7 @@ namespace zeno
         ObjPath get_uuid_path() const;
         std::string get_uuid() const;
         Graph* getGraph() const;
-        INode* coreNode() const;
+        INode2* coreNode() const;
         void initUuid(Graph* pGraph, const std::string nodecls);
 
         virtual NodeType nodeType() const;
@@ -295,7 +294,7 @@ namespace zeno
         zany2 move_input(std::string const& id);
         zany2 move_output(std::string const& id);
         //get_input很麻烦，因为数值型的“对象”是新建出来的
-        //IObject* get_input(std::string const& id) const;
+        //IObject2* get_input(std::string const& id) const;
         IObject2* get_input_obj(std::string const& id) const;
         IObject2* get_output_obj(std::string const& sock_name);
         std::vector<zany2> get_output_objs();
@@ -303,6 +302,7 @@ namespace zeno
         zany2 clone_default_output_object();
         void reportStatus(bool bDirty, NodeRunStatus status);
 
+        std::string get_input2_string(const std::string& param);
         zany2 takeOutputObject(ObjectParam* out_param, ObjectParam* in_param, bool& bAllOutputTaken);
         zany2 takeOutputObject(const std::string& out_param, const std::string& in_param, bool& bAllOutputTaken);
         zeno::reflect::Any takeOutputPrim(PrimitiveParam* out_param, PrimitiveParam* in_param, bool& bAllOutputTaken);
@@ -385,7 +385,6 @@ namespace zeno
         std::string m_uuidPath;
         NodeRunStatus m_status = Node_DirtyReadyToRun;
         Graph* m_pGraph = nullptr;
-        std::unique_ptr<INode> m_pNode;
         std::unique_ptr<INode2, void (*)(INode2*)> m_upNode2;
         DirtyReason m_dirtyReason = NoDirty;
         bool m_bView = false;

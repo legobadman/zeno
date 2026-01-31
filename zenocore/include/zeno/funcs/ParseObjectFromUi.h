@@ -5,6 +5,6 @@
 
 namespace zeno {
 #if 0
-zany parseHeatmapObj(const std::string& json);
+zany2 parseHeatmapObj(const std::string& json);
 #endif
 }

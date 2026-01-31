@@ -33,6 +33,182 @@
 
 namespace zeno
 {
+    void primTriangulate(PrimitiveObject* prim, bool with_uv, bool has_lines, bool with_attr) {
+        if (prim->polys.size() == 0) {
+            return;
+        }
+        boolean_switch(has_lines, [&](auto has_lines) {
+            std::vector<std::conditional_t<has_lines.value, vec2i, int>> scansum(prim->polys.size());
+            auto redsum = parallel_exclusive_scan_sum(prim->polys.begin(), prim->polys.end(),
+                scansum.begin(), [&](auto& ind) {
+                    if constexpr (has_lines.value) {
+                        return vec2i(ind[1] >= 3 ? ind[1] - 2 : 0, ind[1] == 2 ? 1 : 0);
+                    }
+                    else {
+                        return ind[1] >= 3 ? ind[1] - 2 : 0;
+                    }
+                });
+            std::vector<int> mapping;
+            int tribase = prim->tris.size();
+            int linebase = prim->lines.size();
+            if constexpr (has_lines.value) {
+                prim->tris.resize(tribase + redsum[0]);
+                mapping.resize(tribase + redsum[0]);
+                prim->lines.resize(linebase + redsum[1]);
+            }
+            else {
+                prim->tris.resize(tribase + redsum);
+                mapping.resize(tribase + redsum);
+            }
+
+            if (!(prim->loops.has_attr("uvs") && prim->uvs.size() > 0) || !with_uv) {
+                parallel_for(prim->polys.size(), [&](size_t i) {
+                    auto [start, len] = prim->polys[i];
+
+                    if (len >= 3) {
+                        int scanbase;
+                        if constexpr (has_lines.value) {
+                            scanbase = scansum[i][0] + tribase;
+                        }
+                        else {
+                            scanbase = scansum[i] + tribase;
+                        }
+                        prim->tris[scanbase] = vec3i(
+                            prim->loops[start],
+                            prim->loops[start + 1],
+                            prim->loops[start + 2]);
+                        mapping[scanbase] = i;
+                        scanbase++;
+                        for (int j = 3; j < len; j++) {
+                            prim->tris[scanbase] = vec3i(
+                                prim->loops[start],
+                                prim->loops[start + j - 1],
+                                prim->loops[start + j]);
+                            mapping[scanbase] = i;
+                            scanbase++;
+                        }
+                    }
+                    if constexpr (has_lines.value) {
+                        if (len == 2) {
+                            int scanbase = scansum[i][1] + linebase;
+                            prim->lines[scanbase] = vec2i(
+                                prim->loops[start],
+                                prim->loops[start + 1]);
+                        }
+                    }
+                    });
+
+            }
+            else {
+                auto& loop_uv = prim->loops.attr<int>("uvs");
+                auto& uvs = prim->uvs;
+                auto& uv0 = prim->tris.add_attr<zeno::vec3f>("uv0");
+                auto& uv1 = prim->tris.add_attr<zeno::vec3f>("uv1");
+                auto& uv2 = prim->tris.add_attr<zeno::vec3f>("uv2");
+
+                parallel_for(prim->polys.size(), [&](size_t i) {
+                    auto [start, len] = prim->polys[i];
+
+                    if (len >= 3) {
+                        int scanbase;
+                        if constexpr (has_lines.value) {
+                            scanbase = scansum[i][0] + tribase;
+                        }
+                        else {
+                            scanbase = scansum[i] + tribase;
+                        }
+                        uv0[scanbase] = { uvs[loop_uv[start]][0], uvs[loop_uv[start]][1], 0 };
+                        uv1[scanbase] = { uvs[loop_uv[start + 1]][0], uvs[loop_uv[start + 1]][1], 0 };
+                        uv2[scanbase] = { uvs[loop_uv[start + 2]][0], uvs[loop_uv[start + 2]][1], 0 };
+                        prim->tris[scanbase] = vec3i(
+                            prim->loops[start],
+                            prim->loops[start + 1],
+                            prim->loops[start + 2]);
+                        mapping[scanbase] = i;
+                        scanbase++;
+                        for (int j = 3; j < len; j++) {
+                            uv0[scanbase] = { uvs[loop_uv[start]][0], uvs[loop_uv[start]][1], 0 };
+                            uv1[scanbase] = { uvs[loop_uv[start + j - 1]][0], uvs[loop_uv[start + j - 1]][1], 0 };
+                            uv2[scanbase] = { uvs[loop_uv[start + j]][0], uvs[loop_uv[start + j]][1], 0 };
+                            prim->tris[scanbase] = vec3i(
+                                prim->loops[start],
+                                prim->loops[start + j - 1],
+                                prim->loops[start + j]);
+                            mapping[scanbase] = i;
+                            scanbase++;
+                        }
+                    }
+                    if constexpr (has_lines.value) {
+                        if (len == 2) {
+                            int scanbase = scansum[i][1] + linebase;
+                            prim->lines[scanbase] = vec2i(
+                                prim->loops[start],
+                                prim->loops[start + 1]);
+                        }
+                    }
+                    });
+
+            }
+            if (with_attr) {
+                prim->polys.foreach_attr<AttrAcceptAll>([&](auto const& key, auto& arr) {
+                    using T = std::decay_t<decltype(arr[0])>;
+                    auto& attr = prim->tris.add_attr<T>(key);
+                    for (auto i = tribase; i < attr.size(); i++) {
+                        attr[i] = arr[mapping[i]];
+                    }
+                    });
+            }
+            prim->loops.clear_with_attr();
+            prim->polys.clear_with_attr();
+            prim->uvs.clear_with_attr();
+            });
+    }
+
+    void primTriangulateQuads(PrimitiveObject* prim) {
+        if (prim->quads.size() == 0) {
+            return;
+        }
+        auto base = prim->tris.size();
+        prim->tris.resize(base + prim->quads.size() * 2);
+        bool hasmat = prim->quads.has_attr("matid");
+        if (hasmat == false)
+        {
+            prim->quads.add_attr<int>("matid");
+            prim->quads.attr<int>("matid").assign(prim->quads.size(), -1);
+        }
+
+        if (prim->tris.has_attr("matid")) {
+            prim->tris.attr<int>("matid").resize(base + prim->quads.size() * 2);
+        }
+        else {
+            prim->tris.add_attr<int>("matid");
+        }
+
+
+        for (size_t i = 0; i < prim->quads.size(); i++) {
+            auto quad = prim->quads[i];
+            prim->tris[base + i * 2 + 0] = vec3f(quad[0], quad[1], quad[2]);
+            prim->tris[base + i * 2 + 1] = vec3f(quad[0], quad[2], quad[3]);
+            if (hasmat) {
+                prim->tris.attr<int>("matid")[base + i * 2 + 0] = prim->quads.attr<int>("matid")[i];
+                prim->tris.attr<int>("matid")[base + i * 2 + 1] = prim->quads.attr<int>("matid")[i];
+            }
+            else
+            {
+                prim->tris.attr<int>("matid")[base + i * 2 + 0] = -1;
+                prim->tris.attr<int>("matid")[base + i * 2 + 1] = -1;
+            }
+        }
+        prim->quads.clear();
+    }
+
+    ZENO_API std::pair<vec3f, vec3f> primBoundingBox(PrimitiveObject* prim) {
+        if (!prim->verts.size())
+            return { {0, 0, 0}, {0, 0, 0} };
+        return parallel_reduce_minmax(prim->verts.begin(), prim->verts.end());
+    }
+
+#if 0
     template <class T>
     static void revamp_vector(std::vector<T>& arr, std::vector<int> const& revamp) {
         std::vector<T> newarr(arr.size());
@@ -82,169 +258,7 @@ namespace zeno
         }
     }
 
-    void primTriangulate(PrimitiveObject* prim, bool with_uv, bool has_lines, bool with_attr) {
-        if (prim->polys.size() == 0) {
-            return;
-        }
-        boolean_switch(has_lines, [&] (auto has_lines) {
-            std::vector<std::conditional_t<has_lines.value, vec2i, int>> scansum(prim->polys.size());
-            auto redsum = parallel_exclusive_scan_sum(prim->polys.begin(), prim->polys.end(),
-                                           scansum.begin(), [&] (auto &ind) {
-                                               if constexpr (has_lines.value) {
-                                                   return vec2i(ind[1] >= 3 ? ind[1] - 2 : 0, ind[1] == 2 ? 1 : 0);
-                                               } else {
-                                                   return ind[1] >= 3 ? ind[1] - 2 : 0;
-                                               }
-                                           });
-            std::vector<int> mapping;
-            int tribase = prim->tris.size();
-            int linebase = prim->lines.size();
-            if constexpr (has_lines.value) {
-                prim->tris.resize(tribase + redsum[0]);
-                mapping.resize(tribase + redsum[0]);
-                prim->lines.resize(linebase + redsum[1]);
-            } else {
-                prim->tris.resize(tribase + redsum);
-                mapping.resize(tribase + redsum);
-            }
 
-            if (!(prim->loops.has_attr("uvs") && prim->uvs.size() > 0) || !with_uv) {
-                parallel_for(prim->polys.size(), [&] (size_t i) {
-                    auto [start, len] = prim->polys[i];
-
-                    if (len >= 3) {
-                        int scanbase;
-                        if constexpr (has_lines.value) {
-                            scanbase = scansum[i][0] + tribase;
-                        } else {
-                            scanbase = scansum[i] + tribase;
-                        }
-                        prim->tris[scanbase] = vec3i(
-                                prim->loops[start],
-                                prim->loops[start + 1],
-                                prim->loops[start + 2]);
-                        mapping[scanbase] = i;
-                        scanbase++;
-                        for (int j = 3; j < len; j++) {
-                            prim->tris[scanbase] = vec3i(
-                                    prim->loops[start],
-                                    prim->loops[start + j - 1],
-                                    prim->loops[start + j]);
-                            mapping[scanbase] = i;
-                            scanbase++;
-                        }
-                    }
-                    if constexpr (has_lines.value) {
-                        if (len == 2) {
-                            int scanbase = scansum[i][1] + linebase;
-                            prim->lines[scanbase] = vec2i(
-                                prim->loops[start],
-                                prim->loops[start + 1]);
-                        }
-                    }
-                });
-
-            } else {
-                auto &loop_uv = prim->loops.attr<int>("uvs");
-                auto &uvs = prim->uvs;
-                auto &uv0 = prim->tris.add_attr<zeno::vec3f>("uv0");
-                auto &uv1 = prim->tris.add_attr<zeno::vec3f>("uv1");
-                auto &uv2 = prim->tris.add_attr<zeno::vec3f>("uv2");
-
-                parallel_for(prim->polys.size(), [&] (size_t i) {
-                    auto [start, len] = prim->polys[i];
-
-                    if (len >= 3) {
-                        int scanbase;
-                        if constexpr (has_lines.value) {
-                            scanbase = scansum[i][0] + tribase;
-                        } else {
-                            scanbase = scansum[i] + tribase;
-                        }
-                        uv0[scanbase] = {uvs[loop_uv[start]][0], uvs[loop_uv[start]][1], 0};
-                        uv1[scanbase] = {uvs[loop_uv[start + 1]][0], uvs[loop_uv[start + 1]][1], 0};
-                        uv2[scanbase] = {uvs[loop_uv[start + 2]][0], uvs[loop_uv[start + 2]][1], 0};
-                        prim->tris[scanbase] = vec3i(
-                                prim->loops[start],
-                                prim->loops[start + 1],
-                                prim->loops[start + 2]);
-                        mapping[scanbase] = i;
-                        scanbase++;
-                        for (int j = 3; j < len; j++) {
-                            uv0[scanbase] = {uvs[loop_uv[start]][0], uvs[loop_uv[start]][1], 0};
-                            uv1[scanbase] = {uvs[loop_uv[start + j - 1]][0], uvs[loop_uv[start + j - 1]][1], 0};
-                            uv2[scanbase] = {uvs[loop_uv[start + j]][0], uvs[loop_uv[start + j]][1], 0};
-                            prim->tris[scanbase] = vec3i(
-                                    prim->loops[start],
-                                    prim->loops[start + j - 1],
-                                    prim->loops[start + j]);
-                            mapping[scanbase] = i;
-                            scanbase++;
-                        }
-                    }
-                    if constexpr (has_lines.value) {
-                        if (len == 2) {
-                            int scanbase = scansum[i][1] + linebase;
-                            prim->lines[scanbase] = vec2i(
-                                prim->loops[start],
-                                prim->loops[start + 1]);
-                        }
-                    }
-                });
-
-            }
-            if (with_attr) {
-                prim->polys.foreach_attr<AttrAcceptAll>([&](auto const &key, auto &arr) {
-                  using T = std::decay_t<decltype(arr[0])>;
-                  auto &attr = prim->tris.add_attr<T>(key);
-                  for (auto i = tribase; i < attr.size(); i++) {
-                      attr[i] = arr[mapping[i]];
-                  }
-                });
-            }
-            prim->loops.clear_with_attr();
-            prim->polys.clear_with_attr();
-            prim->uvs.clear_with_attr();
-        });
-    }
-
-    void primTriangulateQuads(PrimitiveObject* prim) {
-        if (prim->quads.size() == 0) {
-            return;
-        }
-        auto base = prim->tris.size();
-        prim->tris.resize(base + prim->quads.size() * 2);
-        bool hasmat = prim->quads.has_attr("matid");
-        if (hasmat == false)
-        {
-            prim->quads.add_attr<int>("matid");
-            prim->quads.attr<int>("matid").assign(prim->quads.size(), -1);
-        }
-
-        if (prim->tris.has_attr("matid")) {
-            prim->tris.attr<int>("matid").resize(base + prim->quads.size() * 2);
-        }
-        else {
-            prim->tris.add_attr<int>("matid");
-        }
-
-
-        for (size_t i = 0; i < prim->quads.size(); i++) {
-            auto quad = prim->quads[i];
-            prim->tris[base + i * 2 + 0] = vec3f(quad[0], quad[1], quad[2]);
-            prim->tris[base + i * 2 + 1] = vec3f(quad[0], quad[2], quad[3]);
-            if (hasmat) {
-                prim->tris.attr<int>("matid")[base + i * 2 + 0] = prim->quads.attr<int>("matid")[i];
-                prim->tris.attr<int>("matid")[base + i * 2 + 1] = prim->quads.attr<int>("matid")[i];
-            }
-            else
-            {
-                prim->tris.attr<int>("matid")[base + i * 2 + 0] = -1;
-                prim->tris.attr<int>("matid")[base + i * 2 + 1] = -1;
-            }
-        }
-        prim->quads.clear();
-    }
 
     zeno::ZsVector<std::unique_ptr<zeno::PrimitiveObject>> get_prims_from_list(zeno::ListObject* spList) {
         zeno::ZsVector<std::unique_ptr<zeno::PrimitiveObject>> vec;
@@ -2317,11 +2331,7 @@ namespace zeno
             });
     }
 
-    ZENO_API std::pair<vec3f, vec3f> primBoundingBox(PrimitiveObject* prim) {
-        if (!prim->verts.size())
-            return { {0, 0, 0}, {0, 0, 0} };
-        return parallel_reduce_minmax(prim->verts.begin(), prim->verts.end());
-    }
+
 
     std::optional<std::pair<vec3f, vec3f>> primBoundingBox2(PrimitiveObject* prim) {
         if (!prim->verts.size())
@@ -3875,5 +3885,5 @@ namespace zeno
             }
         }
     }
-
+#endif
 }

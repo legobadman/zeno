@@ -24,7 +24,7 @@ using namespace zeno::types;
         static _Sclass_registor_##ObjectName static_inst_##ObjectName{};
 
 
-registerObjectTypeHash(IObject, IObject)
+registerObjectTypeHash(IObject2, IObject2)
 registerObjectTypeHash(ListObject, List)
 registerObjectTypeHash(PrimitiveObject, Primitive)
 registerObjectTypeHash(CameraObject, Camera)

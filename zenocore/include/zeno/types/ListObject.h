@@ -1,9 +1,9 @@
 #pragma once
 
 #include <zeno/utils/api.h>
-#include <zeno/core/IObject.h>
-#include <iobject2.h>
+#include <zeno/core/common.h>
 #include <zeno/types/UserData.h>
+#include <set>
 
 namespace zeno {
 
@@ -60,12 +60,12 @@ public:
     size_t get_string_arr(char** buf, size_t cap) const override;
 
     std::vector<IObject2*> get();
-    //void set(const zeno::Vector<zany>& arr);
+    //void set(const zeno::Vector<zany2>& arr);
     void set_obj(size_t index, zany2&& obj);
     bool has_change_info() const;
     bool empty() const;
 
-    template <class T = IObject>
+    template <class T = IObject2>
     std::vector<T*> get() const {
         std::vector<T*> res;
         for (auto const& val : m_objects) {
@@ -74,7 +74,7 @@ public:
         return res;
     }
 
-    template <class T = IObject>
+    template <class T = IObject2>
     std::vector<T*> getRaw() const {
         std::vector<T*> res;
         for (auto const& val : m_objects) {

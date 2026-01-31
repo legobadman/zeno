@@ -24,35 +24,15 @@ namespace zeno {
         ZENO_API INodeClass(CustomUI const& customui, std::string const& classname);
         ZENO_API virtual ~INodeClass();
         virtual std::unique_ptr<NodeImpl> new_instance(Graph* pGraph, std::string const& classname) = 0;
-        virtual std::unique_ptr<INode> new_coreinst() = 0;
-        virtual INode2* new_coreinst2() { return nullptr; }
-    };
-
-    struct ReflectNodeClass : INodeClass {
-        std::function<INode*()> ctor;
-        zeno::reflect::TypeBase* typebase;
-
-        ReflectNodeClass(std::function<INode*()> ctor, std::string const& nodecls, zeno::reflect::TypeBase* pTypeBase);
-        void initCustomUI();
-        std::unique_ptr<NodeImpl> new_instance(Graph* pGraph, std::string const& classname) override;
-        std::unique_ptr<INode> new_coreinst() override;
+        virtual std::unique_ptr<INode2> new_coreinst() = 0;
     };
 
     struct ImplNodeClass : INodeClass {
-        INode*(*ctor)();
-
-        ImplNodeClass(INode*(*ctor)(), CustomUI const& customui, std::string const& name);
-        std::unique_ptr<NodeImpl> new_instance(Graph* pGraph, std::string const& name) override;
-        std::unique_ptr<INode> new_coreinst() override;
-    };
-
-    struct ImplNodeClass2 : INodeClass {
-        INode2* (*ctor)();
+        INode2*(*ctor)();
         void (*dtor)(INode2*);
 
-        ImplNodeClass2(INode2* (*ctor)(), void (*dtor)(INode2*), CustomUI const& customui, std::string const& name);
+        ImplNodeClass(INode2*(*ctor)(), void (*dtor)(INode2*), CustomUI const& customui, std::string const& name);
         std::unique_ptr<NodeImpl> new_instance(Graph* pGraph, std::string const& name) override;
-        std::unique_ptr<INode> new_coreinst() override;
-        INode2* new_coreinst2() override;
+        std::unique_ptr<INode2> new_coreinst() override;
     };
 }

@@ -3,7 +3,7 @@
 #include <zeno/utils/api.h>
 #include <zeno/core/Descriptor.h>
 #include <zeno/core/data.h>
-#include <zeno/core/INode.h>
+#include <inodedata.h>
 #include <memory>
 #include <string>
 #include <atomic>
@@ -23,7 +23,7 @@ struct Session;
 struct NodeImpl;
 struct GlobalVariableManager;
 struct ObjectRecorder;
-struct IObject;
+struct IObject2;
 struct INodeClass;
 struct GlobalState;
 struct GlobalComm;

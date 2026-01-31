@@ -26,7 +26,9 @@ namespace zeno {
         ZObj_List,
         ZObj_SceneAssem,
         ZObj_Material,
+        ZObj_Light,
         ZObj_Camera,
+        ZObj_Dummy,
         ZObj_Define = 1000
     };
 
@@ -94,11 +96,34 @@ namespace zeno {
             Vec4f vec4;
         };
     };
+
+    struct ZFacePoints {
+        Vec3f* points;
+        int size;
+    };
+
+    struct ZFacesPoints {
+        ZFacePoints* facepts;
+        int size;
+    };
+
+    struct ZMat4 {
+        // column-major layout (OpenGL / glm compatible)
+        float c0r0, c0r1, c0r2, c0r3;
+        float c1r0, c1r1, c1r2, c1r3;
+        float c2r0, c2r1, c2r2, c2r3;
+        float c3r0, c3r1, c3r2, c3r3;
+    };
 }
 
 enum NodeType2
 {
     Node_Normal2
+};
+
+struct node_ui_info {
+    /*ret*/char* iconResPath;
+
 };
 
 

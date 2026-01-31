@@ -3,10 +3,11 @@
 #include <zeno/funcs/PrimitiveTools.h>
 #include <zeno/types/UserData.h>
 #include <zeno/para/parallel_reduce.h>
+#include <zeno/utils/interfaceutil.h>
 
 namespace zeno {
 
-ZENO_API bool objectGetBoundingBox(IObject *ptr, vec3f &bmin, vec3f &bmax) {
+ZENO_API bool objectGetBoundingBox(IObject2 *ptr, vec3f &bmin, vec3f &bmax) {
     auto ud = ptr->userData();
     if (ud->has("_bboxMin") && ud->has("_bboxMax")) {
         bmin = toVec3f(ud->get_vec3f("_bboxMin"));
@@ -29,7 +30,7 @@ ZENO_API bool objectGetBoundingBox(IObject *ptr, vec3f &bmin, vec3f &bmax) {
 }
 
 
-ZENO_API bool objectGetFocusCenterRadius(IObject *ptr, vec3f &center, float &radius) {
+ZENO_API bool objectGetFocusCenterRadius(IObject2 *ptr, vec3f &center, float &radius) {
     vec3f bmin, bmax;
     if (!objectGetBoundingBox(ptr, bmin, bmax))
         return false;

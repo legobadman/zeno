@@ -1,7 +1,7 @@
 #pragma once
 
 #include <zeno/core/common.h>
-#include <zeno/core/IObject.h>
+#include <iobject2.h>
 #include <zeno/core/data.h>
 #include <zeno/utils/Error.h>
 #include <mutex>

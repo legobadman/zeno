@@ -5,7 +5,7 @@
 namespace zeno {
 
 #if 0
-zany parseHeatmapObj(const std::string& json)
+zany2 parseHeatmapObj(const std::string& json)
 {
     auto heatmap = std::make_shared<zeno::HeatmapObject>();
     rapidjson::Document doc;

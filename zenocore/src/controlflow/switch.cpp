@@ -5,19 +5,21 @@
 
 namespace zeno
 {
-    struct Switch : INode
+    struct Switch : INode2
     {
-        void apply() override {
-            auto input_objects = get_input_ListObject("Input Objects");
+        void apply(INodeData* pNodeData) override {
+            auto input_objects = pNodeData->get_input_ListObject("Input Objects");
             if (!input_objects) {
                 throw makeError<UnimplError>("no input objects on Switch");
             }
-            int switch_num = get_input2_int("Switch Number");
+            int switch_num = pNodeData->get_input2_int("Switch Number");
             int n = input_objects->size();
             int clip_switch = std::min(n - 1, std::max(0, switch_num));
             auto obj = input_objects->get(clip_switch);
-            set_output("Output Object", obj->clone());
+            pNodeData->set_output_object("Output Object", obj->clone());
         }
+
+        DEF_OVERRIDE_FOR_INODE
     };
 
     ZENDEFNODE(Switch,
@@ -33,17 +35,11 @@ namespace zeno
         {"reflect"}
     });
 
-    struct NumericIf : INode
+    struct NumericIf : INode2
     {
-        CustomUI export_customui() const override {
-            CustomUI ui = INode::export_customui();
-            ui.uistyle.iconResPath = ":/icons/node/switchif.svg";
-            ui.uistyle.background = "#CEFFB3";
-            return ui;
-        }
-
-        void apply() override {
-            int cond = get_input2_int("Condition");
+        void apply(INodeData* pNodeData) override {
+            NodeImpl* m_pAdapter = static_cast<NodeImpl*>(pNodeData);
+            int cond = m_pAdapter->get_input2_int("Condition");
             if (cond != 0) {
                 m_pAdapter->set_primitive_output("Output", m_pAdapter->get_param_result("If True"));
             }
@@ -51,6 +47,20 @@ namespace zeno
                 m_pAdapter->set_primitive_output("Output", m_pAdapter->get_param_result("If False"));
             }
         }
+
+        NodeType type() const { return Node_Normal; }
+        void clearCalcResults() {}
+        void getIconResource(char* recv, size_t cap) {
+            const char* icon = ":/icons/node/switchif.svg";
+            strcpy(recv, icon);
+            recv[strlen(icon)] = '\0';
+        }
+        void getBackgroundClr(char* recv, size_t cap) {
+            const char* bg = "#CEFFB3";
+            strcpy(recv, bg);
+            recv[strlen(bg)] = '\0';
+        }
+        float time() const { return 1.0f; }
     };
 
     ZENDEFNODE(NumericIf,
@@ -68,111 +78,129 @@ namespace zeno
     });
 
 
-    struct SwitchIf : INode
+    struct SwitchIf : INode2
     {
-        CustomUI export_customui() const override {
-            CustomUI ui = INode::export_customui();
-            ui.uistyle.iconResPath = ":/icons/node/switchif.svg";
-            ui.uistyle.background = "#CEFFB3";
-            return ui;
-        }
-
-        void apply() override {
-            int cond = get_input2_int("Condition");
+        void apply(INodeData* _pNodeData) override {
+            NodeImpl* pNodeData = static_cast<NodeImpl*>(_pNodeData);
+            int cond = pNodeData->get_input2_int("Condition");
             if (cond != 0) {
-                set_output("Output", clone_input("If True"));
+                pNodeData->set_output("Output", pNodeData->clone_input("If True"));
             }
             else {
-                set_output("Output", clone_input("If False"));
+                pNodeData->set_output("Output", pNodeData->clone_input("If False"));
             }
         }
+
+        NodeType type() const { return Node_Normal; }
+        void clearCalcResults() {}
+        void getIconResource(char* recv, size_t cap) {
+            const char* icon = ":/icons/node/switchif.svg";
+            strcpy(recv, icon);
+            recv[strlen(icon)] = '\0';
+        }
+        void getBackgroundClr(char* recv, size_t cap) {
+            const char* bg = "#CEFFB3";
+            strcpy(recv, bg);
+            recv[strlen(bg)] = '\0';
+        }
+        float time() const { return 1.0f; }
     };
 
     ZENDEFNODE(SwitchIf,
     {
         {
-            {gParamType_IObject, "If False"},
-            {gParamType_IObject, "If True"},
+            {gParamType_IObject2, "If False"},
+            {gParamType_IObject2, "If True"},
             {gParamType_Int, "Condition"}
         },
         {
-            {gParamType_IObject, "Output"}
+            {gParamType_IObject2, "Output"}
         },
         {},
         {"flow"}
     });
 
-    struct SwitchBetween : INode
+    struct SwitchBetween : INode2
     {
-        CustomUI export_customui() const override {
-            CustomUI ui = INode::export_customui();
-            ui.uistyle.iconResPath = ":/icons/node/switch-between.svg";
-            ui.uistyle.background = "#CEFFB3";
-            return ui;
-        }
-
-        void apply() override {
-            int cond = get_input2_int("cond1");
+        void apply(INodeData* _pNodeData) override {
+            NodeImpl* pNodeData = static_cast<NodeImpl*>(_pNodeData);
+            int cond = pNodeData->get_input2_int("cond1");
             if (cond != 0) {
-                set_output("Output", clone_input("b1"));
+                pNodeData->set_output("Output", pNodeData->clone_input("b1"));
                 return;
             }
 
-            cond = get_input2_int("cond2");
+            cond = pNodeData->get_input2_int("cond2");
             if (cond != 0) {
-                set_output("Output", clone_input("b2"));
+                pNodeData->set_output("Output", pNodeData->clone_input("b2"));
                 return;
             }
 
-            cond = get_input2_int("cond3");
+            cond = pNodeData->get_input2_int("cond3");
             if (cond != 0) {
-                set_output("Output", clone_input("b3"));
+                pNodeData->set_output("Output", pNodeData->clone_input("b3"));
                 return;
             }
 
-            cond = get_input2_int("cond4");
+            cond = pNodeData->get_input2_int("cond4");
             if (cond != 0) {
-                set_output("Output", clone_input("b4"));
+                pNodeData->set_output("Output", pNodeData->clone_input("b4"));
                 return;
             }
 
-            cond = get_input2_int("cond5");
+            cond = pNodeData->get_input2_int("cond5");
             if (cond != 0) {
-                set_output("Output", clone_input("b5"));
+                pNodeData->set_output("Output", pNodeData->clone_input("b5"));
                 return;
             }
 
-            cond = get_input2_int("cond6");
+            cond = pNodeData->get_input2_int("cond6");
             if (cond != 0) {
-                set_output("Output", clone_input("b6"));
+                pNodeData->set_output("Output", pNodeData->clone_input("b6"));
                 return;
             }
 
-            cond = get_input2_int("cond7");
+            cond = pNodeData->get_input2_int("cond7");
             if (cond != 0) {
-                set_output("Output", clone_input("b7"));
+                pNodeData->set_output("Output", pNodeData->clone_input("b7"));
                 return;
             }
 
-            cond = get_input2_int("cond8");
+            cond = pNodeData->get_input2_int("cond8");
             if (cond != 0) {
-                set_output("Output", clone_input("b8"));
+                pNodeData->set_output("Output", pNodeData->clone_input("b8"));
                 return;
             }
         }
+
+        NodeType type() const {
+            return Node_SubgraphNode;
+        }
+        void clearCalcResults() {}
+        void getIconResource(char* recv, size_t cap) {
+            const char* icon = ":/icons/node/switch-between.svg";
+            strcpy(recv, icon);
+            recv[strlen(icon)] = '\0';
+        }
+        void getBackgroundClr(char* recv, size_t cap) {
+            const char* bg = "#CEFFB3";
+            strcpy(recv, bg);
+            recv[strlen(bg)] = '\0';
+        }
+        float time() const { return 1.0f; }
     };
 
     ZENDEFNODE(SwitchBetween,
     {
         {
-            {gParamType_IObject, "b1"},
-            {gParamType_IObject, "b2"},
-            {gParamType_IObject, "b3"},
-            {gParamType_IObject, "b4"},
-            {gParamType_IObject, "b5"},
-            {gParamType_IObject, "b6"},
-            {gParamType_IObject, "b7"},
-            {gParamType_IObject, "b8"},
+            {gParamType_IObject2, "b1"},
+            {gParamType_IObject2, "b2"},
+            {gParamType_IObject2, "b3"},
+            {gParamType_IObject2, "b4"},
+            {gParamType_IObject2, "b5"},
+            {gParamType_IObject2, "b6"},
+            {gParamType_IObject2, "b7"},
+            {gParamType_IObject2, "b8"},
             {gParamType_Int, "cond1", "0"},
             {gParamType_Int, "cond2", "0"},
             {gParamType_Int, "cond3", "0"},
@@ -183,7 +211,7 @@ namespace zeno
             {gParamType_Int, "cond8", "0"},
         },
         {
-            {gParamType_IObject, "Output"}
+            {gParamType_IObject2, "Output"}
         },
         {},
         {"flow"}

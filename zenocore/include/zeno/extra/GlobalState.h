@@ -11,7 +11,7 @@
 
 namespace zeno {
 
-struct IObject;
+struct IObject2;
 
 enum CalcObjStatus
 {

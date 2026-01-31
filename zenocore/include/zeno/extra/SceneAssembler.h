@@ -29,7 +29,7 @@ struct SceneTreeNode {
     int visibility = 1;
 };
 
-struct SceneObject : IObject {
+struct SceneObject : IObject2 {
     std::unordered_map <std::string, SceneTreeNode> scene_tree;
     std::unordered_map <std::string, std::vector<glm::mat4>> node_to_matrix;
     std::unordered_map <std::string, std::vector<int>> node_to_id;
@@ -39,7 +39,7 @@ struct SceneObject : IObject {
     bool bNeedUpdateDescriptor = true;  //update descriptor目前和updatemesh是等价的。
     bool bResetOptixScene = false;      //zeno3无法不断更新Mesh，cuda会报不知名的异常，只能重新清理场景
 
-    zany clone() const override {
+    zany2 clone() const override {
         auto newSceneObj = std::make_unique<SceneObject>();
         newSceneObj->m_key = m_key;
         newSceneObj->scene_tree = scene_tree;

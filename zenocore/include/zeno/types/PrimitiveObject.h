@@ -1,6 +1,6 @@
 #pragma once
 
-#include <zeno/core/IObject.h>
+#include <iobject2.h>
 #include <zeno/core/Session.h>
 #include <zeno/types/AttrVector.h>
 #include <zeno/utils/type_traits.h>

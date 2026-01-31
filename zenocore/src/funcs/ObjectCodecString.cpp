@@ -9,9 +9,9 @@ namespace zeno {
 
 namespace _implObjectCodec {
 
-std::shared_ptr<MaterialObject> decodeMaterialObject(const char *it);
-std::shared_ptr<MaterialObject> decodeMaterialObject(const char *it) {
-    auto mtl = std::make_shared<MaterialObject>();
+std::unique_ptr<MaterialObject> decodeMaterialObject(const char *it);
+std::unique_ptr<MaterialObject> decodeMaterialObject(const char *it) {
+    auto mtl = std::make_unique<MaterialObject>();
     mtl->deserialize(it);
     return mtl;
 }
@@ -23,9 +23,9 @@ bool encodeMaterialObject(MaterialObject const *obj, std::back_insert_iterator<s
     return true;
 }
 
-std::shared_ptr<DummyObject> decodeDummyObject(const char *it);
-std::shared_ptr<DummyObject> decodeDummyObject(const char *it) {
-    return std::make_shared<DummyObject>();
+std::unique_ptr<DummyObject> decodeDummyObject(const char *it);
+std::unique_ptr<DummyObject> decodeDummyObject(const char *it) {
+    return std::make_unique<DummyObject>();
 }
 
 bool encodeDummyObject(DummyObject const *obj, std::back_insert_iterator<std::vector<char>> it);

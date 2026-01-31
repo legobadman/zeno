@@ -88,7 +88,7 @@ namespace zeno {
                     param.wildCardGroup = param_desc.wildCard;
 
                     //dict和list允许多连接口，且不限定对象类型（但只能是对象，暂不接收primitive，否则就违反了对象和primitive分开连的设计了）
-                    if (type == gParamType_Dict || type == gParamType_List) {
+                    if (type == gParamType_List) {
                         param.sockProp = Socket_MultiInput;
                     }
                     else {
@@ -192,7 +192,8 @@ namespace zeno {
     }
 
 	int NodeRegister::registerNodeClass(
-		INode* (*ctor)(),
+		INode2* (*ctor)(),
+        void (*dtor)(INode2*),
 		std::string const& clsname,
 		Descriptor const& desc)
 	{
@@ -202,7 +203,7 @@ namespace zeno {
         }
 
         CustomUI ui = descToCustomui(desc);
-        auto cls = std::make_unique<ImplNodeClass>(ctor, ui, clsname);
+        auto cls = std::make_unique<ImplNodeClass>(ctor, dtor, ui, clsname);
         if (!clsname.empty() && clsname.front() == '^')
             return -1;
 
@@ -218,7 +219,8 @@ namespace zeno {
 	}
 
 	int NodeRegister::registerNodeClass(
-		INode* (*ctor)(),
+		INode2* (*ctor)(),
+        void (*dtor)(INode2*),
 		std::string const& nodecls,
 		CustomUI const& customui)
 	{
@@ -228,7 +230,7 @@ namespace zeno {
         }
         CustomUI ui = customui;
         initControlsByType(ui);
-        auto cls = std::make_unique<ImplNodeClass>(ctor, ui, nodecls);
+        auto cls = std::make_unique<ImplNodeClass>(ctor, dtor, ui, nodecls);
 
         NodeInfo info;
         info.module_path = m_current_loading_module;
@@ -296,7 +298,7 @@ namespace zeno {
             stddesc.categories.push_back(std::string(desc.cate));
 
         CustomUI ui = descToCustomui(stddesc);
-        auto cls = std::make_unique<ImplNodeClass2>(ctor, dtor, ui, nodecls);
+        auto cls = std::make_unique<ImplNodeClass>(ctor, dtor, ui, nodecls);
 
         NodeInfo info;
         info.module_path = m_current_loading_module;

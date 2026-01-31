@@ -1,7 +1,7 @@
 #pragma once
 
 #include <zeno/utils/api.h>
-#include <zeno/core/IObject.h>
+#include <iobject2.h>
 #include <zeno/core/data.h>
 #include <zeno/core/NodeImpl.h>
 #include <zeno/utils/safe_dynamic_cast.h>
@@ -120,13 +120,13 @@ struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
         std::string const &sn, std::string const &ss);
 
     //容易有歧义：这个input是defl value，还是实质的对象？按原来zeno的语义，是指defl value
-    void setNodeInput(std::string const &id, std::string const &par, zany const &val);
+    void setNodeInput(std::string const &id, std::string const &par, zany2 const &val);
 
-    void setKeyFrame(std::string const &id, std::string const &par, zany const &val);
-    void setFormula(std::string const &id, std::string const &par, zany const &val);
+    void setKeyFrame(std::string const &id, std::string const &par, zany2 const &val);
+    void setFormula(std::string const &id, std::string const &par, zany2 const &val);
     void addNodeOutput(std::string const &id, std::string const &par);
-    std::map<std::string, zany> callSubnetNode(std::string const &id,
-            std::map<std::string, zany> inputs) const;
+    std::map<std::string, zany2> callSubnetNode(std::string const &id,
+            std::map<std::string, zany2> inputs) const;
 
     std::set<std::string> getSubInputs();
     std::set<std::string> getSubOutputs();

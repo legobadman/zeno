@@ -5,7 +5,7 @@
 #include <zeno/core/data.h>
 #include <zeno/core/coredata.h>
 #include <zeno/utils/string.h>
-#include <zeno/core/IObject.h>
+#include <iobject2.h>
 #include <zeno/utils/log.h>
 #include <zeno/core/CoreParam.h>
 #include <zeno/core/reflectdef.h>
@@ -38,14 +38,13 @@ namespace zeno {
     ZENO_API std::string getControlDesc(zeno::ParamControl ctrl, zeno::ParamType type);
     ZENO_API zeno::ParamControl getDefaultControl(const zeno::ParamType type);
     ZENO_API std::string editVariantToStr(const PrimVar& var);
-    ZENO_API std::vector<zany> fromZenCache(const std::string& cachedir, int frameid);
+    ZENO_API std::vector<zany2> fromZenCache(const std::string& cachedir, int frameid);
     ZENO_API std::wstring s2ws();
     ZENO_API void merge_json(nlohmann::json& target, const nlohmann::json& source);
     bool isEqual(const zvariant& lhs, const zvariant& rhs, ParamType const type);
-    zany strToZAny(std::string const& defl, ParamType const& type);
     EdgeInfo getEdgeInfo(std::shared_ptr<ObjectLink> spLink);
     EdgeInfo getEdgeInfo(std::shared_ptr<PrimitiveLink> spLink);
-    std::string generateObjKey(std::shared_ptr<IObject> spObject);
+    std::string generateObjKey(std::shared_ptr<IObject2> spObject);
     std::string uniqueName(std::string prefix, std::set<std::string> existing);
     ZENO_API std::string objPathToStr(ObjPath path);
     ObjPath strToObjPath(const std::string& str);
@@ -100,7 +99,7 @@ namespace zeno {
     void add_prefix_key(IObject2* pObject, const std::string& prefix);
     ZENO_API std::vector<std::string> get_obj_paths(IObject2* pObject);
 
-    ZENO_API zany readObjCache(const std::string& file_path);
+    ZENO_API zany2 readObjCache(const std::string& file_path);
     ZENO_API void writeObjCache(const std::string& file_path, IObject2* pObject);
 
     AttrVar abiAnyToAttrVar(const zeno::reflect::Any& anyval);

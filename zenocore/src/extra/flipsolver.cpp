@@ -33,7 +33,7 @@ namespace zeno {
     FlipSolver::~FlipSolver() {
         //TODO：如果进程没退出，需要发送终止信号
         terminate_solve();
-        clear_cache();
+        //clear_cache();  没法传
     }
 
     NodeType FlipSolver::type() const {
@@ -58,8 +58,8 @@ namespace zeno {
         m_hJob = INVALID_HANDLE_VALUE;
     }
 
-    void FlipSolver::objs_cleaned() {
-        clear_cache();
+    void FlipSolver::objs_cleaned(NodeImpl* m_pAdapter) {
+        clear_cache(m_pAdapter);
     }
 
     void FlipSolver::CloseIPCHandles() {
@@ -98,12 +98,12 @@ namespace zeno {
 #endif
     }
 
-    zany FlipSolver::checkCache(std::string cache_path, int frame) {
+    zany2 FlipSolver::checkCache(std::string cache_path, int frame) {
         //checkResult的作用是：无论解算器处在什么样的状态，检查当前全局的时间帧，如果cache_path有缓存且合法的cache，
         //就作为当前节点的输出。
-        std::vector<zany> objs = zeno::fromZenCache(cache_path, frame);
+        std::vector<zany2> objs = zeno::fromZenCache(cache_path, frame);
         if (objs.size() > 0) {
-            zany output = (*objs.begin())->clone();
+            zany2 output((*objs.begin())->clone());
             return output;
         }
 
@@ -118,7 +118,7 @@ namespace zeno {
         return nullptr;
     }
 
-    std::string FlipSolver::get_cachepath() const {
+    std::string FlipSolver::get_cachepath(NodeImpl* m_pAdapter) const {
         const ParamPrimitive& param = m_pAdapter->get_input_prim_param("Cache Path");
         std::string cachepath;
         if (param.result.has_value()) {
@@ -130,8 +130,8 @@ namespace zeno {
         return cachepath;
     }
 
-    void FlipSolver::clear_cache() const {
-        const std::string& path = get_cachepath();
+    void FlipSolver::clear_cache(NodeImpl* m_pAdapter) const {
+        const std::string& path = get_cachepath(m_pAdapter);
         std::filesystem::path dirToRemove = std::filesystem::u8path(path);
         if (std::filesystem::exists(dirToRemove) && path.find(".") == std::string::npos)
         {
@@ -149,37 +149,38 @@ namespace zeno {
         }
     }
 
-    void FlipSolver::on_dirty_changed(bool bOn, DirtyReason reason, bool bWholeSubnet, bool bRecursively) {
+    void FlipSolver::on_dirty_changed(NodeImpl* m_pAdapter, bool bOn, DirtyReason reason, bool bWholeSubnet, bool bRecursively) {
         if (reason != Dirty_FrameChanged) {
             //清空所有cache.
-            clear_cache();
+            clear_cache(m_pAdapter);
         }
     }
 
-    void FlipSolver::apply() {
-        auto init_fluid = get_input_Geometry("Initialize Fluid");
-        auto static_collider = get_input_Geometry("Static Collider");
-        zany emission_source = clone_input("Emission Source");
-        float accuracy = get_input2_float("Accuracy");
-        float timestep = get_input2_float("Timestep");
-        float max_substep = get_input2_float("Max Substep");
-        zeno::vec3f gravity = toVec3f(get_input2_vec3f("Gravity"));
-        zeno::vec3f emission = toVec3f(get_input2_vec3f("Emission Velocity"));
-        bool is_emission = get_input2_bool("Is Emission");
-        float dynamic_collide_strength = get_input2_float("Dynamic Collide Strength");
-        float density = get_input2_float("Density");
-        float surface_tension = get_input2_float("Surface Tension");
-        float viscosity = get_input2_float("Viscosity");
-        float wall_viscosity = get_input2_float("Wall Viscosity");
-        float wall_viscosityRange = get_input2_float("Wall Viscosity Range");
-        int curve_endframe = get_input2_int("Curve Endframe");
-        float curve_range = get_input2_float("Curve Range");
-        float preview_size = get_input2_float("Preview Size");
-        float preview_minVelocity = get_input2_float("Preview Minimum Velocity");
-        float preview_maxVelocity = get_input2_float("Preview Maximum Velocity");
-        std::string cache_path = zsString2Std(get_input2_string("Cache Path"));
-        int start_frame = get_input2_int("Begin Frame");
-        int end_frame = get_input2_int("End Frame");
+    void FlipSolver::apply(INodeData* pNodeData) {
+        NodeImpl* m_pAdapter = static_cast<NodeImpl*>(pNodeData);
+        auto init_fluid = static_cast<GeometryObject*>(m_pAdapter->get_input_Geometry("Initialize Fluid"));
+        auto static_collider = static_cast<GeometryObject*>(m_pAdapter->get_input_Geometry("Static Collider"));
+        zany2 emission_source = m_pAdapter->clone_input("Emission Source");
+        float accuracy = m_pAdapter->get_input2_float("Accuracy");
+        float timestep = m_pAdapter->get_input2_float("Timestep");
+        float max_substep = m_pAdapter->get_input2_float("Max Substep");
+        zeno::vec3f gravity = toVec3f(m_pAdapter->get_input2_vec3f("Gravity"));
+        zeno::vec3f emission = toVec3f(m_pAdapter->get_input2_vec3f("Emission Velocity"));
+        bool is_emission = m_pAdapter->get_input2_bool("Is Emission");
+        float dynamic_collide_strength = m_pAdapter->get_input2_float("Dynamic Collide Strength");
+        float density = m_pAdapter->get_input2_float("Density");
+        float surface_tension = m_pAdapter->get_input2_float("Surface Tension");
+        float viscosity = m_pAdapter->get_input2_float("Viscosity");
+        float wall_viscosity = m_pAdapter->get_input2_float("Wall Viscosity");
+        float wall_viscosityRange = m_pAdapter->get_input2_float("Wall Viscosity Range");
+        int curve_endframe = m_pAdapter->get_input2_int("Curve Endframe");
+        float curve_range = m_pAdapter->get_input2_float("Curve Range");
+        float preview_size = m_pAdapter->get_input2_float("Preview Size");
+        float preview_minVelocity = m_pAdapter->get_input2_float("Preview Minimum Velocity");
+        float preview_maxVelocity = m_pAdapter->get_input2_float("Preview Maximum Velocity");
+        std::string cache_path = m_pAdapter->get_input2_string("Cache Path");
+        int start_frame = m_pAdapter->get_input2_int("Begin Frame");
+        int end_frame = m_pAdapter->get_input2_int("End Frame");
 
         if (!init_fluid || !static_collider) {
             throw makeError<UnimplError>("need init fluid and static collider");
@@ -206,18 +207,18 @@ namespace zeno {
                     !CreatePipe(&m_hPipe_solver_read, &m_hPipe_main_write, &sa, 0)) {
                     //throw
                     zeno::log_error("CreatePipe failed");
-                    set_output("Output", nullptr);
+                    m_pAdapter->set_output("Output", nullptr);
                     return;
                 }
 
                 m_hReadPipeEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
 
                 std::vector<char> buf_initfluid, buf_static_collider;
-                bool bConvert = encodeObject(init_fluid->toPrimitiveObject().get(), buf_initfluid);
+                bool bConvert = encodeObject(init_fluid->toPrimitive().get(), buf_initfluid);
                 if (!bConvert) {
                     throw makeError<UnimplError>("init fluid encoding failed");
                 }
-                bConvert = encodeObject(static_collider->toPrimitiveObject().get(), buf_static_collider);
+                bConvert = encodeObject(static_collider->toPrimitive().get(), buf_static_collider);
                 if (!bConvert) {
                     throw makeError<UnimplError>("static collider encoding failed");
                 }
@@ -234,7 +235,7 @@ namespace zeno {
                 );
                 if (m_shm_initFluid == NULL) {
                     zeno::log_error("CreateFileMapping for init fluid failed, error: {}", GetLastError());
-                    set_output("Output", nullptr);
+                    m_pAdapter->set_output("Output", nullptr);
                     return;
                 }
 
@@ -249,7 +250,7 @@ namespace zeno {
                 );
                 if (m_shm_staticCollider == NULL) {
                     zeno::log_error("CreateFileMapping for static collider failed, error: {}", GetLastError());
-                    set_output("Output", nullptr);
+                    m_pAdapter->set_output("Output", nullptr);
                     return;
                 }
 
@@ -273,7 +274,7 @@ namespace zeno {
                 auto cmdargs = zeno::format("C:/zensolver/Debug/bin/zensolver.exe --pipe-write {} --pipe-read {} --cache-path \"{}\" --start-frame {} --end-frame {}  --init-fluid \"{}\" --size-init-fluid \"{}\" --static-collider \"{}\" --size-static-collider \"{}\"",
                     (unsigned long long)m_hPipe_sovler_write, (unsigned long long)m_hPipe_solver_read, cache_path, start_frame, end_frame, shm_initname, shm_initfluid_size, shm_staiccoll_name, shm_staticcoll_size);
 
-                zeno::getSession().set_solver(this->m_pAdapter->get_uuid_path());
+                zeno::getSession().set_solver(m_pAdapter->get_uuid_path());
 
                 m_hJob = CreateJobObject(NULL, NULL);
                 JOBOBJECT_EXTENDED_LIMIT_INFORMATION jobInfo = {};
@@ -306,7 +307,7 @@ namespace zeno {
                 }
                 else {
                     zeno::log_error("CreateProcess failed");
-                    set_output("Output", nullptr);
+                    m_pAdapter->set_output("Output", nullptr);
                     return;
                 }
 
@@ -328,17 +329,10 @@ namespace zeno {
         }
         else {
             //也有一种可能，就是有cache，但解算器只是跑了一部分帧，剩下的需要用户主动触发时间轴更新，然后重新跑
-            set_output("Output", std::move(spRes));
+            m_pAdapter->set_output("Output", std::move(spRes));
             return;
         }
-        set_output("Output", nullptr);
-    }
-
-    CustomUI FlipSolver::export_customui() const {
-        CustomUI ui = INode::export_customui();
-        ui.uistyle.background = "#246283";
-        ui.uistyle.iconResPath = ":/icons/node/fluid.svg";
-        return ui;
+        m_pAdapter->set_output("Output", nullptr);
     }
 
     HANDLE FlipSolver::get_pipe_read() const {
@@ -361,7 +355,7 @@ namespace zeno {
         zeno::ObjectParams{
              zeno::ParamObject("Initialize Fluid", gParamType_Geometry),
              zeno::ParamObject("Static Collider", gParamType_Geometry),
-             zeno::ParamObject("Emission Source", gParamType_IObject),
+             zeno::ParamObject("Emission Source", gParamType_IObject2),
         },
         zeno::CustomUIParams{
             ParamTab {
@@ -410,7 +404,7 @@ namespace zeno {
         zeno::PrimitiveParams{},
         /*output objects:*/
         zeno::ObjectParams{
-            zeno::ParamObject("Output", gParamType_IObject)
+            zeno::ParamObject("Output", gParamType_IObject2)
         },
         NodeUIStyle{ "", "" },
         "create",     //category

@@ -100,7 +100,7 @@ namespace zeno
     }
 
     std::vector<vec3i> IndiceMeshTopology::tri_indice() const {
-        auto clonePrim = m_indiceMesh_topo->clone();
+        auto clonePrim = zany2(m_indiceMesh_topo->clone());
         if (auto pPrim = dynamic_cast<PrimitiveObject*>(clonePrim.get())) {
             if (is_base_triangle()) {
                 return pPrim->tris;

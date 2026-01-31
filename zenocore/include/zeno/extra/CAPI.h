@@ -165,9 +165,9 @@ public:
 
 extern LUT<zeno::Session> lutSession;
 extern LUT<zeno::Graph> lutGraph;
-extern LUT<zeno::IObject> lutObject;
+extern LUT<zeno::IObject2> lutObject;
 extern LastError lastError;
-extern std::map<std::string, std::shared_ptr<zeno::IObject>> tempNodeRes;
+extern std::map<std::string, std::shared_ptr<zeno::IObject2>> tempNodeRes;
 extern std::shared_ptr<zeno::Graph> currentGraph;
 
 static auto &getObjFactory() {

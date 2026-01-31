@@ -89,6 +89,10 @@ namespace zeno
 		return stdStr2charArr(str, ret, cap);
 	}
 
+	std::string NodeImpl::get_input2_string(const std::string& param) {
+		return any_cast<std::string>(get_param_result(std::string(param)));
+	}
+
 	bool NodeImpl::get_input2_bool(const char* param) {
 		return any_cast<bool>(get_param_result(std::string(param)));
 	}

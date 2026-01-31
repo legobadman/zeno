@@ -1,6 +1,6 @@
 #pragma once
 
-#include <zeno/core/IObject.h>
+#include <iobject2.h>
 #include <zeno/utils/vec.h>
 #include <zeno/utils/orthonormal.h>
 

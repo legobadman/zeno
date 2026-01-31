@@ -1,7 +1,7 @@
 #pragma once
 
 #include <zeno/utils/api.h>
-#include <zeno/core/IObject.h>
+#include <iobject2.h>
 #include <zeno/utils/safe_dynamic_cast.h>
 #include <zeno/funcs/ObjectCodec.h>
 #include <set>

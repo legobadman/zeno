@@ -5,8 +5,6 @@
 #include <zeno/core/Assets.h>
 #include <zeno/core/INodeClass.h>
 #include <zeno/types/DummyObject.h>
-#include <zeno/types/NumericObject.h>
-#include <zeno/types/StringObject.h>
 #include <zeno/extra/GlobalState.h>
 #include <zeno/extra/DirtyChecker.h>
 #include <zeno/extra/foreach.h>
@@ -16,7 +14,7 @@
 #ifdef ZENO_BENCHMARKING
 #include <zeno/utils/Timer.h>
 #endif
-#include <zeno/core/IObject.h>
+#include <iobject2.h>
 #include <zeno/utils/safe_at.h>
 #include <zeno/utils/logger.h>
 #include <zeno/utils/uuid.h>
@@ -35,7 +33,6 @@
 #include <zeno/types/ListObject.h>
 #include <zeno/types/ListObject_impl.h>
 #include <zeno/types/MeshObject.h>
-#include <zeno/types/MatrixObject.h>
 #include "zeno_types/reflect/reflection.generated.hpp"
 #include <zeno/core/reflectdef.h>
 #include <zeno/formula/zfxexecute.h>
@@ -54,23 +51,6 @@ using namespace zeno::types;
 namespace zeno {
 
     class ForEachEnd;
-
-NodeImpl::NodeImpl(INode* pNode)
-    : m_pNode(pNode)
-    , m_upNode2(nullptr, nullptr)
-{
-    if (m_pNode)
-        m_pNode->m_pAdapter = this;
-
-    if (m_nodecls == "FrameCache") {
-        //有可能上一次已经缓存了内容，如果我们允许上一次的缓存留下来的话，就可以标为FrameChanged
-        //那就意味着，如果想清理缓存，只能让用户手动清理，因为机制不好理解什么时候缓存失效
-        m_dirtyReason = Dirty_FrameChanged;
-    }
-    else {
-        m_dirtyReason = Dirty_All;
-    }
-}
 
 NodeImpl::NodeImpl(INode2* pNode, void (*dtor)(INode2*))
     : m_upNode2(pNode, dtor)
@@ -91,10 +71,7 @@ NodeImpl::~NodeImpl() {
 }
 
 NodeType NodeImpl::nodeType() const {
-    if (m_pNode) {
-        return m_pNode->type();
-    }
-    else if (m_upNode2) {
+    if (m_upNode2) {
         return m_upNode2->type();
     }
     else {
@@ -196,8 +173,8 @@ Graph* NodeImpl::getGraph() const {
     return m_pGraph;
 }
 
-INode* NodeImpl::coreNode() const {
-    return m_pNode.get();
+INode2* NodeImpl::coreNode() const {
+    return m_upNode2.get();
 }
 
 ObjPath NodeImpl::get_graph_path() const {
@@ -269,18 +246,17 @@ CustomUI NodeImpl::_deflCustomUI() const {
 CustomUI NodeImpl::export_customui() const
 {
     CustomUI deflUI = _deflCustomUI();
-    INode* pNode = coreNode();
+    INode2* pNode = coreNode();
     if (pNode) {
-        CustomUI nodeui = pNode->export_customui();
-        if (nodeui.inputObjs.empty() && nodeui.inputPrims.empty() &&
-            nodeui.outputPrims.empty() && nodeui.outputObjs.empty()) {
-            if (nodeui.uistyle.background != "" || nodeui.uistyle.iconResPath != "") {
-                deflUI.uistyle = nodeui.uistyle;
-            }
-            return deflUI;
-        }
-        else {
-            return nodeui;
+        char icon[1024];
+        pNode->getIconResource(icon, sizeof(icon));
+        char background[1024];
+        pNode->getBackgroundClr(background, sizeof(background));
+        std::string sIcon(icon);
+        std::string sBg(icon);
+        if (!sIcon.empty() || !sBg.empty()) {
+            deflUI.uistyle.background = sBg;
+            deflUI.uistyle.iconResPath = sIcon;
         }
     }
     return deflUI;
@@ -997,13 +973,15 @@ void NodeImpl::foreachend_apply(CalcContext* pContext)
         auto foreach_begin = spGraph->getNode(foreach_begin_path);
         auto foreach_end = static_cast<ForEachEnd*>(coreNode());
         assert(foreach_end);
-        for (foreach_end->reset_forloop_settings(); foreach_end->is_continue_to_run(pContext); foreach_end->increment())
+        for (foreach_end->reset_forloop_settings(this);
+            foreach_end->is_continue_to_run(this,pContext);
+            foreach_end->increment(this))
         {
             foreach_begin->mark_dirty(true);
             //pContext->curr_iter = zeno::reflect::any_cast<int>(foreach_begin->get_defl_value("Current Iteration"));
 
             preApply(pContext);
-            foreach_end->apply_foreach(pContext);
+            foreach_end->apply_foreach(this,pContext);
         }
         auto output = get_output_obj("Output Object");
         if (output)
@@ -1013,12 +991,9 @@ void NodeImpl::foreachend_apply(CalcContext* pContext)
 
 
 void NodeImpl::apply() {
-    if (m_pNode || m_upNode2) {
+    if (m_upNode2) {
         try {
-            if (m_pNode) {
-                m_pNode->apply();
-            }
-            else if (m_upNode2) {
+            if (m_upNode2) {
                 m_upNode2->apply(this);
             }
         }
@@ -1155,7 +1130,7 @@ void NodeImpl::reflectNode_apply()
                 auto funcSetOutputParam = [&](const std::string& normalName, const zeno::reflect::Any& returnVal) {
                     auto iterOutputObj = m_outputObjs.find(normalName);
                     if (iterOutputObj != m_outputObjs.end()) {
-                        iterOutputObj->second.spObject = any_cast<zany>(returnVal);
+                        iterOutputObj->second.spObject = any_cast<zany2>(returnVal);
                     }
                     else {
                         auto iterOutputPrim = m_outputPrims.find(normalName);
@@ -1203,7 +1178,7 @@ void NodeImpl::reflectNode_apply()
                                         if (iter2 != m_outputObjs.end())
                                         {
                                             //TODO: need to parse on the param, not only return value.
-                                            //iter2->second.spObject = zeno::reflect::any_cast<std::shared_ptr<IObject>>(outputAny);
+                                            //iter2->second.spObject = zeno::reflect::any_cast<std::shared_ptr<IObject2>>(outputAny);
                                         }
                                     }
                                 }
@@ -1678,7 +1653,7 @@ std::unique_ptr<ListObject> NodeImpl::processList(ObjectParam* in_param, CalcCon
             return nullptr;
         }
 
-        if ((out_param->type == in_param->type || out_param->type == gParamType_IObject) &&
+        if ((out_param->type == in_param->type || out_param->type == gParamType_IObject2) &&
             spLink->tokey.empty())
         {
             std::unique_ptr<ListObject> spList;
@@ -2179,13 +2154,14 @@ void NodeImpl::doOnlyApply() {
 }
 
 float NodeImpl::time() const {
-    if (m_pNode) return m_pNode->time();
+    if (m_upNode2)
+        return m_upNode2->time();
     return 0;
 }
 
 void NodeImpl::clearCalcResults() {
-    if (m_pNode)
-        m_pNode->clearCalcResults();
+    if (m_upNode2)
+        m_upNode2->clearCalcResults();
 
     for (auto& [key, param] : m_inputObjs) {
         param.spObject.reset();
@@ -3367,12 +3343,12 @@ void NodeImpl::update_layout(params_change_info& changes)
 }
 
 bool NodeImpl::is_loaded() const {
-    return m_pNode != nullptr || m_upNode2 != nullptr;
+    return m_upNode2 != nullptr;
 }
 
 void NodeImpl::update_load_info(bool bDisable) {
     if (bDisable) {
-        m_pNode.reset();
+        m_upNode2.reset();
     }
     else {
         //重新加载，需要拿到INode的定义，TODO：有点麻烦
@@ -3859,7 +3835,7 @@ IObject2* NodeImpl::get_input_obj(std::string const& id) const {
 }
 
 /*
-IObject* NodeImpl::get_input(std::string const& id) const {
+IObject2* NodeImpl::get_input(std::string const& id) const {
     auto iter = m_inputPrims.find(id);
     if (iter != m_inputPrims.end()) {
         auto& val = iter->second.result;
@@ -4041,52 +4017,7 @@ bool NodeImpl::set_output(std::string const& param, zany2&& obj) {
     else {
         auto iter2 = m_outputPrims.find(param);
         if (iter2 != m_outputPrims.end()) {
-            //兼容以前NumericObject的情况
-            if (auto numObject = dynamic_cast<NumericObject*>(obj.get())) {
-                const auto& val = numObject->value;
-                if (std::holds_alternative<int>(val))
-                {
-                    iter2->second.result = std::get<int>(val);
-                }
-                else if (std::holds_alternative<float>(val))
-                {
-                    iter2->second.result = std::get<float>(val);
-                }
-                else if (std::holds_alternative<vec2i>(val))
-                {
-                    iter2->second.result = std::get<vec2i>(val);
-                }
-                else if (std::holds_alternative<vec2f>(val))
-                {
-                    iter2->second.result = std::get<vec2f>(val);
-                }
-                else if (std::holds_alternative<vec3i>(val))
-                {
-                    iter2->second.result = std::get<vec3i>(val);
-                }
-                else if (std::holds_alternative<vec3f>(val))
-                {
-                    iter2->second.result = std::get<vec3f>(val);
-                }
-                else if (std::holds_alternative<vec4i>(val))
-                {
-                    iter2->second.result = std::get<vec4i>(val);
-                }
-                else if (std::holds_alternative<vec4f>(val))
-                {
-                    iter2->second.result = std::get<vec4f>(val);
-                }
-                else
-                {
-                    //throw makeError<TypeError>(typeid(T));
-                    //error, throw expection.
-                }
-            }
-            else if (auto strObject = dynamic_cast<StringObject*>(obj.get())) {
-                const auto& val = strObject->value;
-                iter2->second.result = val;
-            }
-            return true;
+            throw;
         }
     }
     return false;

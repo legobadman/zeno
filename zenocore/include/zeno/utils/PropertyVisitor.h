@@ -245,7 +245,7 @@ namespace zeno {
             }
 
             inline void ReadObject(NodeImpl *Node) {
-                zeno::log_debug("[AutoNode] Reading zany '{}'", KeyName);
+                zeno::log_debug("[AutoNode] Reading zany2 '{}'", KeyName);
                 if (!IsOptional || Node->has_input(KeyName)) {
                     ValueRef = Node->get_input<RawType_t<InputType>>(KeyName);
                 }

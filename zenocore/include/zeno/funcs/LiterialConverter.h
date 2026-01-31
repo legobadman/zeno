@@ -1,17 +1,14 @@
 #pragma once
 
 #include <zeno/utils/Error.h>
-#include <zeno/core/IObject.h>
-#include <zeno/types/NumericObject.h>
-#include <zeno/types/MatrixObject.h>
-#include <zeno/types/StringObject.h>
+#include <zeno/core/common.h>
 #include <zeno/utils/safe_dynamic_cast.h>
 
 namespace zeno {
 
 template <class T>
-inline bool objectIsLiterial(IObject* ptr) {
-    if constexpr (std::is_base_of_v<IObject, T>) {
+inline bool objectIsLiterial(IObject2* ptr) {
+    if constexpr (std::is_base_of_v<IObject2, T>) {
         return dynamic_cast<T *>(ptr);
     } else if constexpr (std::is_same_v<std::string, T>) {
         return dynamic_cast<StringObject *>(ptr);
@@ -26,8 +23,8 @@ inline bool objectIsLiterial(IObject* ptr) {
 }
 
 template <class T>
-inline bool objectIsRawLiterial(IObject* ptr) {
-    if constexpr (std::is_base_of_v<IObject, T>) {
+inline bool objectIsRawLiterial(IObject2* ptr) {
+    if constexpr (std::is_base_of_v<IObject2, T>) {
         return dynamic_cast<T *>(ptr);
     } else if constexpr (std::is_same_v<std::string, T>) {
         return dynamic_cast<StringObject *>(ptr);
@@ -42,8 +39,8 @@ inline bool objectIsRawLiterial(IObject* ptr) {
 }
 
 template <class T>
-inline auto objectToLiterial_old(std::shared_ptr<IObject> const& ptr, std::string const& msg = "objectToLiterial") {
-    if constexpr (std::is_base_of_v<IObject, T>) {
+inline auto objectToLiterial_old(std::shared_ptr<IObject2> const& ptr, std::string const& msg = "objectToLiterial") {
+    if constexpr (std::is_base_of_v<IObject2, T>) {
         return safe_dynamic_cast<T>(ptr, msg);
     }
     else if constexpr (std::is_same_v<std::string, T>) {
@@ -72,8 +69,8 @@ inline auto objectToLiterial_old(std::shared_ptr<IObject> const& ptr, std::strin
 }
 
 template <class T>
-inline auto objectToLiterial(const std::unique_ptr<IObject>& ptr, std::string const &msg = "objectToLiterial") {
-    if constexpr (std::is_base_of_v<IObject, T>) {
+inline auto objectToLiterial(const std::unique_ptr<IObject2>& ptr, std::string const &msg = "objectToLiterial") {
+    if constexpr (std::is_base_of_v<IObject2, T>) {
         return safe_uniqueptr_cast<T>(ptr->clone());
     } else if constexpr (std::is_same_v<std::string, T>) {
         return safe_dynamic_cast<StringObject>(ptr.get(), msg)->get();
@@ -96,16 +93,8 @@ inline auto objectToLiterial(const std::unique_ptr<IObject>& ptr, std::string co
     }
 }
 
-inline zany objectFromLiterial(std::string const &value) {
-    return std::make_unique<StringObject>(value);
-}
-
-inline zany objectFromLiterial(NumericValue const &value) {
-    return std::make_unique<NumericObject>(value);
-}
-
-inline zany objectFromLiterial(zany&& value) {
-    return value->clone();
+inline zany2 objectFromLiterial(zany2&& value) {
+    return zany2(value->clone());
 }
 
 }

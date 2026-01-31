@@ -1,5 +1,5 @@
 ﻿#include <zeno/core/Session.h>
-#include <zeno/core/IObject.h>
+#include <iobject2.h>
 #include <zeno/core/INodeClass.h>
 #include <zeno/core/Assets.h>
 #include <zeno/extra/GlobalState.h>
@@ -155,7 +155,7 @@ static CustomUI descToCustomui(const Descriptor& desc) {
                 param.wildCardGroup = param_desc.wildCard;
 
                 //dict和list允许多连接口，且不限定对象类型（但只能是对象，暂不接收primitive，否则就违反了对象和primitive分开连的设计了）
-                if (type == gParamType_Dict || type == gParamType_List) {
+                if (type == gParamType_List) {
                     param.sockProp = Socket_MultiInput;
                 }
                 else {

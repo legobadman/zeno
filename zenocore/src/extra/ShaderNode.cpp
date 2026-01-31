@@ -1,11 +1,12 @@
 #include <zeno/zeno.h>
 #include <zeno/extra/ShaderNode.h>
 #include <zeno/types/ShaderObject.h>
-#include <zeno/types/NumericObject.h>
 #include <zeno/utils/type_traits.h>
 #include <zeno/core/NodeImpl.h>
 #include <sstream>
 #include <cassert>
+#include <zeno/utils/Exception.h>
+
 
 namespace zeno {
 
@@ -18,7 +19,8 @@ static std::string ftos(T x) {
 
 ZENO_API ShaderNode::ShaderNode() = default;
 
-ZENO_API void ShaderNode::apply() {
+ZENO_API void ShaderNode::apply(INodeData* pNodeData) {
+    NodeImpl* m_pAdapter = static_cast<NodeImpl*>(pNodeData);
     ShaderData shader;
     shader.data = m_pAdapter->get_uuid_path();
     m_pAdapter->set_primitive_output("out", shader);

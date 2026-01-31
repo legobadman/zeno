@@ -1,13 +1,13 @@
 #pragma once
 
-#include <zeno/core/IObject.h>
+#include <iobject2.h>
 #include <zeno/utils/Any.h>
 #include <string>
 
 namespace zeno {
 
 struct MutableObject : IObjectClone<MutableObject> {
-  zany value;
+  zany2 value;
 
   template <class T>
   T get() const {

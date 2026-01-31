@@ -1,5 +1,6 @@
 #pragma once
 
+
 #include <zeno/core/coredata.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/types/HeatmapObject.h>
@@ -9,6 +10,8 @@ namespace zeno
 {
     ZENO_API void primTriangulate(PrimitiveObject* prim, bool with_uv = true, bool has_lines = true, bool with_attr = true);
     ZENO_API void primTriangulateQuads(PrimitiveObject* prim);
+
+#if 0
     ZENO_API std::unique_ptr<zeno::PrimitiveObject> PrimMerge(ZsVector<zeno::PrimitiveObject*> const& primList, String const& tagAttr = "", bool tag_on_vert = true, bool tag_on_face = false);
     ZENO_API void primPolygonate(PrimitiveObject* prim, bool with_uv = true);
     ZENO_API void primFlipFaces(PrimitiveObject* prim, bool only_face = false);
@@ -48,4 +51,5 @@ namespace zeno
     ZENO_API void primFilterVerts(PrimitiveObject* prim, std::string tagAttr, int tagValue, bool isInversed = false, std::string revampAttrO = {}, std::string method = "verts", int* aux = nullptr, int aux_size = 0, bool use_aux = false);
     ZENO_API std::vector<std::unique_ptr<PrimitiveObject>> primUnmergeVerts(PrimitiveObject* prim, std::string tagAttr);
     ZENO_API void primSimplifyTag(PrimitiveObject* prim, std::string tagAttr);
+#endif
 }

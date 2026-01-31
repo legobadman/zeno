@@ -11,7 +11,9 @@
 #include <glm/glm.hpp>
 #include <glm/vec2.hpp>
 #include <glm/vec3.hpp>
+#include <memory>
 #include <zenum.h>
+#include <iobject2.h>
 
 
 #define ENUM_FLAGS(enum_class) \
@@ -224,6 +226,8 @@ namespace zeno {
         Reload_ToggleView,      //用户在编辑器上当前节点图，切换节点间的view触发的load
         Reload_Calculation,     //由于标脏计算引发的load
     };
+
+    using zany2 = std::unique_ptr<zeno::IObject2>;
 }
 
 

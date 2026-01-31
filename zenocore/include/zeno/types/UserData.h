@@ -86,6 +86,11 @@ struct UserData : IUserData2 {
         m_data[name] = zeno::reflect::Any(value);
     }
 
+    template <class T>
+    void set2(std::string const& name, const T& value) {
+        m_data[name] = zeno::reflect::Any(value);
+    }
+
     void set(std::string const& name, zeno::reflect::Any&& value);
     void merge(const UserData& rhs);
     auto begin() const {

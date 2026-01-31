@@ -9,8 +9,10 @@ namespace zeno {
     static zeno::CustomUI ui_##Class(__VA_ARGS__); \
     static struct _Def##Class { \
         _Def##Class() { \
-            ::zeno::getNodeRegister().registerNodeClass([]() -> zeno::INode* { \
-                return new Class; }, #Class, ui_##Class); \
+            ::zeno::getNodeRegister().registerNodeClass(\
+                []() -> zeno::INode2* { return new Class; }, \
+                [] (INode2* pNode) { delete pNode; }, \
+                #Class, ui_##Class); \
         } \
 \
         ~_Def##Class() {\
@@ -22,8 +24,10 @@ namespace zeno {
 #define ZENO_DEFNODE(Class) \
     static struct _Def##Class { \
         _Def##Class(::zeno::Descriptor const &desc) { \
-            ::zeno::getNodeRegister().registerNodeClass([] () -> zeno::INode* { \
-                return new Class; }, #Class, desc); \
+            ::zeno::getNodeRegister().registerNodeClass( \
+                [] () -> zeno::INode2* { return new Class; }, \
+                [] (INode2* pNode) { delete pNode; }, \
+                 #Class, desc); \
         } \
 \
         ~_Def##Class() {\

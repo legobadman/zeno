@@ -41,7 +41,7 @@ namespace zeno {
         else if (type == "vec3f") { return gParamType_Vec3f; }
         else if (type == "vec4f") { return gParamType_Vec4f; }
         else if (type == "Matrix4") { return gParamType_Matrix4; }
-        else if (type == "iobject") { return gParamType_IObject; }
+        else if (type == "iobject") { return gParamType_IObject2; }
         else if (type == "prim" || type == "PrimitiveObject" || type == "primitive") { return gParamType_Primitive; }
         else if (type == "geometry") { return gParamType_Geometry; }
         else if (type == "list" || type == "ListObject") { return gParamType_List; }
@@ -49,26 +49,26 @@ namespace zeno {
         else if (type == "color") { return gParamType_Heatmap; }
         else if (type == "curve") { return gParamType_Curve; }
         else if (starts_with(type, "enum ")) { return gParamType_String; }
-        else if (type == "AxisObject") { return gParamType_IObject; }
+        else if (type == "AxisObject") { return gParamType_IObject2; }
         else if (type == "CameraObject") { return gParamType_Camera; }
         else if (type == "LightObject") { return gParamType_Light; }
-        else if (type == "FunctionObject") { return gParamType_IObject; }
+        else if (type == "FunctionObject") { return gParamType_IObject2; }
         else if (type == "object" ||
-            type == "IObject" ||
-            type == "zany" ||
+            type == "IObject2" ||
+            type == "zany2" ||
             type == "material" ||
             type == "texture" ||
             type == "instancing" ||
             type == "shader" ||
             type == "MaterialObject" ||
             type == "LBvh") {
-            return gParamType_IObject;
+            return gParamType_IObject2;
         }
         else if (type == "Material") {
             return gParamType_Material;
         }
         else if (type == "VDBGrid") {
-            return gParamType_IObject;
+            return gParamType_IObject2;
         }
         else if (type == "") {
             //类型名字为空时，只能根据参数名字去猜测
@@ -76,7 +76,7 @@ namespace zeno {
                 return gParamType_Primitive;
             }
             else if (param_name == "object") {
-                return gParamType_IObject;
+                return gParamType_IObject2;
             }
             else if (param_name == "list" || param_name == "droppedList") { return gParamType_List; }
             else if (param_name == "camera" || param_name == "cam") {
@@ -86,7 +86,7 @@ namespace zeno {
                 return gParamType_Light;
             }
             else if (param_name == "FOR" || param_name == "FUNC" || param_name == "function") {
-                return gParamType_IObject;    //只能给Object了，不然就要再分配一个枚举值
+                return gParamType_IObject2;    //只能给Object了，不然就要再分配一个枚举值
             }
             else if (param_name == "true" ||
                 param_name == "false" ||
@@ -97,23 +97,23 @@ namespace zeno {
                 param_name == "port" ||
                 param_name == "data" ||
                 param_name == "mtl") {
-                return gParamType_IObject;
+                return gParamType_IObject2;
             }
             else if (param_name == "VDBGrid" || param_name == "grid") {
-                return gParamType_IObject;
+                return gParamType_IObject2;
             }
             else if (param_name == "heatmap") {
                 return gParamType_Heatmap;
             }
             else {
-                return gParamType_IObject;
+                return gParamType_IObject2;
             }
         }
         else if (type == "null") {
             return Param_Null;
         }
         else
-            return gParamType_IObject;    //zeno各个模块定义的类型不规范程度很大，而且积累了很多，很难一下子改好，所以不明类型都转成obj
+            return gParamType_IObject2;    //zeno各个模块定义的类型不规范程度很大，而且积累了很多，很难一下子改好，所以不明类型都转成obj
     }
 
     ZENO_API bool isAnyEqual(const Any& lhs, const Any& rhs)
@@ -235,7 +235,7 @@ namespace zeno {
         case gParamType_Vec2f:   return "vec2f";
         case gParamType_Vec3f:   return "vec3f";
         case gParamType_Vec4f:   return "vec4f";
-        case gParamType_IObject: return "iobject";
+        case gParamType_IObject2: return "iobject";
         case gParamType_Primitive:    return "prim";
         case gParamType_Geometry:return "geometry";
         case gParamType_List:    return "list";
@@ -281,12 +281,12 @@ namespace zeno {
         return true;
     }
 
-    std::vector<zany> fromZenCache(const std::string& cachedir, int frameid) {
-        std::vector<zany> objs;
-        std::map<std::string, zany> _objs;
+    std::vector<zany2> fromZenCache(const std::string& cachedir, int frameid) {
+        std::vector<zany2> objs;
+        std::map<std::string, zany2> _objs;
         GlobalComm::fromDisk(cachedir, frameid, _objs);
         for (const auto& iter : _objs) {
-            objs.push_back(iter.second->clone());
+            objs.push_back(zany2(iter.second->clone()));
         }
         return objs;
     }
@@ -789,7 +789,7 @@ namespace zeno {
         {
             return make_any<CurvesData>();
         }
-        else if (type == gParamType_IObject)
+        else if (type == gParamType_IObject2)
         {
             return nullptr;
         }
@@ -915,7 +915,7 @@ namespace zeno {
         return edge;
     }
 
-    std::string generateObjKey(std::shared_ptr<IObject> spObject) {
+    std::string generateObjKey(std::shared_ptr<IObject2> spObject) {
         return "";    //TODO
     }
 
@@ -1333,7 +1333,7 @@ namespace zeno {
 
     bool isObjectType(const RTTITypeInfo& type, bool& isConstPtr)
     {
-        //目前TF_IsObject只是标识Object子类，不包括IObject，如果需要后者，可以判断TF_IsIObject.
+        //目前TF_IsObject只是标识Object子类，不包括IObject2，如果需要后者，可以判断TF_IsIObject.
         //const 也可以用generator搞
         isConstPtr = type.has_flags(TF_IsConst);
         return type.has_flags(TF_IsObject);
@@ -1407,11 +1407,11 @@ namespace zeno {
         else if (inType == gParamType_ListOfMat4 || outType == gParamType_Matrix4) {
             return true;
         }
-        else if (gParamType_IObject == inType && outGroup == Role_OutputObject) {    //outType的Obj类型可以转IObject
+        else if (gParamType_IObject2 == inType && outGroup == Role_OutputObject) {    //outType的Obj类型可以转IObject2
             return true;
         }
-        else if (gParamType_IObject == outType && inGroup == Role_InputObject) {
-            //由于一些特殊节点，比如foreachbegin，出来的是IObject，但需要连到其他的特定object节点，
+        else if (gParamType_IObject2 == outType && inGroup == Role_InputObject) {
+            //由于一些特殊节点，比如foreachbegin，出来的是IObject2，但需要连到其他的特定object节点，
             //同时又不能用wildcard（因为要和foreachend对应），这种情况允许向下转换，错误让节点自己报
             return true;
         }
@@ -1999,7 +1999,7 @@ namespace zeno {
         }
     }
 
-    zany readObjCache(const std::string& file_path) {
+    zany2 readObjCache(const std::string& file_path) {
         if (!std::filesystem::exists(file_path)) {
             return nullptr;
         }
@@ -2089,61 +2089,6 @@ namespace zeno {
             type == gParamType_IntList ||
             type == gParamType_FloatList ||
             type == gParamType_GLMVec3;
-    }
-
-    zany strToZAny(std::string const& defl, ParamType const& type) {
-        switch (type) {
-        case gParamType_String: {
-            zany res = std::make_unique<zeno::StringObject>(defl);
-            return res;
-        }
-        case gParamType_Int: {
-            return std::make_unique<NumericObject>(std::stoi(defl));
-        }
-        case gParamType_Float: {
-            return std::make_unique<NumericObject>(std::stof(defl));
-        }
-        case gParamType_Vec2i:
-        case gParamType_Vec3i:
-        case gParamType_Vec4i:
-        {
-            std::vector<int> vec;
-            for (auto v : split_str(defl, ',')) {
-                vec.push_back(std::stoi(v));
-            }
-
-            if (gParamType_Vec2i == type) {
-                return std::make_unique<NumericObject>(vec2i(vec[0], vec[1]));
-            }
-            else if (gParamType_Vec3i == type) {
-                return std::make_unique<NumericObject>(vec3i(vec[0], vec[1], vec[2]));
-            }
-            else {
-                return std::make_unique<NumericObject>(vec4i(vec[0], vec[1], vec[2], vec[3]));
-            }
-        }
-        case gParamType_Vec2f:
-        case gParamType_Vec3f:
-        case gParamType_Vec4f:
-        {
-            std::vector<float> vec;
-            for (auto v : split_str(defl, ',')) {
-                vec.push_back(std::stof(v));
-            }
-
-            if (gParamType_Vec2f == type) {
-                return std::make_unique<NumericObject>(vec2f(vec[0], vec[1]));
-            }
-            else if (gParamType_Vec3f == type) {
-                return std::make_unique<NumericObject>(vec3f(vec[0], vec[1], vec[2]));
-            }
-            else {
-                return std::make_unique<NumericObject>(vec4f(vec[0], vec[1], vec[2], vec[3]));
-            }
-        }
-        default:
-            return nullptr;
-        }
     }
 
     bool isEqual(const zvariant& lhs, const zvariant& rhs, ParamType const type) {

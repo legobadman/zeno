@@ -133,7 +133,7 @@ namespace zeno
         return m_type;
     }
 
-    std::unique_ptr<PrimitiveObject> GeometryObject::toPrimitive() {
+    std::unique_ptr<PrimitiveObject> GeometryObject::toPrimitive() const {
         auto spPrim = std::make_unique<PrimitiveObject>();
         std::vector<vec3f> vec_pos = points_pos();
         int nPoints = m_spTopology->npoints();
@@ -143,7 +143,7 @@ namespace zeno
             spPrim->verts[i] = vec_pos[i];
         }
 
-        for (auto& [name, sp_attr_data] : m_point_attrs) {
+        for (const auto& [name, sp_attr_data] : m_point_attrs) {
             if (name == "pos") {
                 continue;
             }
@@ -314,10 +314,9 @@ namespace zeno
         }
     }
 
-    std::vector<vec3f> GeometryObject::points_pos() {
-        std::map<std::string, AttributeVector>& container = get_container(ATTR_POINT);
-        auto iter = container.find("pos");
-        if (iter == container.end()) {
+    std::vector<vec3f> GeometryObject::points_pos() const {
+        auto iter = m_geo_attrs.find("pos");
+        if (iter == m_geo_attrs.end()) {
             throw makeError<KeyError>("pos", "not exist on point attr");
         }
         return iter->second.get_attrs<vec3f>();

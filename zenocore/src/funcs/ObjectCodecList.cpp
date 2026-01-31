@@ -9,8 +9,8 @@ namespace zeno {
 
 namespace _implObjectCodec {
 
-std::shared_ptr<ListObject> decodeListObject(const char *it);
-std::shared_ptr<ListObject> decodeListObject(const char *it) {
+std::unique_ptr<ListObject> decodeListObject(const char *it);
+std::unique_ptr<ListObject> decodeListObject(const char *it) {
     auto obj = create_ListObject();
 
     size_t size = *(int *)it;
@@ -24,7 +24,7 @@ std::shared_ptr<ListObject> decodeListObject(const char *it) {
     for (size_t i = 0; i < size; i++) {
         auto elm = decodeObject(it + tab[i * 2], tab[i * 2 + 1]);
         if (!elm) return nullptr;
-        obj->set(i, std::move(elm));
+        obj->set(i, elm.release());
     }
 
     return obj;

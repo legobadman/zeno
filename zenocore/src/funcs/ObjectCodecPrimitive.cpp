@@ -73,9 +73,9 @@ void encodeAttrVector(AttrVector<T0> const &arr, It &it) {
 
 }
 
-std::shared_ptr<PrimitiveObject> decodePrimitiveObject(const char *it);
-std::shared_ptr<PrimitiveObject> decodePrimitiveObject(const char *it) {
-    auto obj = std::make_shared<PrimitiveObject>();
+std::unique_ptr<PrimitiveObject> decodePrimitiveObject(const char *it);
+std::unique_ptr<PrimitiveObject> decodePrimitiveObject(const char *it) {
+    auto obj = std::make_unique<PrimitiveObject>();
     decodeAttrVector(obj->verts, it);
     decodeAttrVector(obj->points, it);
     decodeAttrVector(obj->lines, it);
@@ -113,12 +113,12 @@ bool encodePrimitiveObject(PrimitiveObject const *obj, std::back_insert_iterator
     return true;
 }
 
-bool encodeGeometryObject_Adapter(GeometryObject_Adapter const* obj, std::back_insert_iterator<std::vector<char>> it) {
-    auto spPrim = obj->toPrimitiveObject();
+bool encodeGeometryObject(GeometryObject const* obj, std::back_insert_iterator<std::vector<char>> it) {
+    auto spPrim = obj->toPrimitive();
     return encodePrimitiveObject(spPrim.get(), it);
 }
 
-std::shared_ptr<GeometryObject_Adapter> decodeGeometryObject_Adapter(const char* it) {
+std::unique_ptr<GeometryObject> decodeGeometryObject(const char* it) {
     auto spPrim = decodePrimitiveObject(it);
     auto geom = create_GeometryObject(spPrim.get());
     return geom;
