@@ -12,6 +12,7 @@
 #include <zeno/utils/variantswitch.h>
 #include <zeno/core/Session.h>
 #include <zeno/core/ObjectRecorder.h>
+#include <zeno/utils/interfaceutil.h>
 #include <regex>
 
 
@@ -108,6 +109,13 @@ namespace zeno
         m_face_attrs = rhs.m_face_attrs;
         m_geo_attrs = rhs.m_geo_attrs;
         m_userDat = rhs.m_userDat;
+    }
+
+    IObject2* GeometryObject::clone() const {
+        GeometryObject* pGeom = new GeometryObject(*this);
+        pGeom->m_key = this->m_key;
+        pGeom->m_userDat = this->m_userDat;
+        return pGeom;
     }
 
     GeometryObject::~GeometryObject() {
@@ -315,8 +323,8 @@ namespace zeno
     }
 
     std::vector<vec3f> GeometryObject::points_pos() const {
-        auto iter = m_geo_attrs.find("pos");
-        if (iter == m_geo_attrs.end()) {
+        auto iter = m_point_attrs.find("pos");
+        if (iter == m_point_attrs.end()) {
             throw makeError<KeyError>("pos", "not exist on point attr");
         }
         return iter->second.get_attrs<vec3f>();
@@ -1428,6 +1436,16 @@ namespace zeno
         return pGeom;
     }
 
+    ZENO_EXPORT zeno::IGeometryObject* __cdecl createGeometry(
+        zeno::GeomTopoType type,
+        bool bTriangle,
+        int nPoints,
+        int nFaces,
+        bool bInitFaces)
+    {
+        return zeno::create_GeometryObject(type, bTriangle, nPoints, nFaces, bInitFaces).release();
+    }
+
     std::unique_ptr<GeometryObject> create_GeometryObject(
         GeomTopoType type,
         bool bTriangle,
@@ -1437,6 +1455,32 @@ namespace zeno
         auto pGeom = std::make_unique<GeometryObject>(type, bTriangle, (int)points.size(), faces);
         pGeom->create_attr(ATTR_POINT, "pos", points);
         return pGeom;
+    }
+
+    ZENO_EXPORT zeno::IGeometryObject* __cdecl createGeometryByPointFace(
+        zeno::GeomTopoType type,
+        bool bTriangle,
+        const zeno::Vec3f* points,
+        size_t num_of_points,
+        const ZIntArray* faces_points,
+        size_t num_of_facespts)
+    {
+        std::vector<zeno::vec3f> pts(num_of_points);
+        for (size_t i = 0; i < num_of_points; i++) {
+            pts[i] = toVec3f(points[i]);
+        }
+
+        std::vector<std::vector<int>> faces(num_of_facespts);
+        for (size_t i = 0; i < num_of_facespts; i++) {
+            const ZIntArray& arr = faces_points[i];
+            std::vector<int> face_pts(arr.size);
+            for (size_t j = 0; j < arr.size; j++) {
+                face_pts[j] = arr.arr[j];
+            }
+            faces[i] = std::move(face_pts);
+        }
+        auto spGeo = create_GeometryObject(type, bTriangle, pts, faces);
+        return spGeo.release();
     }
 
     std::unique_ptr<GeometryObject> create_GeometryObject(PrimitiveObject* prim)

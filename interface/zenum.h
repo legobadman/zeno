@@ -153,7 +153,8 @@ typedef enum ZValueType {
     ZVAL_STRING,
     ZVAL_INT_ARRAY,
     ZVAL_FLOAT_ARRAY,
-    ZVAL_STRING_ARRAY
+    ZVAL_STRING_ARRAY,
+    ZVAL_VEC3
 } ZValueType;
 
 enum ParamControl2
@@ -183,6 +184,13 @@ enum ParamControl2
     ctrl_NoMultiSockPanel,   //disable dist/list panel
 };
 
+enum Rotate_Orientaion
+{
+    Orientaion_YZ,
+    Orientaion_XY,
+    Orientaion_ZX
+};
+
 struct ZValue {
     ZValueType _type;
     union {
@@ -204,6 +212,8 @@ struct ZValue {
             const char** data;
             size_t size;
         } sarr;
+
+        zeno::Vec3f vec3f;
     };
 };
 
@@ -238,6 +248,13 @@ inline ZValue ZInt(int ival) {
     ZValue v{};
     v._type = ZVAL_INT;
     v.i = ival;
+    return v;
+}
+
+inline ZValue ZVec3f(float x, float y, float z) {
+    ZValue v{};
+    v._type = ZVAL_VEC3;
+    v.vec3f = { x,y,z };
     return v;
 }
 

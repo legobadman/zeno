@@ -271,9 +271,7 @@ namespace zeno
         std::tuple<int, int, int> vertex_info(int linear_vertex_id);
 
     public: //IObject2
-        IObject2* clone() const override {
-            return new GeometryObject(*this);
-        }
+        IObject2* clone() const override;
         ZObjectType type() const override {
             return ZObj_Geometry;
         }

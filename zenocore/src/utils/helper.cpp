@@ -495,8 +495,63 @@ namespace zeno {
             }
             return vec;
         }
+        case ZVAL_VEC3: {
+            return toVec3f(val.vec3f);
+        }
         }
         return Any();
+    }
+
+    zeno::reflect::Any convertType(const zeno::reflect::Any& defl, ParamType type) {
+        if (!defl.has_value()) return defl;
+        ParamType deflType = defl.type().hash_code();
+        switch (type) {
+        case gParamType_Bool: {
+            if (gParamType_Int == deflType) {
+                bool val = any_cast<int>(defl);
+                return val;
+            }
+            else if (gParamType_Float == deflType) {
+                bool val = any_cast<float>(defl);
+                return val;
+            }
+            else if (gParamType_Bool == deflType) {
+                return defl;
+            }
+            break;
+        }
+        case gParamType_Int: {
+            if (gParamType_Int == deflType) {
+                return defl;
+            }
+            else if (gParamType_Float == deflType) {
+                int val = any_cast<float>(defl);
+                return val;
+            }
+            else if (gParamType_Bool == deflType) {
+                int val = any_cast<bool>(defl);
+                return val;
+            }
+            break;
+        }
+        case gParamType_Float: {
+            if (gParamType_Int == deflType) {
+                float val = any_cast<int>(defl);
+                return val;
+            }
+            else if (gParamType_Float == deflType) {
+                return defl;
+            }
+            else if (gParamType_Bool == deflType) {
+                float val = any_cast<bool>(defl);
+                return val;
+            }
+            break;
+        }
+        default:
+            break;
+        }
+        return defl;
     }
 
     ZENO_API Any str2any(std::string const& defl, ParamType const& type) {

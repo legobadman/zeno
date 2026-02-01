@@ -26,6 +26,7 @@ namespace zeno {
     ZENO_API std::string any_cast_to_string(const zeno::reflect::Any& value);
     ZENO_API zvariant str2var(std::string const& defl, ParamType const& type);
     ZENO_API zeno::reflect::Any str2any(std::string const& defl, ParamType const& type);
+    ZENO_API zeno::reflect::Any convertType(const zeno::reflect::Any& defl, ParamType type);
     ZENO_API zeno::reflect::Any zvalue2any(const ZValue& val);
     ZENO_API ParamControl zctrl2ctrl(ParamControl2 ctrl);
     ZENO_API bool convertToEditVar(zeno::reflect::Any& var, const ParamType type);

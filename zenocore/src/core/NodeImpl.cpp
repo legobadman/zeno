@@ -248,12 +248,12 @@ CustomUI NodeImpl::export_customui() const
     CustomUI deflUI = _deflCustomUI();
     INode2* pNode = coreNode();
     if (pNode) {
-        char icon[1024];
+        char icon[1024] = "\0";
         pNode->getIconResource(icon, sizeof(icon));
-        char background[1024];
+        char background[1024] = "\0";
         pNode->getBackgroundClr(background, sizeof(background));
         std::string sIcon(icon);
-        std::string sBg(icon);
+        std::string sBg(background);
         if (!sIcon.empty() || !sBg.empty()) {
             deflUI.uistyle.background = sBg;
             deflUI.uistyle.iconResPath = sIcon;

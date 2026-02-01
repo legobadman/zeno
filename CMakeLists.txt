@@ -202,6 +202,7 @@ endif()
 
 add_subdirectory(zenocore)
 add_subdirectory(customplugin)
+add_subdirectory(zenodes/zs_base)
 
 if (ZENO_WITH_BASENODE)
     add_subdirectory(zeno)

@@ -26,6 +26,17 @@
 
 #define Z_ARRAY_COUNT(arr) (sizeof(arr) / sizeof((arr)[0]))
 
+#define Z_STRING_ARRAY(...)                                         \
+    ([]() -> ZValue {                                               \
+        static const char* arr[] = { __VA_ARGS__ };                 \
+        ZValue v{};                                                 \
+        v._type = ZVAL_STRING_ARRAY;                                \
+        v.sarr.data = arr;                                          \
+        v.sarr.size = sizeof(arr) / sizeof(arr[0]);                \
+        return v;                                                   \
+    }())
+
+
 #define Z_FLOAT(name,def) \
     { #name, _gParamType_Float, ZFloat(def), ctrl_Slider, ZNull() }
 
