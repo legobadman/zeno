@@ -19,11 +19,12 @@ static std::string ftos(T x) {
 
 ZENO_API ShaderNode::ShaderNode() = default;
 
-ZENO_API void ShaderNode::apply(INodeData* pNodeData) {
+ZENO_API ZErrorCode ShaderNode::apply(INodeData* pNodeData) {
     NodeImpl* m_pAdapter = static_cast<NodeImpl*>(pNodeData);
     ShaderData shader;
     shader.data = m_pAdapter->get_uuid_path();
     m_pAdapter->set_primitive_output("out", shader);
+    return ZErr_OK;
 }
 
 ZENO_API std::string EmissionPass::finalizeCode() {

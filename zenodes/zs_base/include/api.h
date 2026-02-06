@@ -12,5 +12,9 @@ namespace zeno {
         bool bTriangle,
         const std::vector<vec3f>& points,
         const std::vector<std::vector<int>>& faces);
-
+    IGeometryObject* mergeObjects(
+        IListObject* spList,
+        const char* tagAttr = 0,
+        bool tag_on_vert = true,
+        bool tag_on_face = false);
 }

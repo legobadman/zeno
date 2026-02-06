@@ -19,7 +19,7 @@ namespace zeno
     struct ForEachBegin : INode2
     {
         NodeImpl* get_foreachend(NodeImpl* m_pAdapter);
-        void apply(INodeData* ptrNodeData) override;
+        ZErrorCode apply(INodeData* ptrNodeData) override;
         NodeType type() const override { return Node_Normal; }
         void clearCalcResults() override {}
         void getIconResource(char* recv, size_t cap) override;
@@ -42,7 +42,7 @@ namespace zeno
         bool is_continue_to_run(NodeImpl* m_pAdapter, CalcContext* pContext);
         void increment(NodeImpl* m_pAdapter);
         IObject2* get_iterate_object();
-        void apply(INodeData* ptrNodeData) override;
+        ZErrorCode apply(INodeData* ptrNodeData) override;
         void apply_foreach(INodeData* ptrNodeData, CalcContext* pContext);
         void adjustCollectObjInfo(NodeImpl* ptrNodeData);
         void clearCalcResults() override;

@@ -13,7 +13,7 @@ namespace zeno {
 struct EmissionPass;
 
 struct ShaderNode : INode2 {
-    ZENO_API virtual void apply(INodeData* pNodeData) override;
+    ZENO_API virtual ZErrorCode apply(INodeData* pNodeData) override;
     ZENO_API virtual int determineType(EmissionPass *em) = 0;
     ZENO_API virtual void emitCode(EmissionPass *em) = 0;
     ZENO_API virtual std::shared_ptr<ShaderNode> clone() const = 0;

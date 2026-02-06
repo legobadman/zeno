@@ -74,6 +74,9 @@ struct GlobalState {
     ZENO_API void inc_io_processed(int inc);
     ZENO_API int get_io_processed() const;
 
+    std::string get_report_error() const;
+    void report_error(const std::string& error);
+
 private:
     int frameid = 0;
     int frame_start = 0;
@@ -84,6 +87,7 @@ private:
     float time_consumed = 0.f;
     float total_io_units = 0.f;
     float processed_io_units = 0.f;
+    std::string m_reported_error;
 
     mutable std::mutex mtx;
 };

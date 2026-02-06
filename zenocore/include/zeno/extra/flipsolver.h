@@ -28,7 +28,7 @@ public:
     FlipSolver();
     ~FlipSolver();
     NodeType type() const override;
-    void apply(INodeData* pNodeData) override;
+    ZErrorCode apply(INodeData* pNodeData) override;
     void clearCalcResults() {}
     void getIconResource(char* recv, size_t cap) {
         const char* icon = ":/icons/node/fluid.svg";

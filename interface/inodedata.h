@@ -35,6 +35,7 @@ namespace zeno {
 		virtual bool set_output_vec4f(const char* param, Vec4f val) = 0;
 		virtual bool set_output_vec4i(const char* param, Vec4i val) = 0;
 		virtual int GetFrameId() const = 0;
+		virtual void report_error(const char* error_info) = 0;
 	};
 }
 

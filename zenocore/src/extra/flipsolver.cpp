@@ -156,7 +156,7 @@ namespace zeno {
         }
     }
 
-    void FlipSolver::apply(INodeData* pNodeData) {
+    ZErrorCode FlipSolver::apply(INodeData* pNodeData) {
         NodeImpl* m_pAdapter = static_cast<NodeImpl*>(pNodeData);
         auto init_fluid = static_cast<GeometryObject*>(m_pAdapter->get_input_Geometry("Initialize Fluid"));
         auto static_collider = static_cast<GeometryObject*>(m_pAdapter->get_input_Geometry("Static Collider"));
@@ -208,7 +208,7 @@ namespace zeno {
                     //throw
                     zeno::log_error("CreatePipe failed");
                     m_pAdapter->set_output("Output", nullptr);
-                    return;
+                    return ZErr_OK;
                 }
 
                 m_hReadPipeEvent = CreateEvent(NULL, TRUE, FALSE, NULL);
@@ -236,7 +236,7 @@ namespace zeno {
                 if (m_shm_initFluid == NULL) {
                     zeno::log_error("CreateFileMapping for init fluid failed, error: {}", GetLastError());
                     m_pAdapter->set_output("Output", nullptr);
-                    return;
+                    return ZErr_OK;
                 }
 
                 const size_t shm_staticcoll_size = buf_static_collider.size();
@@ -251,7 +251,7 @@ namespace zeno {
                 if (m_shm_staticCollider == NULL) {
                     zeno::log_error("CreateFileMapping for static collider failed, error: {}", GetLastError());
                     m_pAdapter->set_output("Output", nullptr);
-                    return;
+                    return ZErr_OK;
                 }
 
                 LPVOID pInitBuf = MapViewOfFile(m_shm_initFluid, FILE_MAP_ALL_ACCESS, 0, 0, shm_initfluid_size);
@@ -308,7 +308,7 @@ namespace zeno {
                 else {
                     zeno::log_error("CreateProcess failed");
                     m_pAdapter->set_output("Output", nullptr);
-                    return;
+                    return ZErr_OK;
                 }
 
                 //从解算进程读取发来的通知
@@ -320,7 +320,7 @@ namespace zeno {
                 //可以等到子进程回传消息时，再标脏位，从而重新apply
                 //A: 如果用户主动杀进程，而这个句柄还在，会发生什么？
 
-                return;
+                return ZErr_OK;
             }
 #else
                 //TODO: Linux下IPC
@@ -330,9 +330,11 @@ namespace zeno {
         else {
             //也有一种可能，就是有cache，但解算器只是跑了一部分帧，剩下的需要用户主动触发时间轴更新，然后重新跑
             m_pAdapter->set_output("Output", std::move(spRes));
-            return;
+            return ZErr_OK;
         }
         m_pAdapter->set_output("Output", nullptr);
+
+        return ZErr_OK;
     }
 
     HANDLE FlipSolver::get_pipe_read() const {

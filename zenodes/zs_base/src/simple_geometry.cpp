@@ -55,9 +55,7 @@ namespace zeno {
     }
 
     struct Cube : INode2 {
-        zeno::NodeType type() const override {
-            return zeno::Node_Normal;
-        }
+        zeno::NodeType type() const override { return zeno::Node_Normal; }
         void getIconResource(char* recv, size_t cap) override {
             const char* icon = ":/icons/node/cube.svg";
             strcpy(recv, icon);
@@ -67,7 +65,7 @@ namespace zeno {
         float time() const override { return 1.0; }
         void clearCalcResults() override {}
 
-        void apply(INodeData* ptrNodeData) override {
+        ZErrorCode apply(INodeData* ptrNodeData) override {
             zeno::vec3f Center = toVec3f(ptrNodeData->get_input2_vec3f("Center"));
             zeno::vec3f Size = toVec3f(ptrNodeData->get_input2_vec3f("Size"));
             zeno::vec3f Rotate = toVec3f(ptrNodeData->get_input2_vec3f("Rotate"));
@@ -81,6 +79,8 @@ namespace zeno {
 
             if (x_division < 2 || y_division < 2 || z_division < 2) {
                 throw;// makeError<UnimplError>("the division should be greater than 2");
+                ptrNodeData->report_error("the division should be greater than 2");
+                return ZErr_ParamError;
             }
 
             bool bQuad = face_type == "Quadrilaterals";
@@ -396,6 +396,7 @@ namespace zeno {
                 geo->create_attr_by_vec3(ATTR_POINT, "nrm", nrmData.get(), outCount);
             }
             ptrNodeData->set_output_object("Output", geo);
+            return ZErr_OK;
         }
     };
 
@@ -404,18 +405,747 @@ namespace zeno {
             { "Center", _gParamType_Vec3f, ZVec3f(0,0,0) },
             { "Size", _gParamType_Vec3f, ZVec3f(1,1,1) },
             { "Rotate", _gParamType_Vec3f, ZVec3f(0,0,0) },
-            { "X Division", _gParamType_Int, ZInt(2), ctrl_Lineedit },
-            { "Y Division", _gParamType_Int, ZInt(2), ctrl_Lineedit },
-            { "Z Division", _gParamType_Int, ZInt(2), ctrl_Lineedit },
-            { "Uniform Scale", _gParamType_Float, ZFloat(1.0f), ctrl_Lineedit },
-            { "Face Type", _gParamType_String, ZString("Quadrilaterals"), ctrl_Combobox, Z_STRING_ARRAY("Triangles", "Quadrilaterals") },
-            { "Point Normals", _gParamType_Bool, ZInt(1), ctrl_Checkbox }
+            { "X Division", _gParamType_Int, ZInt(2), Lineedit },
+            { "Y Division", _gParamType_Int, ZInt(2), Lineedit },
+            { "Z Division", _gParamType_Int, ZInt(2), Lineedit },
+            { "Uniform Scale", _gParamType_Float, ZFloat(1.0f), Lineedit },
+            { "Face Type", _gParamType_String, ZString("Quadrilaterals"), Combobox, Z_STRING_ARRAY("Triangles", "Quadrilaterals") },
+            { "Point Normals", _gParamType_Bool, ZInt(0), Checkbox }
             ),
         Z_OUTPUTS(
             { "Output", _gParamType_Geometry }
         ),
-        "create",
+        "geometry",
         "create a cube"
+    );
+
+
+    struct Grid : INode2 {
+
+        enum PlaneDirection {
+            Dir_XY,
+            Dir_YZ,
+            Dir_ZX
+        };
+
+        DEF_OVERRIDE_FOR_INODE
+
+        ZErrorCode apply(INodeData* ptrNodeData) override {
+            zeno::vec3f Center = toVec3f(ptrNodeData->get_input2_vec3f("Center"));
+            zeno::vec3f Rotate = toVec3f(ptrNodeData->get_input2_vec3f("Rotate"));
+            zeno::vec2f Size = toVec2f(ptrNodeData->get_input2_vec2f("Size"));
+            int Rows = ptrNodeData->get_input2_int("Rows");
+            int Columns = ptrNodeData->get_input2_int("Columns");
+            std::string face_type = get_string_param(ptrNodeData, "Face Type");
+            std::string Direction = get_string_param(ptrNodeData, "Direction");
+            bool bCalcPointNormals = ptrNodeData->get_input2_bool("Point Normal");
+
+            if (Rows < 2 || Columns < 2) {
+                //throw; //("the division should be greater than 2");
+                return ZErr_ParamError;
+            }
+
+            float size1 = Size[0], size2 = Size[1];
+            float step1 = size1 / (Rows - 1), step2 = size2 / (Columns - 1);
+            float bottom1 = -size1 / 2, up1 = bottom1 + size1;
+            float bottom2 = -size2 / 2, up2 = bottom2 + size2;
+            bool bQuad = face_type == "Quadrilaterals";
+
+            int nPoints = Rows * Columns;
+            int nFaces = (Rows - 1) * (Columns - 1);
+            if (!bQuad) {
+                nFaces *= 2;
+            }
+
+            PlaneDirection dir;
+            Rotate_Orientaion ori;
+            if (Direction == "ZX") {
+                dir = Dir_ZX;
+                ori = Orientaion_ZX;
+            }
+            else if (Direction == "YZ") {
+                dir = Dir_YZ;
+                ori = Orientaion_YZ;
+            }
+            else if (Direction == "XY") {
+                dir = Dir_XY;
+                ori = Orientaion_XY;
+            }
+            else {
+                //throw;// makeError<UnimplError>("Unknown Direction");
+                return ZErr_ParamError;
+            }
+
+            std::vector<vec3f> points, normals;
+            std::vector<std::vector<int>> faces;
+            points.resize(nPoints);
+            faces.reserve(nFaces);
+            if (bCalcPointNormals)
+                normals.resize(nPoints);
+
+            for (size_t i = 0; i < Rows; i++) {
+                for (size_t j = 0; j < Columns; j++) {
+                    //zeno::vec3f pt(xleft + xstep * x_div, ybottom + ystep * y_div, zfront - zstep * z_div);
+                    vec3f pt, nrm;
+                    if (dir == Dir_ZX) {
+                        pt = vec3f(bottom2 + step2 * j, 0, bottom1 + step1 * i);
+                        nrm = vec3f(0, 1, 0);
+                    }
+                    else if (dir == Dir_YZ) {
+                        pt = vec3f(0, bottom1 + step1 * i, bottom2 + step2 * j);
+                        nrm = vec3f(1, 0, 0);
+                    }
+                    else {
+                        pt = vec3f(bottom1 + step1 * i, bottom2 + step2 * j, 0);
+                        nrm = vec3f(0, 0, -1);
+                    }
+
+                    int idx = i * Columns + j;
+                    points[idx] = pt;
+                    if (bCalcPointNormals)
+                        normals[idx] = nrm;
+
+                    if (j > 0 && i > 0) {
+                        int ij = idx;
+                        int ij_1 = idx - 1;
+                        int i_1j = (i - 1) * Columns + j;
+                        int i_1j_1 = i_1j - 1;
+
+                        if (bQuad) {
+                            std::vector<int> _face = { ij, i_1j, i_1j_1, ij_1 };
+                            faces.push_back(_face);
+                        }
+                        else {
+                            std::vector<int> _face = { ij, i_1j, i_1j_1 };
+                            faces.push_back(_face);
+                            _face = { ij, i_1j_1, ij_1 };
+                            faces.push_back(_face);
+                        }
+                    }
+                }
+            }
+
+            glm::mat4 translate = glm::translate(glm::mat4(1.0), glm::vec3(Center[0], Center[1], Center[2]));
+            glm::mat4 rotation = calc_rotate_matrix(Rotate[0], Rotate[1], Rotate[2], ori);
+            glm::mat4 transform = translate * rotation;
+            for (size_t i = 0; i < points.size(); i++)
+            {
+                auto pt = points[i];
+                glm::vec4 gp = transform * glm::vec4(pt[0], pt[1], pt[2], 1);
+                points[i] = zeno::vec3f(gp.x, gp.y, gp.z);
+                if (bCalcPointNormals) {
+                    auto nrm = normals[i];
+                    glm::vec4 gnrm = rotation * glm::vec4(nrm[0], nrm[1], nrm[2], 0);
+                    normals[i] = zeno::vec3f(gnrm.x, gnrm.y, gnrm.z);
+                }
+            }
+
+            auto geo = create_GeometryObject(Topo_HalfEdge, !bQuad, points, faces);
+            if (bCalcPointNormals) {
+                size_t outCount = 0;
+                auto nrmData = convert_points_to_abi(normals, outCount);
+                geo->create_attr_by_vec3(ATTR_POINT, "nrm", nrmData.get(), outCount);
+            }
+            ptrNodeData->set_output_object("Output", std::move(geo));
+            return ZErr_OK;
+        }
+    };
+
+    ZENDEFNODE_ABI(Grid,
+        Z_INPUTS(
+            { "Center", _gParamType_Vec3f, ZVec3f(0,0,0) },
+            { "Size", _gParamType_Vec2f, ZVec2f(1,1) },
+            { "Rotate", _gParamType_Vec3f, ZVec3f(0,0,0) },
+            { "Rows", _gParamType_Int, ZInt(2), Slider, Z_ARRAY(1, 100, 1) },
+            { "Columns", _gParamType_Int, ZInt(2), Slider, Z_ARRAY(1, 100, 1) },
+            { "Direction", _gParamType_String, ZString("ZX"), Combobox, Z_STRING_ARRAY("XY", "YZ", "ZX") },
+            { "Uniform Scale", _gParamType_Float, ZFloat(1.0f), Lineedit },
+            { "Face Type", _gParamType_String, ZString("Quadrilaterals"), Combobox, Z_STRING_ARRAY("Triangles", "Quadrilaterals") },
+            { "Point Normal", _gParamType_Bool, ZInt(0), Checkbox }
+        ),
+        Z_OUTPUTS(
+            { "Output", _gParamType_Geometry }
+        ),
+        "geometry",
+        "create a cube"
+    );
+
+
+    struct Sphere : INode2 {
+
+        enum AxisDirection {
+            Y_Axis,
+            X_Axis,
+            Z_Axis
+        };
+
+        zeno::NodeType type() const override { return zeno::Node_Normal; }
+        float time() const override { return 1.0f; }
+        void clearCalcResults() override {}
+
+        void getIconResource(char* recv, size_t cap) override {
+            const char* icon = ":/icons/node/sphere.svg";
+            if (recv && cap > 0) {
+                strncpy(recv, icon, cap - 1);
+                recv[cap - 1] = '\0';
+            }
+        }
+
+        void getBackgroundClr(char* recv, size_t cap) override {}
+
+        ZErrorCode apply(INodeData* ptrNodeData) override
+        {
+            zeno::vec3f Center = toVec3f(ptrNodeData->get_input2_vec3f("Center"));
+            zeno::vec3f Rotate = toVec3f(ptrNodeData->get_input2_vec3f("Rotate"));
+            zeno::vec3f Radius = toVec3f(ptrNodeData->get_input2_vec3f("Radius"));
+
+            float uniform_scale = ptrNodeData->get_input2_float("Uniform Scale");
+            std::string Direction = get_string_param(ptrNodeData, "Direction");
+            int Rows = ptrNodeData->get_input2_int("Rows");
+            int Columns = ptrNodeData->get_input2_int("Columns");
+            std::string face_type = get_string_param(ptrNodeData, "Face Type");
+
+            bool bQuad = face_type == "Quadrilaterals";
+
+            if (Rows < 3) return ZErr_ParamError;
+            if (Columns < 2) return ZErr_ParamError;
+
+            int nPoints = 2 + (Rows - 2) * Columns;
+            int nFaces = bQuad ? (Rows - 1) * Columns
+                : Columns * 2 + (Rows - 3) * Columns * 2;
+
+            float Rx = Radius[0], Ry = Radius[1], Rz = Radius[2];
+            if (Rx <= 0 || Ry <= 0 || Rz <= 0)
+                return ZErr_ParamError;
+
+            AxisDirection dir;
+            Rotate_Orientaion ori;
+
+            if (Direction == "Y Axis") {
+                dir = Y_Axis; ori = Orientaion_ZX;
+            }
+            else if (Direction == "X Axis") {
+                dir = X_Axis; ori = Orientaion_YZ;
+            }
+            else {
+                dir = Z_Axis; ori = Orientaion_XY;
+            }
+
+            std::vector<zeno::vec3f> points(nPoints);
+            std::vector<std::vector<int>> faces;
+            faces.reserve(nFaces);
+
+            zeno::vec3f topPos, bottomPos;
+            if (dir == Y_Axis) { topPos = { 0,1,0 }; bottomPos = { 0,-1,0 }; }
+            else if (dir == X_Axis) { topPos = { 1,0,0 }; bottomPos = { -1,0,0 }; }
+            else { topPos = { 0,0,1 }; bottomPos = { 0,0,-1 }; }
+
+            points[0] = topPos;
+            points[1] = bottomPos;
+
+            float x = 0, y = 0, z = 0;
+
+            for (int row = 1; row < Rows - 1; row++)
+            {
+                float v = (float)row / (float)(Rows - 1);
+                float theta = M_PI * v;
+
+                if (dir == Y_Axis) y = cos(theta);
+                else if (dir == X_Axis) x = cos(theta);
+                else z = cos(theta);
+
+                int startIdx = 2 + (row - 1) * Columns;
+
+                for (int col = 0; col < Columns; col++)
+                {
+                    float u = (float)col / (float)Columns;
+                    float phi = M_PI * 2 * u;
+
+                    if (dir == Y_Axis) {
+                        x = sin(theta) * cos(phi);
+                        z = -sin(theta) * sin(phi);
+                    }
+                    else if (dir == Z_Axis) {
+                        x = sin(theta) * cos(phi);
+                        y = sin(theta) * sin(phi);
+                    }
+                    else {
+                        y = sin(theta) * cos(phi);
+                        z = -sin(theta) * sin(phi);
+                    }
+
+                    int idx = 2 + (row - 1) * Columns + col;
+                    points[idx] = zeno::vec3f(x, y, z);
+
+                    if (col > 0) {
+                        if (row == 1) {
+                            faces.push_back({ 0, idx - 1, idx });
+                            if (col == Columns - 1)
+                                faces.push_back({ 0, idx, startIdx });
+                        }
+                        else {
+                            int rd = idx;
+                            int ld = rd - 1;
+                            int ru = 2 + (row - 2) * Columns + col;
+                            int lu = ru - 1;
+
+                            if (bQuad)
+                                faces.push_back({ rd,ru,lu,ld });
+                            else {
+                                faces.push_back({ rd,ru,lu });
+                                faces.push_back({ rd,lu,ld });
+                            }
+
+                            if (col == Columns - 1) {
+                                lu = ru;
+                                ld = rd;
+                                rd = startIdx;
+                                ru = 2 + (row - 2) * Columns;
+
+                                if (bQuad)
+                                    faces.push_back({ rd,ru,lu,ld });
+                                else {
+                                    faces.push_back({ rd,ru,lu });
+                                    faces.push_back({ rd,lu,ld });
+                                }
+                            }
+
+                            if (row == Rows - 2) {
+                                faces.push_back({ idx, idx - 1, 1 });
+                                if (col == Columns - 1)
+                                    faces.push_back({ 1, startIdx, idx });
+                            }
+                        }
+                    }
+                }
+            }
+
+            glm::mat4 scale_matrix = glm::scale(glm::mat4(1.0),
+                glm::vec3(uniform_scale * Rx, uniform_scale * Ry, uniform_scale * Rz));
+
+            glm::mat4 translate = glm::translate(glm::mat4(1.0),
+                glm::vec3(Center[0], Center[1], Center[2]));
+
+            glm::mat4 rotation = calc_rotate_matrix(Rotate[0], Rotate[1], Rotate[2], ori);
+            glm::mat4 transform = translate * rotation * scale_matrix;
+
+            for (auto& p : points) {
+                glm::vec4 gp = transform * glm::vec4(p[0], p[1], p[2], 1);
+                p = zeno::vec3f(gp.x, gp.y, gp.z);
+            }
+
+            auto geo = create_GeometryObject(Topo_HalfEdge, !bQuad, points, faces);
+            ptrNodeData->set_output_object("Output", geo);
+            return ZErr_OK;
+        }
+    };
+
+    ZENDEFNODE_ABI(Sphere,
+        Z_INPUTS(
+            { "Center", _gParamType_Vec3f, ZVec3f(0,0,0) },
+            { "Rotate", _gParamType_Vec3f, ZVec3f(0,0,0) },
+            { "Radius", _gParamType_Vec3f, ZVec3f(1,1,1) },
+            { "Uniform Scale", _gParamType_Float, ZFloat(1.0f) },
+
+            { "Direction", _gParamType_String,
+              ZString("Y Axis"),
+              Combobox,
+              Z_STRING_ARRAY("X Axis","Y Axis","Z Axis") },
+
+            { "Rows", _gParamType_Int,
+              ZInt(13),
+              Slider,
+              Z_ARRAY(3,100,1) },
+
+            { "Columns", _gParamType_Int,
+              ZInt(24),
+              Slider,
+              Z_ARRAY(2,100,1) },
+
+            { "Face Type", _gParamType_String,
+              ZString("Quadrilaterals"),
+              Combobox,
+              Z_STRING_ARRAY("Triangles","Quadrilaterals") }
+        ),
+
+        Z_OUTPUTS(
+            { "Output", _gParamType_Geometry }
+        ),
+
+        "create",
+        ""
+    );
+
+
+    struct Circle : INode2 {
+
+        enum PlaneDirection {
+            Dir_XY,
+            Dir_YZ,
+            Dir_ZX
+        };
+
+        zeno::NodeType type() const override { return zeno::Node_Normal; }
+        float time() const override { return 1.0f; }
+        void clearCalcResults() override {}
+
+        void getIconResource(char* recv, size_t cap) override {
+            const char* icon = ":/icons/node/circle.svg";
+            if (recv && cap > 0) {
+                strncpy(recv, icon, cap - 1);
+                recv[cap - 1] = '\0';
+            }
+        }
+
+        void getBackgroundClr(char* recv, size_t cap) override {}
+
+        ZErrorCode apply(INodeData* ptrNodeData) override
+        {
+            zeno::vec3f Center = toVec3f(ptrNodeData->get_input2_vec3f("Center"));
+            zeno::vec3f Rotate = toVec3f(ptrNodeData->get_input2_vec3f("Rotate"));
+
+            float segments = ptrNodeData->get_input2_float("Segments");
+            float radius = ptrNodeData->get_input2_float("Radius");
+
+            std::string arcType = get_string_param(ptrNodeData, "Arc Type");
+
+            Vec2i arcAngleABI = ptrNodeData->get_input2_vec2i("Arc Angle");
+            zeno::vec2f arcAngle((float)arcAngleABI.x, (float)arcAngleABI.y);
+
+            std::string direction = get_string_param(ptrNodeData, "ZX");
+            bool bCalcPointNormals = ptrNodeData->get_input2_bool("Point Normals");
+
+            if (segments <= 0 || radius < 0)
+                return ZErr_ParamError;
+
+            PlaneDirection dir;
+            Rotate_Orientaion ori;
+
+            if (direction == "ZX") {
+                dir = Dir_ZX; ori = Orientaion_ZX;
+            }
+            else if (direction == "YZ") {
+                dir = Dir_YZ; ori = Orientaion_YZ;
+            }
+            else {
+                dir = Dir_XY; ori = Orientaion_XY;
+            }
+
+            size_t pointNumber = 0, faceNumber = 0;
+
+            if (arcType == "Closed") {
+                if (segments == 1) {
+                    pointNumber = 1;
+                    faceNumber = 0;
+                }
+                else {
+                    pointNumber = segments + 1;
+                    faceNumber = segments;
+                }
+            }
+            else if (arcType == "Open Arc") {
+                pointNumber = segments + 1;
+                faceNumber = 0;
+            }
+            else if (arcType == "Sliced Arc") {
+                pointNumber = segments + 2;
+                faceNumber = segments;
+            }
+
+            std::vector<zeno::vec3f> points, normals;
+            std::vector<std::vector<int>> faces;
+
+            faces.reserve(faceNumber);
+            points.resize(pointNumber);
+            if (bCalcPointNormals)
+                normals.resize(pointNumber);
+
+            if (arcType == "Closed") {
+
+                if (segments == 1) {
+                    points.push_back(Center);
+
+                    auto geo = create_GeometryObject(Topo_HalfEdge, true, points, faces);
+                    ptrNodeData->set_output_object("Output", geo);
+                    return ZErr_OK;
+                }
+
+                points[0] = Center;
+
+                for (int i = 1; i < pointNumber; ++i) {
+                    float rad = 2.0f * M_PI * (i - 1) / (pointNumber - 1);
+                    zeno::vec3f pt, nrm;
+
+                    if (dir == Dir_ZX) {
+                        pt = { cos(rad) * radius, 0, -sin(rad) * radius };
+                        nrm = { 0,1,0 };
+                    }
+                    else if (dir == Dir_YZ) {
+                        pt = { 0, cos(rad) * radius, -sin(rad) * radius };
+                        nrm = { 1,0,0 };
+                    }
+                    else {
+                        pt = { cos(rad) * radius, -sin(rad) * radius, 0 };
+                        nrm = { 0,0,1 };
+                    }
+
+                    points[i] = pt;
+                    if (bCalcPointNormals) normals[i] = nrm;
+
+                    if (i > 1)
+                        faces.push_back({ 0, i - 1, i });
+                }
+
+                faces.push_back({ 0, (int)pointNumber - 1, 1 });
+            }
+            else if (arcType == "Open Arc") {
+
+                float startAngle = arcAngle[0];
+                float arcRange = arcAngle[1] - startAngle;
+                std::vector<int> ptIndice;
+
+                for (int i = 0; i < pointNumber; ++i) {
+                    float rad = glm::radians(startAngle + arcRange * i / (pointNumber - 1));
+                    zeno::vec3f pt;
+
+                    if (dir == Dir_ZX)
+                        pt = { cos(rad) * radius,0,-sin(rad) * radius };
+                    else if (dir == Dir_YZ)
+                        pt = { 0,cos(rad) * radius,-sin(rad) * radius };
+                    else
+                        pt = { cos(rad) * radius,-sin(rad) * radius,0 };
+
+                    points[i] = pt;
+                    ptIndice.push_back(i);
+                }
+
+                faces.push_back(ptIndice);
+                bCalcPointNormals = false;
+            }
+            else if (arcType == "Sliced Arc") {
+
+                points[0] = Center;
+
+                float startAngle = arcAngle[0];
+                float arcRange = arcAngle[1] - startAngle;
+
+                for (int i = 1; i < pointNumber; ++i) {
+                    float rad = glm::radians(startAngle + arcRange * (i - 1) / (pointNumber - 2));
+                    zeno::vec3f pt, nrm;
+
+                    if (dir == Dir_ZX) {
+                        pt = { cos(rad) * radius,0,-sin(rad) * radius };
+                        nrm = { 0,1,0 };
+                    }
+                    else if (dir == Dir_YZ) {
+                        pt = { 0,cos(rad) * radius,-sin(rad) * radius };
+                        nrm = { 1,0,0 };
+                    }
+                    else {
+                        pt = { cos(rad) * radius,-sin(rad) * radius,0 };
+                        nrm = { 0,0,1 };
+                    }
+
+                    points[i] = pt;
+                    if (bCalcPointNormals) normals[i] = nrm;
+
+                    if (i > 1)
+                        faces.push_back({ 0,i - 1,i });
+                }
+            }
+
+            glm::mat4 translate = glm::translate(glm::mat4(1.0f),
+                glm::vec3(Center[0], Center[1], Center[2]));
+            glm::mat4 rotation = calc_rotate_matrix(Rotate[0], Rotate[1], Rotate[2], ori);
+            glm::mat4 transform = translate * rotation;
+
+            for (size_t i = arcType == "Open Arc" ? 0 : 1; i < points.size(); ++i) {
+                auto& pt = points[i];
+                glm::vec4 gp = transform * glm::vec4(pt[0], pt[1], pt[2], 1);
+                pt = { gp.x,gp.y,gp.z };
+
+                if (bCalcPointNormals) {
+                    auto& nrm = normals[i];
+                    glm::vec4 gnrm = rotation * glm::vec4(nrm[0], nrm[1], nrm[2], 0);
+                    nrm = { gnrm.x,gnrm.y,gnrm.z };
+                }
+            }
+
+            auto geo = create_GeometryObject(Topo_HalfEdge, true, points, faces);
+
+            // pos
+            {
+                size_t outCount = 0;
+                auto abiPts = convert_points_to_abi(points, outCount);
+                geo->create_attr_by_vec3(ATTR_POINT, "pos", abiPts.get(), outCount);
+            }
+
+            // nrm
+            if (bCalcPointNormals) {
+                size_t outCount = 0;
+                auto abiNrms = convert_points_to_abi(normals, outCount);
+                geo->create_attr_by_vec3(ATTR_POINT, "nrm", abiNrms.get(), outCount);
+            }
+
+            ptrNodeData->set_output_object("Output", geo);
+            return ZErr_OK;
+        }
+    };
+
+    ZENDEFNODE_ABI(Circle,
+        Z_INPUTS(
+            { "Center", _gParamType_Vec3f, ZVec3f(0,0,0) },
+            { "Rotate", _gParamType_Vec3f, ZVec3f(0,0,0) },
+
+            { "Segments", _gParamType_Int, ZInt(32), Lineedit },
+
+            { "Radius", _gParamType_Float, ZFloat(1.0f), Lineedit },
+
+            { "Arc Type", _gParamType_String,
+              ZString("Closed"),
+              Combobox,
+              Z_STRING_ARRAY("Closed", "Open Arc", "Sliced Arc") },
+
+            { "Arc Angle", _gParamType_Vec2f, ZVec2f(0,120) },
+
+            { "Direction", _gParamType_String,
+              ZString("ZX"),
+              Combobox,
+              Z_STRING_ARRAY("XY","YZ","ZX") },
+
+            { "Point Normals", _gParamType_Bool, ZInt(0), Checkbox }
+        ),
+
+        Z_OUTPUTS(
+            { "Output", _gParamType_Geometry }
+        ),
+
+        "create",
+        ""
+    );
+
+
+    struct Point : INode2 {
+
+        zeno::NodeType type() const override { return zeno::Node_Normal; }
+        float time() const override { return 1.0f; }
+        void clearCalcResults() override {}
+
+        void getIconResource(char* recv, size_t cap) override {
+            const char* icon = ":/icons/node/point.svg";
+            if (recv && cap > 0) {
+                strncpy(recv, icon, cap - 1);
+                recv[cap - 1] = '\0';
+            }
+        }
+
+        void getBackgroundClr(char* recv, size_t cap) override {}
+
+        ZErrorCode apply(INodeData* ptrNodeData) override
+        {
+            zeno::vec3f Position = toVec3f(ptrNodeData->get_input2_vec3f("Position"));
+            std::vector<zeno::vec3f> pos = { Position };
+            auto geo = create_GeometryObject(Topo_HalfEdge, false, pos, {});
+            ptrNodeData->set_output_object("Output", geo);
+            return ZErr_OK;
+        }
+    };
+
+    ZENDEFNODE_ABI(Point,
+        Z_INPUTS(
+            { "Position", _gParamType_Vec3f, ZVec3f(0,0,0) }
+        ),
+
+        Z_OUTPUTS(
+            { "Output", _gParamType_Geometry }
+        ),
+
+        "create",
+        ""
+    );
+
+
+    struct Line : INode2 {
+        zeno::NodeType type() const override { return zeno::Node_Normal; }
+        float time() const override { return 1.0f; }
+        void clearCalcResults() override {}
+
+        void getIconResource(char* recv, size_t cap) override {
+            const char* icon = ":/icons/node/line.svg";
+            if (recv && cap > 0) {
+                strncpy(recv, icon, cap - 1);
+                recv[cap - 1] = '\0';
+            }
+        }
+
+        void getBackgroundClr(char* recv, size_t cap) override {}
+
+        ZErrorCode apply(INodeData* ptrNodeData) override
+        {
+            int npoints = ptrNodeData->get_input2_int("npoints");
+            zeno::vec3f direction = toVec3f(ptrNodeData->get_input2_vec3f("direction"));
+            zeno::vec3f origin = toVec3f(ptrNodeData->get_input2_vec3f("origin"));
+            float length = ptrNodeData->get_input2_float("length");
+            bool isCentered = ptrNodeData->get_input2_bool("isCentered");
+
+            if (npoints <= 0) {
+                return ZErr_ParamError;
+            }
+
+            if (length < 0) {
+                return ZErr_ParamError;
+            }
+
+            if (direction == zeno::vec3f({ 0,0,0 }))
+                return ZErr_ParamError;
+
+            float scale = length /
+                glm::sqrt(glm::pow(direction[0], 2) +
+                    glm::pow(direction[1], 2) +
+                    glm::pow(direction[2], 2)) /
+                (npoints - 1);
+
+            zeno::vec3f ax = direction * scale;
+            if (isCentered) {
+                origin -= (ax * (npoints - 1)) / 2.0f;
+            }
+
+            std::vector<zeno::vec3f> points;
+            std::vector<std::vector<int>> faces;
+
+            points.resize(npoints);
+            faces.resize(npoints - 1);
+
+            for (int pt = 0; pt < npoints; ++pt) {
+                zeno::vec3f p = origin + pt * ax;
+                points[pt] = p;
+
+                if (pt > 0) {
+                    faces[pt - 1] = { pt - 1, pt };
+                }
+            }
+
+            auto geo = create_GeometryObject(Topo_HalfEdge, false, points, faces);
+            ptrNodeData->set_output_object("Output", geo);
+            return ZErr_OK;
+        }
+    };
+
+    ZENDEFNODE_ABI(Line,
+        Z_INPUTS(
+            { "direction", _gParamType_Vec3f, ZVec3f(0,1,0) },
+            { "origin",    _gParamType_Vec3f, ZVec3f(0,0,0) },
+            { "npoints",   _gParamType_Int,   ZInt(2) },
+            { "length",    _gParamType_Float, ZFloat(1.0f) },
+            { "isCentered",_gParamType_Bool,  ZInt(0) }
+        ),
+
+        Z_OUTPUTS(
+            { "Output", _gParamType_Geometry }
+        ),
+
+        "create",
+        ""
     );
 
 }

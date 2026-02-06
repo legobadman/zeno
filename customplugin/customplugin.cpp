@@ -12,8 +12,8 @@ namespace zeno {
             return zeno::Node_Normal;
         }
         void clearCalcResults() override {}
-        void apply(INodeData* ptrNodeData) override {
-
+        ZErrorCode apply(INodeData* ptrNodeData) override {
+            return ZErr_UnimplError;
         }
         void getIconResource(char* recv, size_t cap) override {}
         void getBackgroundClr(char* recv, size_t cap) override {}
@@ -23,11 +23,10 @@ namespace zeno {
     ZENDEFNODE_ABI(CustomNode2,
         Z_INPUTS(
             { "param1", _gParamType_Float, ZFloat(1.0f) },
-            { "param2", _gParamType_Float, ZFloat(0.2f), ctrl_Slider, Z_ARRAY(0, 1, 0.1) },
-            ),
+            { "param2", _gParamType_Float, ZFloat(0.2f), Slider, Z_ARRAY(0, 1, 0.1) },
+        ),
         Z_OUTPUTS(
-            { "Output", _gParamType_Geometry },
-            Z_FLOAT(prim, 1.0f, ZFloat(2.0f))
+            { "Output", _gParamType_Geometry }
         ),
         "debug",
         "custom node"

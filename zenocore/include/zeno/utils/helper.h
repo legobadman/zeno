@@ -28,7 +28,6 @@ namespace zeno {
     ZENO_API zeno::reflect::Any str2any(std::string const& defl, ParamType const& type);
     ZENO_API zeno::reflect::Any convertType(const zeno::reflect::Any& defl, ParamType type);
     ZENO_API zeno::reflect::Any zvalue2any(const ZValue& val);
-    ZENO_API ParamControl zctrl2ctrl(ParamControl2 ctrl);
     ZENO_API bool convertToEditVar(zeno::reflect::Any& var, const ParamType type);
     ZENO_API bool convertToOriginalVar(zeno::reflect::Any& editvar, const ParamType type);
     ZENO_API bool ListHasPrimObj(zeno::ListObject* list);

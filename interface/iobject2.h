@@ -10,7 +10,7 @@ namespace zeno {
 struct IUserData2 {
     virtual IUserData2* clone() = 0;
     virtual void copy(IUserData2* pUserData) = 0;
-    //virtual ~IUserData() = default; //ĞéÎö¹¹º¯ÊıÔÚvtblÖĞµÄÎ»ÖÃËæ×Å±àÒëÆ÷µÄ²»Í¬¶ø²»Í¬
+    //virtual ~IUserData() = default; //è™šææ„å‡½æ•°åœ¨vtblä¸­çš„ä½ç½®éšç€ç¼–è¯‘å™¨çš„ä¸åŒè€Œä¸åŒ
 
     virtual bool has(const char* key) = 0;
     virtual size_t size() const = 0;
@@ -59,7 +59,7 @@ struct IUserData2 {
 };
 
 struct IObject2 {
-    virtual IObject2* clone() const = 0; //TODO£ºabi compatible for shared_ptr
+    virtual IObject2* clone() const = 0; //TODO: abi compatible for shared_ptr
     virtual size_t key(char* buf, size_t buf_size) const = 0;
     virtual void update_key(const char* key) = 0;
     virtual size_t serialize_json(char* buf, size_t buf_size) const = 0;
@@ -120,7 +120,9 @@ struct IGeometryObject : IObject2 {
         GeoAttrGroup grp,
         const char* name,
         GeoAttrType type = ATTR_TYPE_UNKNOWN
-        ) = 0;
+        ) const = 0;
+
+    virtual bool has_point_attr(const char* name) const = 0;
 
     virtual int delete_attr(
         GeoAttrGroup grp,
@@ -144,7 +146,7 @@ struct IGeometryObject : IObject2 {
     virtual size_t face_vertices(int face_id, int* vertices, size_t cap) = 0;
     virtual Vec3f face_nrm(int face_id) = 0;
 
-    /* VertexÏà¹Ø */
+    /* Vertexç›¸å…³ */
     virtual int vertex_index(int face_id, int vertex_id) = 0;
     virtual int vertex_next(int linear_vertex_id) = 0;
     virtual int vertex_prev(int linear_vertex_id) = 0;

@@ -7,7 +7,7 @@ namespace zeno
 {
     struct Switch : INode2
     {
-        void apply(INodeData* pNodeData) override {
+        ZErrorCode apply(INodeData* pNodeData) override {
             auto input_objects = pNodeData->get_input_ListObject("Input Objects");
             if (!input_objects) {
                 throw makeError<UnimplError>("no input objects on Switch");
@@ -17,6 +17,7 @@ namespace zeno
             int clip_switch = std::min(n - 1, std::max(0, switch_num));
             auto obj = input_objects->get(clip_switch);
             pNodeData->set_output_object("Output Object", obj->clone());
+            return ZErr_OK;
         }
 
         DEF_OVERRIDE_FOR_INODE
@@ -37,7 +38,7 @@ namespace zeno
 
     struct NumericIf : INode2
     {
-        void apply(INodeData* pNodeData) override {
+        ZErrorCode apply(INodeData* pNodeData) override {
             NodeImpl* m_pAdapter = static_cast<NodeImpl*>(pNodeData);
             int cond = m_pAdapter->get_input2_int("Condition");
             if (cond != 0) {
@@ -46,6 +47,7 @@ namespace zeno
             else {
                 m_pAdapter->set_primitive_output("Output", m_pAdapter->get_param_result("If False"));
             }
+            return ZErr_OK;
         }
 
         NodeType type() const { return Node_Normal; }
@@ -80,7 +82,7 @@ namespace zeno
 
     struct SwitchIf : INode2
     {
-        void apply(INodeData* _pNodeData) override {
+        ZErrorCode apply(INodeData* _pNodeData) override {
             NodeImpl* pNodeData = static_cast<NodeImpl*>(_pNodeData);
             int cond = pNodeData->get_input2_int("Condition");
             if (cond != 0) {
@@ -89,6 +91,7 @@ namespace zeno
             else {
                 pNodeData->set_output("Output", pNodeData->clone_input("If False"));
             }
+            return ZErr_OK;
         }
 
         NodeType type() const { return Node_Normal; }
@@ -122,55 +125,56 @@ namespace zeno
 
     struct SwitchBetween : INode2
     {
-        void apply(INodeData* _pNodeData) override {
+        ZErrorCode apply(INodeData* _pNodeData) override {
             NodeImpl* pNodeData = static_cast<NodeImpl*>(_pNodeData);
             int cond = pNodeData->get_input2_int("cond1");
             if (cond != 0) {
                 pNodeData->set_output("Output", pNodeData->clone_input("b1"));
-                return;
+                return ZErr_OK;
             }
 
             cond = pNodeData->get_input2_int("cond2");
             if (cond != 0) {
                 pNodeData->set_output("Output", pNodeData->clone_input("b2"));
-                return;
+                return ZErr_OK;
             }
 
             cond = pNodeData->get_input2_int("cond3");
             if (cond != 0) {
                 pNodeData->set_output("Output", pNodeData->clone_input("b3"));
-                return;
+                return ZErr_OK;
             }
 
             cond = pNodeData->get_input2_int("cond4");
             if (cond != 0) {
                 pNodeData->set_output("Output", pNodeData->clone_input("b4"));
-                return;
+                return ZErr_OK;
             }
 
             cond = pNodeData->get_input2_int("cond5");
             if (cond != 0) {
                 pNodeData->set_output("Output", pNodeData->clone_input("b5"));
-                return;
+                return ZErr_OK;
             }
 
             cond = pNodeData->get_input2_int("cond6");
             if (cond != 0) {
                 pNodeData->set_output("Output", pNodeData->clone_input("b6"));
-                return;
+                return ZErr_OK;
             }
 
             cond = pNodeData->get_input2_int("cond7");
             if (cond != 0) {
                 pNodeData->set_output("Output", pNodeData->clone_input("b7"));
-                return;
+                return ZErr_OK;
             }
 
             cond = pNodeData->get_input2_int("cond8");
             if (cond != 0) {
                 pNodeData->set_output("Output", pNodeData->clone_input("b8"));
-                return;
+                return ZErr_OK;
             }
+            return ZErr_OK;
         }
 
         NodeType type() const {

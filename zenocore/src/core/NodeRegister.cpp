@@ -264,7 +264,7 @@ namespace zeno {
             else {
                 auto deflVal = zvalue2any(param_desc.defl);
                 deflVal = convertType(deflVal, type);
-                ParamControl ctrl = zctrl2ctrl(param_desc.control);
+                ParamControl ctrl = param_desc.control;
                 const auto& ctrlProp = zvalue2any(param_desc.ctrl_props);
                 stddesc.inputs.emplace_back(std::move(ParamPrimitive(name, type, deflVal, ctrl, ctrlProp, "", false)));
             }
@@ -284,7 +284,7 @@ namespace zeno {
             }
             else {
                 const auto& deflVal = zvalue2any(param_desc.defl);
-                ParamControl ctrl = zctrl2ctrl(param_desc.control);
+                ParamControl ctrl = param_desc.control;
                 const auto& ctrlProp = zvalue2any(param_desc.ctrl_props);
                 stddesc.outputs.emplace_back(std::move(ParamPrimitive(name, type, deflVal, ctrl, ctrlProp, "", false)));
             }

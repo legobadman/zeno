@@ -333,6 +333,7 @@ namespace zeno
     protected:
         virtual void complete();
         virtual void apply();
+        virtual void report_error(const char* error_info);
         void reflectNode_apply();
         virtual void initParams(const NodeData& dat);
 

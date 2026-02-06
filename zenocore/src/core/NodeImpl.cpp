@@ -994,7 +994,13 @@ void NodeImpl::apply() {
     if (m_upNode2) {
         try {
             if (m_upNode2) {
-                m_upNode2->apply(this);
+                //这里属于core层面，可以抛异常，但节点不能抛，否则破坏二进制兼容
+                ZErrorCode err = m_upNode2->apply(this);
+                if (err != ZErr_OK) {
+                    auto err = getSession().globalState->get_report_error();
+                    //TODO: 细化各种错误
+                    throw makeNodeError<UnimplError>(get_path(), err);
+                }
             }
         }
         catch (ErrorException const& e) {
@@ -1016,6 +1022,10 @@ void NodeImpl::apply() {
     else {
         throw makeNodeError<UnimplError>(get_path(), "the node has been uninstalled");
     }
+}
+
+void NodeImpl::report_error(const char* error_info) {
+    zeno::getSession().globalState->report_error(std::string(error_info));
 }
 
 void NodeImpl::reflectNode_apply()

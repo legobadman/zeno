@@ -37,15 +37,6 @@
     }())
 
 
-#define Z_FLOAT(name,def) \
-    { #name, _gParamType_Float, ZFloat(def), ctrl_Slider, ZNull() }
-
-#define Z_BOOL(name,def) \
-    { #name, _gParamType_Bool, ZInt(def), ctrl_Checkbox, ZNull() }
-
-#define Z_INT(name,def) \
-    { #name, _gParamType_Int, ZInt(def), ctrl_Lineedit, ZNull() }
-
 #define Z_INPUTS(...) __VA_ARGS__
 #define Z_OUTPUTS(...) __VA_ARGS__
 
@@ -78,7 +69,7 @@ using fnUnRegister = bool(__cdecl*)(const char* name);
     static struct _Def##Node { \
         _Def##Node() { \
             auto h = LoadLibrary("zenocore.dll");\
-            if (h == INVALID_HANDLE_VALUE) { throw; }\
+            if (h == INVALID_HANDLE_VALUE || h == 0) { throw; }\
             auto procReg = (fnRegister)GetProcAddress(h, "registerNode");\
             if (procReg) { \
                 procReg(\
@@ -92,7 +83,7 @@ using fnUnRegister = bool(__cdecl*)(const char* name);
 \
         ~_Def##Node() {\
             auto h = LoadLibrary("zenocore.dll");\
-            if (h == INVALID_HANDLE_VALUE) { throw; }\
+            if (h == INVALID_HANDLE_VALUE || h == 0) { throw; }\
             auto procUnReg = (fnUnRegister)GetProcAddress(h, "unRegisterNode");\
             if (procUnReg) { \
                 procUnReg(#Node); \

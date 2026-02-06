@@ -11,8 +11,9 @@ namespace zeno {
 namespace {
 
 struct Subnet : INode2 {
-    virtual void apply(INodeData* ptrNodeData) override {
+    virtual ZErrorCode apply(INodeData* ptrNodeData) override {
         /*zeno::SubnetNode::apply();*/
+        return ZErr_OK;
     }
     NodeType type() const override {
         return Node_SubgraphNode;
@@ -31,10 +32,11 @@ ZENDEFNODE(Subnet, {
 });
 
 struct SubInput : zeno::INode2 {
-    void apply(INodeData* ptrNodeData) override {
+    ZErrorCode apply(INodeData* ptrNodeData) override {
         //printf("!!! %s\n", typeid(*ZImpl(get_input("_IN_port"))).name());
         //set_output("port", ZImpl(get_input("_IN_port"))); 
         //set_output("hasValue", ZImpl(get_input("_IN_hasValue")));
+        return ZErr_OK;
     }
 
     NodeType type() const {
@@ -59,7 +61,8 @@ ZENDEFNODE(SubInput, {
 });
 
 struct SubOutput : zeno::INode2 {
-    void apply(INodeData* ptrNodeData) override {
+    ZErrorCode apply(INodeData* ptrNodeData) override {
+        return ZErr_OK;
     }
 
     NodeType type() const {

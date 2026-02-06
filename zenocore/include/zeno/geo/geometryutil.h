@@ -6,6 +6,7 @@
 #include <array>
 #include <zeno/types/ListObject.h>
 #include <zeno/types/GeometryObject.h>
+#include <iobject2.h>
 
 namespace zeno
 {
@@ -31,11 +32,11 @@ namespace zeno
 
     ZENO_API std::pair<vec3f, vec3f> GetGeomBoundingBox(GeometryObject* geo);
     ZENO_API bool geomBoundingBox(IGeometryObject* geo, Vec3f& bbmin, Vec3f& bbmax);
-    ZENO_API IGeometryObject* mergeObjects(
-        IListObject* spList,
-        const char* tagAttr = 0,
-        bool tag_on_vert = true,
-        bool tag_on_face = false);
+    //ZENO_EXPORT IGeometryObject* __cdecl mergeObjects(
+    //    IListObject* spList,
+    //    const char* tagAttr,
+    //    bool tag_on_vert,
+    //    bool tag_on_face);
     ZENO_API void geom_set_abcpath(IGeometryObject* prim, const char* path_name);
     ZENO_API void geom_set_faceset(IGeometryObject* prim, const char* faceset_name);
     ZENO_API IGeometryObject* fuseGeometry(IGeometryObject* input, float threshold);

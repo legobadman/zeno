@@ -60,7 +60,7 @@ namespace zeno {
     };
 
 
-    //¼¸ºÎÊôĞÔ¶ÔÓ¦µÄ·Ö×é
+    //å‡ ä½•å±æ€§å¯¹åº”çš„åˆ†ç»„
     enum GeoAttrGroup {
         ATTR_GEO,
         ATTR_FACE,
@@ -74,7 +74,7 @@ namespace zeno {
         Topo_HalfEdge,
     };
 
-    //¼¸ºÎÊôĞÔÀàĞÍ
+    //å‡ ä½•å±æ€§ç±»å‹
     enum GeoAttrType {
         ATTR_TYPE_UNKNOWN,
         ATTR_INT,
@@ -83,6 +83,12 @@ namespace zeno {
         ATTR_VEC2,
         ATTR_VEC3,
         ATTR_VEC4
+    };
+
+    enum ZErrorCode {
+        ZErr_OK,        //no error
+        ZErr_UnimplError,
+        ZErr_ParamError
     };
 
     struct ZAttrValue {
@@ -154,35 +160,10 @@ typedef enum ZValueType {
     ZVAL_INT_ARRAY,
     ZVAL_FLOAT_ARRAY,
     ZVAL_STRING_ARRAY,
-    ZVAL_VEC3
+    ZVAL_VEC2,
+    ZVAL_VEC3,
+    ZVAL_VEC4
 } ZValueType;
-
-enum ParamControl2
-{
-    ctrl_NullControl,
-    ctrl_Lineedit,
-    ctrl_Multiline,
-    ctrl_ReadPathEdit,
-    ctrl_WritePathEdit,
-    ctrl_DirectoryPathEdit,
-    ctrl_Combobox,
-    ctrl_Checkbox,
-    ctrl_Vec2edit,
-    ctrl_Vec3edit,
-    ctrl_Vec4edit,
-    ctrl_ColorVec,
-    ctrl_Heatmap,
-    ctrl_CurveEditor,
-    ctrl_SpinBox,
-    ctrl_Slider,
-    ctrl_DoubleSpinBox,
-    ctrl_SpinBoxSlider,
-    ctrl_PythonEditor,
-    ctrl_PushButton,
-    ctrl_Seperator,
-    ctrl_CodeEditor,
-    ctrl_NoMultiSockPanel,   //disable dist/list panel
-};
 
 enum Rotate_Orientaion
 {
@@ -213,7 +194,9 @@ struct ZValue {
             size_t size;
         } sarr;
 
+        zeno::Vec2f vec2f;
         zeno::Vec3f vec3f;
+        zeno::Vec4f vec4f;
     };
 };
 
@@ -251,10 +234,24 @@ inline ZValue ZInt(int ival) {
     return v;
 }
 
+inline ZValue ZVec2f(float x, float y) {
+    ZValue v{};
+    v._type = ZVAL_VEC2;
+    v.vec2f = { x,y };
+    return v;
+}
+
 inline ZValue ZVec3f(float x, float y, float z) {
     ZValue v{};
     v._type = ZVAL_VEC3;
     v.vec3f = { x,y,z };
+    return v;
+}
+
+inline ZValue ZVec4f(float x, float y, float z, float w) {
+    ZValue v{};
+    v._type = ZVAL_VEC4;
+    v.vec4f = { x,y,z,w };
     return v;
 }
 
@@ -265,10 +262,10 @@ inline ZValue ZNull() {
 }
 
 struct ZParamDescriptor {
-    const char* name;   //²»ĞèÒª¿¼ÂÇÄÚ´æ¶ÔÆë£¬·ÅÕâÀï¸ü·½±ã
+    const char* name;   //ä¸éœ€è¦è€ƒè™‘å†…å­˜å¯¹é½ï¼Œæ”¾è¿™é‡Œæ›´æ–¹ä¾¿
     size_t type;
     ZValue defl;
-    ParamControl2 control;
+    zeno::ParamControl control;
     ZValue ctrl_props;
 };
 

@@ -691,20 +691,12 @@ namespace zeno
     }
 
     const std::map<std::string, AttributeVector>& GeometryObject::get_const_container(GeoAttrGroup grp) const {
-        if (grp == ATTR_GEO) {
-            return m_geo_attrs;
-        }
-        else if (grp == ATTR_POINT) {
-            return m_point_attrs;
-        }
-        else if (grp == ATTR_FACE) {
-            return m_face_attrs;
-        }
-        else if (grp == ATTR_VERTEX) {
-            return m_vert_attrs;
-        }
-        else {
-            throw makeError<UnimplError>("Unknown group on attr");
+        switch (grp)
+        {
+        case ATTR_GEO:    return m_geo_attrs;
+        case ATTR_POINT:  return m_point_attrs;
+        case ATTR_FACE:   return m_face_attrs;
+        case ATTR_VERTEX: return m_vert_attrs;
         }
     }
 
@@ -997,9 +989,9 @@ namespace zeno
         }
     }
 
-    bool GeometryObject::has_attr(GeoAttrGroup grp, std::string const& name, GeoAttrType type)
+    bool GeometryObject::has_attr(GeoAttrGroup grp, std::string const& name, GeoAttrType type) const
     {
-        std::map<std::string, AttributeVector>& container = get_container(grp);
+        const auto& container = get_const_container(grp);
         auto it = container.find(name);
         if (it == container.end()) return false;
         GeoAttrType attrType = it->second.type();
@@ -1012,9 +1004,13 @@ namespace zeno
         GeoAttrGroup grp,
         const char* name,
         GeoAttrType type
-    )
+    ) const
     {
         return has_attr(grp, std::string(name), type);
+    }
+
+    bool GeometryObject::has_point_attr(const char* name) const {
+        return has_attr(ATTR_POINT, name);
     }
 
     std::vector<std::string> GeometryObject::attributes(GeoAttrGroup grp) {

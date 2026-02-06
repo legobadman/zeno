@@ -328,14 +328,14 @@ namespace zeno
     }
 
 
-    ZENO_API IGeometryObject* mergeObjects(
+    ZENO_EXPORT zeno::IGeometryObject* __cdecl mergeObjects(
         IListObject* _spList,
         const char* _tagAttr,
         bool tag_on_vert,
         bool tag_on_face)
     {
         ListObject* spList = static_cast<ListObject*>(_spList);
-        std::string tagAttr(_tagAttr);
+        std::string tagAttr(_tagAttr ? _tagAttr : "");
         size_t nTotalPts = 0, nTotalFaces = 0, nVertices = 0;
         const std::vector<zeno::GeometryObject*>& geoobjs = spList->get<zeno::GeometryObject>();
         for (auto spObject : geoobjs) {

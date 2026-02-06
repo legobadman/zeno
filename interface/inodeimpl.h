@@ -6,7 +6,7 @@
 
 namespace zeno {
 	struct INode2 {
-		virtual void apply(INodeData* ptrNodeData) = 0;
+		virtual ZErrorCode apply(INodeData* ptrNodeData) = 0;
 		virtual NodeType type() const = 0;
 		virtual void clearCalcResults() = 0;
 		virtual void getIconResource(char* recv, size_t cap) = 0;

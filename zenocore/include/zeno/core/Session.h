@@ -110,6 +110,7 @@ private:
     bool m_bAsyncExecute = false;
     std::string m_current_loading_module;
     std::string m_solver;
+
     std::wstring m_proj_path;
     unsigned long m_mainThreadId;
     std::atomic<bool> m_bInterrupted;

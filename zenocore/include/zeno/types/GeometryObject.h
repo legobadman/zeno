@@ -208,8 +208,9 @@ namespace zeno
             GeoAttrGroup grp,
             const char* name,
             GeoAttrType type = ATTR_TYPE_UNKNOWN
-        ) override;
-        bool has_attr(GeoAttrGroup grp, std::string const& name, GeoAttrType type = ATTR_TYPE_UNKNOWN);
+        ) const override;
+        bool has_point_attr(const char* name) const override;
+        bool has_attr(GeoAttrGroup grp, std::string const& name, GeoAttrType type = ATTR_TYPE_UNKNOWN) const;
         bool has_vertex_attr(std::string const& name) const;
         bool has_point_attr(std::string const& name) const;
         bool has_face_attr(std::string const& name) const;

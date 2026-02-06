@@ -29,7 +29,6 @@ namespace zeno {
 		const std::vector<vec3f>& points,
 		const std::vector<std::vector<int>>& faces)
 	{
-
 		const Vec3f* abiPoints = nullptr;
 		size_t pointCount = points.size();
 
@@ -90,4 +89,27 @@ namespace zeno {
 		//TODO:
 #endif
 	}
+
+	IGeometryObject* mergeObjects(
+		IListObject* spList,
+		const char* tagAtt,
+		bool tag_on_vert,
+		bool tag_on_face)
+	{
+#ifdef _WIN32
+		HMODULE hDll = ::LoadLibrary("zenocore.dll");
+		if (hDll == INVALID_HANDLE_VALUE || hDll == 0) {
+			return nullptr;
+		}
+		using fnMergeGeo = IGeometryObject* (__cdecl*)(IListObject*, const char*, bool, bool);
+		auto fCall = (fnMergeGeo)GetProcAddress(hDll, "mergeObjects");
+		if (fCall) {
+			return fCall(spList, tagAtt, tag_on_vert, tag_on_face);
+		}
+#else
+		//TODO:
+#endif
+		return nullptr;
+	}
+
 }

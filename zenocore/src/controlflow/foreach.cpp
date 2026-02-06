@@ -27,7 +27,7 @@ namespace zeno {
         return foreach_end;
     }
 
-    void ForEachBegin::apply(INodeData* ptrNodeData) {
+    ZErrorCode ForEachBegin::apply(INodeData* ptrNodeData) {
         NodeImpl* m_pAdapter = static_cast<NodeImpl*>(ptrNodeData);
         IObject2* init_object = m_pAdapter->get_input_obj("Initial Object");
         std::string m_fetch_mehod = m_pAdapter->get_input2_string("Fetch Method");
@@ -45,7 +45,7 @@ namespace zeno {
             auto itemethod = foreach_end_data->get_input2_string("Iterate Method");
             if (itemethod == "By Count") {
                 m_pAdapter->set_output("Output Object", zany2(init_object->clone()));
-                return;
+                return ZErr_OK;;
             }
             else if (itemethod == "By Container") {
                 //TODO: 目前只支持list，后续可支持dict
@@ -55,7 +55,7 @@ namespace zeno {
                         auto elemObj = spList->get(m_current_iteration);
                         zany2 spClonedObj(elemObj->clone());
                         m_pAdapter->set_output("Output Object", std::move(spClonedObj));
-                        return;
+                        return ZErr_OK;
                     }
                     else {
                         throw makeError<UnimplError>("current iteration on foreach begin exceeds the range of Listobject");
@@ -73,7 +73,7 @@ namespace zeno {
             int startValue = foreach_end_data->get_input2_int("Start Value");
             if (startValue == m_current_iteration) {
                 m_pAdapter->set_output("Output Object", zany2(init_object->clone()));
-                return;
+                return ZErr_OK;
             }
             else {
                 auto outputObj = foreach_end->get_iterate_object();
@@ -84,7 +84,7 @@ namespace zeno {
                     m_pAdapter->set_output("Output Object", zany2(init_object->clone()));
                 }
                 //outputObj of last iteration as a feedback to next procedure.
-                return;
+                return ZErr_OK;;
             }
         }
         else if (m_fetch_mehod == "Element of Object") {
@@ -100,6 +100,7 @@ namespace zeno {
         else {
             m_pAdapter->set_output("Output Object", nullptr);
         }
+        return ZErr_OK;
     }
 
     int ForEachBegin::get_current_iteration(NodeImpl* m_pAdapter) {
@@ -241,7 +242,7 @@ namespace zeno {
         return m_iterate_object.get();
     }
 
-    void ForEachEnd::apply(INodeData* ptrNodeData) {}
+    ZErrorCode ForEachEnd::apply(INodeData* ptrNodeData) { return ZErr_OK; }
 
     void ForEachEnd::apply_foreach(INodeData* ptrNodeData, CalcContext* pContext) {
         NodeImpl* thisNodeData = static_cast<NodeImpl*>(ptrNodeData);
@@ -306,8 +307,8 @@ namespace zeno {
                     if (m_collect_objs->size() != 0) {
                         auto firstObj = m_collect_objs->get(0);
                         if (ZObj_Geometry == firstObj->type()) {
-                            auto mergedObj = zeno::mergeObjects(m_collect_objs.get());
-                            thisNodeData->set_output_object("Output Object", mergedObj);
+                            //auto mergedObj = zeno::mergeObjects(m_collect_objs.get(), nullptr, false, false);
+                            //thisNodeData->set_output_object("Output Object", mergedObj);
                             return;
                         }
                     }

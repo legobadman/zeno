@@ -119,6 +119,16 @@ int GlobalState::get_io_processed() const {
     return processed_io_units;
 }
 
+std::string GlobalState::get_report_error() const {
+    return m_reported_error;
+}
+
+void GlobalState::report_error(const std::string& error) {
+    //TODO: 考虑多线程情况下的race condition
+    std::lock_guard lck(mtx);
+    m_reported_error = error;
+}
+
 ZENO_API void GlobalState::set_working(bool working) {
     std::lock_guard lk(mtx);
     m_working = working;

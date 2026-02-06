@@ -437,37 +437,6 @@ namespace zeno {
         return true;
     }
 
-    ParamControl zctrl2ctrl(ParamControl2 ctrl) {
-        switch (ctrl)
-        {
-        case ctrl_NullControl:      return NullControl;
-        case ctrl_Lineedit:         return Lineedit;
-        case ctrl_Multiline:        return Multiline;
-        case ctrl_ReadPathEdit:     return ReadPathEdit;
-        case ctrl_WritePathEdit:    return WritePathEdit;
-        case ctrl_DirectoryPathEdit:return DirectoryPathEdit;
-        case ctrl_Combobox:         return Combobox;
-        case ctrl_Checkbox:         return Checkbox;
-        case ctrl_Vec2edit:         return Vec2edit;
-        case ctrl_Vec3edit:         return Vec3edit;
-        case ctrl_Vec4edit:         return Vec4edit;
-        case ctrl_ColorVec:         return ColorVec;
-        case ctrl_Heatmap:          return Heatmap;
-        case ctrl_CurveEditor:      return CurveEditor;
-        case ctrl_SpinBox:          return SpinBox;
-        case ctrl_Slider:           return Slider;
-        case ctrl_DoubleSpinBox:    return DoubleSpinBox;
-        case ctrl_SpinBoxSlider:    return SpinBoxSlider;
-        case ctrl_PythonEditor:     return PythonEditor;
-        case ctrl_PushButton:       return PushButton;
-        case ctrl_Seperator:        return Seperator;
-        case ctrl_CodeEditor:       return CodeEditor;
-        case ctrl_NoMultiSockPanel: return NoMultiSockPanel;
-        default:
-            return NullControl;
-        };
-    }
-
     zeno::reflect::Any zvalue2any(const ZValue& val) {
         switch (val._type) {
         case ZVAL_NULL:     return Any();
