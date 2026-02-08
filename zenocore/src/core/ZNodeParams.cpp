@@ -76,6 +76,11 @@ namespace zeno {
         }
     }
 
+    std::map<std::string, ObjectParam>& ZNodeParams::get_input_object_params2() { return m_inputObjs; }
+    std::map<std::string, ObjectParam>& ZNodeParams::get_output_object_params2() { return m_outputObjs; }
+    std::map<std::string, PrimitiveParam>& ZNodeParams::get_input_prim_params2() { return m_inputPrims; }
+    std::map<std::string, PrimitiveParam>& ZNodeParams::get_output_prim_params2() { return m_outputPrims; }
+
     // ------------------------- basic param queries -------------------------
 
     CommonParam ZNodeParams::get_input_param(std::string const& name, bool* bExist)

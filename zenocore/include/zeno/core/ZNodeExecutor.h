@@ -106,5 +106,12 @@ namespace zeno {
         ZNode* m_pNodeRepo{};
         NodeRunStatus m_status = Node_DirtyReadyToRun;
         DirtyReason m_dirtyReason = NoDirty;
+
+        bool m_bView = false;
+        bool m_bypass = false;
+        bool m_nocache = false;
+
+        bool m_dirty = true;
+        bool m_takenover = false;   //标记为nocache的节点，在计算完毕后，其输出被“移动”到下游节点后，当前节点处于takenover的状态，即，不脏且无法取出数据
     };
 }

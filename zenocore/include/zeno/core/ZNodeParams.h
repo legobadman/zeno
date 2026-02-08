@@ -46,6 +46,11 @@ namespace zeno {
         CommonParam get_input_param(std::string const& name, bool* bExist = nullptr);
         CommonParam get_output_param(std::string const& name, bool* bExist = nullptr);
 
+        std::map<std::string, ObjectParam>& get_input_object_params2();
+        std::map<std::string, ObjectParam>& get_output_object_params2();
+        std::map<std::string, PrimitiveParam>& get_input_prim_params2();
+        std::map<std::string, PrimitiveParam>& get_output_prim_params2();
+
         ObjectParams get_input_object_params() const;
         ObjectParams get_output_object_params() const;
         PrimitiveParams get_input_primitive_params() const;
