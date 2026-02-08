@@ -1,5 +1,5 @@
 #include <zeno/core/Graph.h>
-#include <zeno/core/NodeImpl.h>
+#include <zeno/core/ZNode.h>
 #include <iobject2.h>
 #include <zeno/core/INodeClass.h>
 #include <zeno/core/Session.h>
@@ -73,7 +73,7 @@ void Graph::addNode(std::string const &cls, std::string const &id) {
 
 Graph *Graph::getSubnetGraph(std::string const & node_name) const {
     const std::string uuid = safe_at(m_name2uuid, node_name, "uuid");
-    NodeImpl* pNode = safe_at(m_nodes, uuid, "node name").get();
+    ZNode* pNode = safe_at(m_nodes, uuid, "node name").get();
     auto node = dynamic_cast<SubnetNode*>(pNode);
     return node ? node->get_subgraph() : nullptr;
 }
@@ -276,7 +276,7 @@ void Graph::addNodeOutput(std::string const& id, std::string const& par) {
     //safe_at(nodes, id, "node name")->outputs[par] = nullptr;
 }
 
-static void initSpecialNode(zeno::NodeImpl* pNodeImpl, const NodeData& node) {
+static void initSpecialNode(zeno::ZNode* pNodeImpl, const NodeData& node) {
     if (node.cls == "FlipSolver") {
         //节点在初始化的时候是脏的，但还需要手动触发solver的dirty_changed，让它删cache
         pNodeImpl->dirty_changed(true, Dirty_All, false, false);
@@ -431,7 +431,7 @@ std::string Graph::generateNewName(const std::string& node_cls, const std::strin
     return "";
 }
 
-void Graph::updateWildCardParamTypeRecursive(Graph* spCurrGarph, NodeImpl* spNode, std::string paramName, bool bPrim, bool bInput, ParamType newtype)
+void Graph::updateWildCardParamTypeRecursive(Graph* spCurrGarph, ZNode* spNode, std::string paramName, bool bPrim, bool bInput, ParamType newtype)
 {
     if (!spCurrGarph || !spNode)
         return;
@@ -455,7 +455,7 @@ void Graph::updateWildCardParamTypeRecursive(Graph* spCurrGarph, NodeImpl* spNod
             }
         }
         if (auto graph = spNode->getGraph()) {
-            if (NodeImpl* pNodeImpl = getParentSubnetNode()) {
+            if (ZNode* pNodeImpl = getParentSubnetNode()) {
                 if (SubnetNode* parentSubgNode = dynamic_cast<SubnetNode*>(pNodeImpl)) {
                     pNodeImpl->update_param_type(spNode->get_name(), bPrim, !bInput, newtype);
                     for (auto& link : pNodeImpl->getLinksByParam(!bInput, spNode->get_name())) {
@@ -556,7 +556,7 @@ void Graph::updateWildCardParamTypeRecursive(Graph* spCurrGarph, NodeImpl* spNod
         for (const auto& param : params) {
             spNode->update_param_type(param.first, bPrim, param.second, newtype);
             for (auto& link : spNode->getLinksByParam(param.second, param.first)) {
-                NodeImpl* otherNodeLinkToThis = param.second ? spCurrGarph->getNode(link.outNode) : spCurrGarph->getNode(link.inNode);
+                ZNode* otherNodeLinkToThis = param.second ? spCurrGarph->getNode(link.outNode) : spCurrGarph->getNode(link.inNode);
                 if (otherNodeLinkToThis) {
                     if (param.second) {
                         ParamType paramType;
@@ -591,8 +591,8 @@ void Graph::updateWildCardParamTypeRecursive(Graph* spCurrGarph, NodeImpl* spNod
 
 void Graph::removeLinkWhenUpdateWildCardParam(const std::string& outNodeName, const std::string& inNodeName, EdgeInfo& edge)
 {
-    NodeImpl* outNode = getNode(outNodeName);
-    NodeImpl* inNode = getNode(inNodeName);
+    ZNode* outNode = getNode(outNodeName);
+    ZNode* inNode = getNode(inNodeName);
     if (!outNode || !inNode)
         return;
     outNode->removeLink(false, edge);
@@ -601,12 +601,12 @@ void Graph::removeLinkWhenUpdateWildCardParam(const std::string& outNodeName, co
     CALLBACK_NOTIFY(removeLink, edge)
 }
 
-void Graph::resetWildCardParamsType(bool bParamWildcard, NodeImpl* node, const std::string& paramName, const bool& bPrimType, const bool& bInput)
+void Graph::resetWildCardParamsType(bool bParamWildcard, ZNode* node, const std::string& paramName, const bool& bPrimType, const bool& bInput)
 {
     if (!node)
         return;
-    std::function<bool(Graph*, NodeImpl*, std::string, bool, std::set<std::string>&)> linkedToSpecificType =
-        [&linkedToSpecificType, this](Graph* currGraph, NodeImpl* node, std::string paramName, bool bPrimType, std::set<std::string>& visited)->bool {
+    std::function<bool(Graph*, ZNode*, std::string, bool, std::set<std::string>&)> linkedToSpecificType =
+        [&linkedToSpecificType, this](Graph* currGraph, ZNode* node, std::string paramName, bool bPrimType, std::set<std::string>& visited)->bool {
         const auto& params = node->getWildCardParams(paramName, bPrimType);
         for (auto& param : params) {
             visited.insert(node->get_uuid() + param.first);
@@ -628,7 +628,7 @@ void Graph::resetWildCardParamsType(bool bParamWildcard, NodeImpl* node, const s
                     }
                 }
                 if (auto graph = node->getGraph()) {
-                    if (NodeImpl* pNodeImpl = getParentSubnetNode()) {
+                    if (ZNode* pNodeImpl = getParentSubnetNode()) {
                         SubnetNode* parentSubgNode = getSubnetNode(getParentSubnetNode());
                         if (parentSubgNode) {
                             visited.insert(pNodeImpl->get_uuid() + node->get_uuid());
@@ -722,7 +722,7 @@ bool Graph::isAssets() const
 
 bool Graph::isAssetRoot() const
 {
-    NodeImpl* pNode = m_parSubnetNode;
+    ZNode* pNode = m_parSubnetNode;
     const Graph* pGraph = this;
     while (pNode) {
         pGraph = pNode->getGraph();
@@ -761,7 +761,7 @@ std::string Graph::updateNodeName(const std::string oldName, const std::string n
         return "";
     }
 
-    NodeImpl* spNode = m_nodes[uuid].get();
+    ZNode* spNode = m_nodes[uuid].get();
     std::string oldPath = spNode->get_path();
     std::string name = newName;
     if (m_name2uuid.find(name) != m_name2uuid.end()) {
@@ -802,7 +802,7 @@ void Graph::clear()
     m_parSubnetNode = nullptr;
 }
 
-NodeImpl* Graph::createNode(
+ZNode* Graph::createNode(
     const std::string& cls,
     const std::string& orgin_name,
     bool bAssets,
@@ -821,8 +821,8 @@ NodeImpl* Graph::createNode(
     }
 
     std::string uuid;
-    NodeImpl* pNode = nullptr;
-    std::unique_ptr<NodeImpl> upNode;
+    ZNode* pNode = nullptr;
+    std::unique_ptr<ZNode> upNode;
     if (!bAssets) {
         std::string nodecls = cls;
         auto cl = getNodeRegister().getNodeClassPtr(nodecls);
@@ -833,7 +833,7 @@ NodeImpl* Graph::createNode(
             uuid = pNode->get_uuid();
         }
         else {
-            upNode = std::make_unique<NodeImpl>((INode2*)nullptr, nullptr);   //空壳
+            upNode = std::make_unique<ZNode>((INode2*)nullptr, nullptr);   //空壳
             pNode = upNode.get();
             pNode->initUuid(this, nodecls);
             uuid = pNode->get_uuid();
@@ -917,7 +917,7 @@ bool Graph::hasNode(std::string const& uuid_node_path) {
     return spNode->getThisGraph() == this;
 }
 
-NodeImpl* Graph::getNode(std::string const& name) {
+ZNode* Graph::getNode(std::string const& name) {
     if (m_name2uuid.find(name) == m_name2uuid.end()) {
         return nullptr;
     }
@@ -925,7 +925,7 @@ NodeImpl* Graph::getNode(std::string const& name) {
     return safe_at(m_nodes, uuid, "").get();
 }
 
-NodeImpl* Graph::getNodeByUuidPath(ObjPath path) {
+ZNode* Graph::getNodeByUuidPath(ObjPath path) {
     if (path.empty())
         return nullptr;
 
@@ -967,7 +967,7 @@ std::shared_ptr<Graph> Graph::_getGraphByPath(std::vector<std::string> items)
             return _getGraphByPath(items);
         }
         else if (currname == "..") {
-            if (NodeImpl* pSubnetImpl = getParentSubnetNode()) {
+            if (ZNode* pSubnetImpl = getParentSubnetNode()) {
                 SubnetNode* parentNode = getSubnetNode(pSubnetImpl);
                 auto parentG = pSubnetImpl->getGraph();
                 return parentG->_getGraphByPath(items);
@@ -1003,7 +1003,7 @@ std::shared_ptr<Graph> Graph::getGraphByPath(const std::string& pa)
     return _getGraphByPath(pathitems);
 }
 
-zeno::NodeImpl* Graph::getNodeByPath(const std::string& pa)
+zeno::ZNode* Graph::getNodeByPath(const std::string& pa)
 {
     std::string path = pa;
     if (path.empty())
@@ -1021,17 +1021,17 @@ zeno::NodeImpl* Graph::getNodeByPath(const std::string& pa)
     return spGraph->getNode(nodename);
 }
 
-NodeImpl* Graph::getParentSubnetNode() const {
+ZNode* Graph::getParentSubnetNode() const {
     return m_parSubnetNode;
 }
 
-void Graph::initParentSubnetNode(NodeImpl* pSubnetNode) {
+void Graph::initParentSubnetNode(ZNode* pSubnetNode) {
     m_parSubnetNode = pSubnetNode;
 }
 
-std::vector<NodeImpl*> Graph::getNodesByClass(const std::string& cls)
+std::vector<ZNode*> Graph::getNodesByClass(const std::string& cls)
 {
-    std::vector<NodeImpl*> nodes;
+    std::vector<ZNode*> nodes;
     auto iter = node_set.find(cls);
     if (iter != node_set.end()) {
         for (auto name : iter->second) {
@@ -1041,8 +1041,8 @@ std::vector<NodeImpl*> Graph::getNodesByClass(const std::string& cls)
     return nodes;
 }
 
-std::map<std::string, NodeImpl*> Graph::getNodes() const {
-    std::map<std::string, NodeImpl*> nodes;
+std::map<std::string, ZNode*> Graph::getNodes() const {
+    std::map<std::string, ZNode*> nodes;
     for (auto& [uuid, node] : m_nodes) {
         nodes.insert(std::make_pair(node->get_name(), node.get()));
     }
@@ -1145,10 +1145,10 @@ bool Graph::removeNode(std::string const& name) {
 
 bool zeno::Graph::isLinkValid(const EdgeInfo& edge)
 {
-    NodeImpl* outNode = getNode(edge.outNode);
+    ZNode* outNode = getNode(edge.outNode);
     if (!outNode)
         return false;
-    NodeImpl* inNode = getNode(edge.inNode);
+    ZNode* inNode = getNode(edge.inNode);
     if (!inNode)
         return false;
 
@@ -1201,8 +1201,8 @@ bool Graph::addLink(const EdgeInfo& edge) {
     if (!isLinkValid(edge))
         return false;
 
-    NodeImpl* outNode = getNode(edge.outNode);
-    NodeImpl* inNode = getNode(edge.inNode);
+    ZNode* outNode = getNode(edge.outNode);
+    ZNode* inNode = getNode(edge.inNode);
 
     bool bExist = false;
     bool bOutputPrim = outNode->isPrimitiveType(false, edge.outParam, bExist);
@@ -1379,11 +1379,11 @@ bool Graph::removeLink(const EdgeInfo& edge) {
 
     CALLBACK_NOTIFY(removeLink, edge)
 
-    NodeImpl* outNode = getNode(edge.outNode);
+    ZNode* outNode = getNode(edge.outNode);
     if (!outNode)
         return false;
 
-    NodeImpl* inNode = getNode(edge.inNode);
+    ZNode* inNode = getNode(edge.inNode);
     if (!inNode)
         return false;
 
@@ -1436,7 +1436,7 @@ bool Graph::removeLinks(const std::string nodename, bool bInput, const std::stri
 {
     CORE_API_BATCH
 
-    NodeImpl* spNode = getNode(nodename);
+    ZNode* spNode = getNode(nodename);
     std::vector<EdgeInfo> links = spNode->getLinksByParam(bInput, paramname);
     for (auto link : links)
         removeLink(link);
@@ -1449,10 +1449,10 @@ bool Graph::updateLink(const EdgeInfo& edge, bool bInput, const std::string oldk
 {
     CORE_API_BATCH
 
-    NodeImpl* outNode = getNode(edge.outNode);
+    ZNode* outNode = getNode(edge.outNode);
     if (!outNode)
         return false;
-    NodeImpl* inNode = getNode(edge.inNode);
+    ZNode* inNode = getNode(edge.inNode);
     if (!inNode)
         return false;
 
@@ -1471,10 +1471,10 @@ bool Graph::updateLink(const EdgeInfo& edge, bool bInput, const std::string oldk
 bool Graph::moveUpLinkKey(const EdgeInfo& edge, bool bInput, const std::string keyName)
 {
     CORE_API_BATCH
-    NodeImpl* outNode = getNode(edge.outNode);
+    ZNode* outNode = getNode(edge.outNode);
     if (!outNode)
         return false;
-    NodeImpl* inNode = getNode(edge.inNode);
+    ZNode* inNode = getNode(edge.inNode);
     if (!inNode)
         return false;
     return moveUpLinkKey(edge, bInput, keyName);

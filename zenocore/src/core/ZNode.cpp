@@ -31,4 +31,12 @@ namespace zeno {
     ZNodeStatus* ZNode::getNodeStatus() const {
         return m_upNodeStatus.get();
     }
+
+    std::string ZNode::get_name() const {
+        return m_upNodeStatus->get_name();
+    }
+
+    std::string ZNode::get_path() const {
+        return m_upNodeStatus->get_path();
+    }
 }

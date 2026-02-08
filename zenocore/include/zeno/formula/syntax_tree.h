@@ -255,12 +255,12 @@ struct PointCloud
     int maxpoints = 0;
 };
 
-class NodeImpl;
+class ZNode;
 
 struct ZfxContext
 {
     /* in */ zany2 spObject;
-    /* in */ NodeImpl* spNode;
+    /* in */ ZNode* spNode;
     /* in */ std::string code;
     /* in */ GeoAttrGroup runover = ATTR_POINT;
     /* in */ bool bSingleFmla = false;      //只是计算一个表达式

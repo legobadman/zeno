@@ -19,6 +19,7 @@ namespace zeno {
     class ObjectParam;
     class PrimitiveParam;
     class CoreParam;
+    class ZNode;
 
     struct ObjectLink {
         std::future<zany2> upstream_task;
@@ -52,7 +53,7 @@ namespace zeno {
 
     struct CoreParam {
         std::string name;
-        NodeImpl* m_wpNode;
+        ZNode* m_wpNode;
         std::string wildCardGroup;
         std::string constrain;
         std::list<std::shared_ptr<ReferLink>> reflinks;

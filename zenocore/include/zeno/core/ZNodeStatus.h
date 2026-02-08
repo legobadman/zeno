@@ -71,6 +71,8 @@ namespace zeno {
         CALLBACK_REGIST(set_pos, void, std::pair<float, float>)
         std::pair<float, float> get_pos() const;
 
+        Graph* getGraph() const { return m_pGraph; }
+
     private:
         std::string m_name;
         std::string m_nodecls;

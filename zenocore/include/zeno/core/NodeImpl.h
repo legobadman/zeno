@@ -41,20 +41,20 @@ namespace zeno
     struct CalcContext;
     struct RefSourceInfo;
 
-    struct ExecuteContext
-    {
-        std::string innode_uuid_path;
-        std::string in_node;
-        std::string in_param;
-        std::string out_param;
-        CalcContext* pContext;
-    };
+    //struct ExecuteContext
+    //{
+    //    std::string innode_uuid_path;
+    //    std::string in_node;
+    //    std::string in_param;
+    //    std::string out_param;
+    //    CalcContext* pContext;
+    //};
 
-    struct RefLinkInfo
-    {
-        EdgeInfo reflink;
-        bool bOutParamIsOutput;//reflink的source可能是一个output也可能是一个input，true表示reflink引用了一个output参数
-    };
+    //struct RefLinkInfo
+    //{
+    //    EdgeInfo reflink;
+    //    bool bOutParamIsOutput;//reflink的source可能是一个output也可能是一个input，true表示reflink引用了一个output参数
+    //};
 
     class ZENO_API NodeImpl : public INodeData
     {

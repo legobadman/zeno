@@ -3,7 +3,7 @@
 #include <zeno/utils/api.h>
 #include <iobject2.h>
 #include <zeno/core/data.h>
-#include <zeno/core/NodeImpl.h>
+#include <zeno/core/ZNode.h>
 #include <zeno/utils/safe_dynamic_cast.h>
 #include <functional>
 #include <variant>
@@ -22,7 +22,7 @@ struct Session;
 struct SubgraphNode;
 struct SubnetNode;
 struct DirtyChecker;
-struct NodeImpl;
+struct ZNode;
 
 struct Context {
     std::set<std::string> visited;
@@ -51,7 +51,7 @@ struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
     void init(const GraphData& graph);
     void initRef(const GraphData& graph);
 
-    NodeImpl* createNode(
+    ZNode* createNode(
         const std::string& cls,
         const std::string& orgin_name = "",
         bool bAssets = false,
@@ -59,7 +59,7 @@ struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
         bool isIOInit = false,
         bool* pbAssetLock = nullptr,
         CustomUI customUi = CustomUI());
-    CALLBACK_REGIST(createNode, void, const std::string&, zeno::NodeImpl*)
+    CALLBACK_REGIST(createNode, void, const std::string&, zeno::ZNode*)
 
     bool removeNode(std::string const& name);
     CALLBACK_REGIST(removeNode, void, const std::string&)
@@ -79,15 +79,15 @@ struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
     bool moveUpLinkKey(const EdgeInfo& edge, bool bInput, const std::string keyName);
 
     bool hasNode(std::string const& uuid_node_path);
-    //老代码直接拿NodeImpl就行了，不需要考虑abi问题
-    NodeImpl* getNode(std::string const& name);
-    NodeImpl* getNodeByUuidPath(ObjPath path);
-    NodeImpl* getNodeByPath(const std::string& path);
-    NodeImpl* getParentSubnetNode() const;
-    void initParentSubnetNode(NodeImpl* pSubnetNode);
-    std::vector<NodeImpl*> getNodesByClass(const std::string& cls);
+    //老代码直接拿ZNode就行了，不需要考虑abi问题
+    ZNode* getNode(std::string const& name);
+    ZNode* getNodeByUuidPath(ObjPath path);
+    ZNode* getNodeByPath(const std::string& path);
+    ZNode* getParentSubnetNode() const;
+    void initParentSubnetNode(ZNode* pSubnetNode);
+    std::vector<ZNode*> getNodesByClass(const std::string& cls);
     std::shared_ptr<Graph> getGraphByPath(const std::string& path);
-    std::map<std::string, NodeImpl*> getNodes() const;
+    std::map<std::string, ZNode*> getNodes() const;
     std::set<std::string> get_viewnodes() const;
     float statistic_cpu_used() const;
 
@@ -139,19 +139,19 @@ struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
     bool isFrameNode(std::string uuid);
 
     //增/删边之后更新wildCard端口的类型
-    void updateWildCardParamTypeRecursive(Graph* spCurrGarph, NodeImpl* spNode, std::string paramName, bool bPrim, bool bInput, ParamType newtype);
+    void updateWildCardParamTypeRecursive(Graph* spCurrGarph, ZNode* spNode, std::string paramName, bool bPrim, bool bInput, ParamType newtype);
 
 private:
     std::string generateNewName(const std::string& node_cls, const std::string& origin_name = "", bool bAssets = false);
     //增/删边之后更新wildCard端口的类型
     void removeLinkWhenUpdateWildCardParam(const std::string& outNode, const std::string& inNode, EdgeInfo& edge);
-    void resetWildCardParamsType(bool bWildcard, NodeImpl* node, const std::string& paramName, const bool& bPrimType, const bool& bInput);
+    void resetWildCardParamsType(bool bWildcard, ZNode* node, const std::string& paramName, const bool& bPrimType, const bool& bInput);
     std::shared_ptr<Graph> _getGraphByPath(std::vector<std::string> items);
     bool isLinkValid(const EdgeInfo& edge);
     render_update_info applyNode(std::string const& node_name, CalcContext* pContext);
 
-    NodeImpl* m_parSubnetNode = nullptr;
-    std::map<std::string, std::unique_ptr<NodeImpl>> m_nodes;  //based on uuid.
+    ZNode* m_parSubnetNode = nullptr;
+    std::map<std::string, std::unique_ptr<ZNode>> m_nodes;  //based on uuid.
     std::set<std::string> nodesToExec;
     std::map<std::string, std::string> subInputNodes;
     std::map<std::string, std::string> subOutputNodes;

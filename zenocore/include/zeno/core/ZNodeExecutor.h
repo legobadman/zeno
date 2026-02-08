@@ -85,8 +85,6 @@ namespace zeno {
         std::string resolve_string(const std::string& fmla, const std::string& defl);
         zfxvariant execute_fmla(const std::string& expression);
         template<class T, class E> T resolveVec(const zeno::reflect::Any& defl, const ParamType type);
-        std::set<RefSourceInfo> resolveReferSource(const zeno::reflect::Any& param_defl);
-        void initReferLinks(PrimitiveParam* target_param);
         bool checkAllOutputLinkTraced();
         void launch_param_task(const std::string& param);
 

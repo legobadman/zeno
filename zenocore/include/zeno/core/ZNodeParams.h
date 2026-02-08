@@ -14,6 +14,7 @@
 #include <zeno/extra/GlobalState.h>
 #include <zeno/formula/syntax_tree.h>
 #include <zeno/core/data.h>
+#include <zeno/core/FunctionManager.h>
 #include <zeno/utils/uuid.h>
 #include <zeno/utils/safe_at.h>
 #include <zeno/core/CoreParam.h>
@@ -32,12 +33,15 @@ namespace zeno {
         bool bOutParamIsOutput;     //reflink的source可能是一个output也可能是一个input，true表示reflink引用了一个output参数
     };
 
+    class ZNode;
+
     class ZNodeParams : public INodeData
     {
     public:
-        ZNodeParams(const CustomUI& cui);
+        ZNodeParams(ZNode* pNode, const CustomUI& cui);
         ZNodeParams() = delete;
         ZNodeParams(const ZNodeParams& rhs) = delete;
+        ZNode* getNode() const { return m_pNode; }
 
         CommonParam get_input_param(std::string const& name, bool* bExist = nullptr);
         CommonParam get_output_param(std::string const& name, bool* bExist = nullptr);
@@ -89,6 +93,8 @@ namespace zeno {
 
         void update_layout(params_change_info& changes);
         CALLBACK_REGIST(update_layout, void, params_change_info& changes)
+        bool removeRefLinkDesParamIndx(bool bInput, bool bPrimitivParam, const std::string& paramName, bool bUiNeedRemoveReflink = false);
+        bool removeRefLink(const EdgeInfo& edge, bool outParamIsOutput);
 
         virtual params_change_info update_editparams(const ParamsUpdateInfo& params, bool bSubnetInit = false);
         //由param这个参数值的变化触发节点params重置
@@ -118,6 +124,7 @@ namespace zeno {
         std::vector<RefLinkInfo> getReflinkInfo(bool bOnlySearchByDestNode = true);
         void removeNodeUpdateRefLink(const zeno::EdgeInfo& link, bool bAddRef, bool bOutParamIsOutput);//前端删除节点时undo/redo相关param的reflink
 
+        CALLBACK_REGIST(update_visable_enable, void, zeno::NodeImpl*, std::set<std::string>, std::set<std::string>)
         CALLBACK_REGIST(addRefLink, void, EdgeInfo, bool outParamIsOutput)
         CALLBACK_REGIST(removeRefLink, void, EdgeInfo, bool outParamIsOutput)
 
@@ -174,9 +181,19 @@ namespace zeno {
         void report_error(const char* error_info) override;
 
     private:
+        zany2 clone_input(std::string const& id) const;
+        Graph* getGraph() const;
+        bool addRefLink(const EdgeInfo& edge, bool outParamIsOutput);
+        void initReferLinks(PrimitiveParam* target_param);
+        std::set<RefSourceInfo> resolveReferSource(const zeno::reflect::Any& param_defl);
+        GlobalState* getGlobalState() const;
+        bool has_input(std::string const& id) const;
+        bool has_link_input(std::string const& id) const;
+
         std::map<std::string, ObjectParam> m_inputObjs;
         std::map<std::string, PrimitiveParam> m_inputPrims;
         std::map<std::string, PrimitiveParam> m_outputPrims;
         std::map<std::string, ObjectParam> m_outputObjs;
+        ZNode* m_pNode{};
     };
 }

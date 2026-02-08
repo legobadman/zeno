@@ -48,6 +48,9 @@ namespace zeno
         ZNodeExecutor* getNodeExecutor() const;
         ZNodeStatus* getNodeStatus() const;
 
+        std::string get_name() const;
+        std::string get_path() const;
+
     private:
         std::unique_ptr<ZNodeParams> m_upParams;
         std::unique_ptr<ZNodeExecutor> m_upNodeExec;
