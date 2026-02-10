@@ -44,6 +44,8 @@ namespace zeno {
         ZNodeExecutor(ZNode* pNodeRepop, INode2* pNode, void (*dtor)(INode2*));
         ZNodeExecutor(const ZNodeExecutor&) = delete;
 
+        void initAfterIO();
+
         void execute(CalcContext* pContext);
         zany2 execute_get_object(const ExecuteContext& exec_context);
         zeno::reflect::Any execute_get_numeric(const ExecuteContext& exec_context);
@@ -72,9 +74,11 @@ namespace zeno {
         void reportStatus(bool bDirty, NodeRunStatus status);
         void mark_takeover();
         bool is_takenover() const;
+        bool is_dirty() const;
         void check_break_and_return();
         void complete();
         void apply();
+        INode2* coreNode() const;
 
         void doApply(CalcContext* pContext);
         void doApply_Parameter(std::string const& name, CalcContext* pContext); //引入数值输入参数，并不计算整个节点
@@ -102,6 +106,8 @@ namespace zeno {
         void foreachend_apply(CalcContext* pContext);
 
     private:
+        bool requireInput(const std::string& ds, CalcContext* pContext);
+
         std::unique_ptr<INode2, void (*)(INode2*)> m_upNode2;
         ZNode* m_pNodeRepo{};
         NodeRunStatus m_status = Node_DirtyReadyToRun;

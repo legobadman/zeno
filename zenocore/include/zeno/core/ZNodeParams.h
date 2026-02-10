@@ -41,11 +41,14 @@ namespace zeno {
         ZNodeParams(ZNode* pNode, const CustomUI& cui);
         ZNodeParams() = delete;
         ZNodeParams(const ZNodeParams& rhs) = delete;
+        void initParams(const NodeData& dat);
         ZNode* getNode() const { return m_pNode; }
+        CustomUI get_customui() const { return m_customUI; }
 
         CommonParam get_input_param(std::string const& name, bool* bExist = nullptr);
         CommonParam get_output_param(std::string const& name, bool* bExist = nullptr);
 
+        //以下方法依然破坏封装，不过暂时先这么做，方便执行节点代码
         std::map<std::string, ObjectParam>& get_input_object_params2();
         std::map<std::string, ObjectParam>& get_output_object_params2();
         std::map<std::string, PrimitiveParam>& get_input_prim_params2();
@@ -152,6 +155,8 @@ namespace zeno {
             return safe_uniqueptr_cast<T>(std::move(obj));
         }
 
+        IObject2* get_output_obj(std::string const& param);
+
     public://INodeData
         IObject2* get_input_object(const char* param) override;
         IObject2* clone_input_object(const char* param) override;
@@ -195,6 +200,7 @@ namespace zeno {
         bool has_input(std::string const& id) const;
         bool has_link_input(std::string const& id) const;
 
+        CustomUI m_customUI;
         std::map<std::string, ObjectParam> m_inputObjs;
         std::map<std::string, PrimitiveParam> m_inputPrims;
         std::map<std::string, PrimitiveParam> m_outputPrims;

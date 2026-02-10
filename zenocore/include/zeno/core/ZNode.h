@@ -23,6 +23,9 @@
 #include <zcommon.h>
 #include <inodedata.h>
 #include <inodeimpl.h>
+#include <zeno/core/ZNodeExecutor.h>
+#include <zeno/core/ZNodeParams.h>
+#include <zeno/core/ZNodeStatus.h>
 
 
 namespace zeno
@@ -44,17 +47,20 @@ namespace zeno
         ZNode(const ZNode& rhs) = delete;
         virtual ~ZNode() = default;
 
-        ZNodeParams* getNodeParams() const;
-        ZNodeExecutor* getNodeExecutor() const;
-        ZNodeStatus* getNodeStatus() const;
+        void init(const NodeData& dat);
+
+        ZNodeParams& getNodeParams();
+        ZNodeExecutor& getNodeExecutor();
+        ZNodeStatus& getNodeStatus();
 
         std::string get_name() const;
         std::string get_path() const;
+        std::string get_uuid() const;
 
     private:
-        std::unique_ptr<ZNodeParams> m_upParams;
-        std::unique_ptr<ZNodeExecutor> m_upNodeExec;
-        std::unique_ptr<ZNodeStatus> m_upNodeStatus;
+        ZNodeParams m_upParams;
+        ZNodeExecutor m_upNodeExec;
+        ZNodeStatus m_upNodeStatus;
     };
 
 }

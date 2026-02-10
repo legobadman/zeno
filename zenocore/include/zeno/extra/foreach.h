@@ -1,6 +1,7 @@
 #pragma once
 
-#include <zeno/core/NodeImpl.h>
+#include <zeno/core/ZNode.h>
+#include <zeno/core/ZNode.h>
 #include <zeno/zeno.h>
 #include <zeno/core/Graph.h>
 #include <zeno/types/PrimitiveObject.h>
@@ -18,15 +19,15 @@ namespace zeno
 {
     struct ForEachBegin : INode2
     {
-        NodeImpl* get_foreachend(NodeImpl* m_pAdapter);
+        ZNode* get_foreachend(ZNode* m_pAdapter);
         ZErrorCode apply(INodeData* ptrNodeData) override;
         NodeType type() const override { return Node_Normal; }
         void clearCalcResults() override {}
         void getIconResource(char* recv, size_t cap) override;
         void getBackgroundClr(char* recv, size_t cap) override;
         float time() const override { return 1.0; }
-        int get_current_iteration(NodeImpl* m_pAdapter);
-        void update_iteration(NodeImpl* m_pAdapter, int new_iteration);
+        int get_current_iteration(ZNode* m_pAdapter);
+        void update_iteration(ZNode* m_pAdapter, int new_iteration);
     };
 
     struct ForEachEnd : INode2
@@ -37,14 +38,14 @@ namespace zeno
         float time() const override { return 1.0; }
 
         ForEachEnd();
-        NodeImpl* get_foreach_begin(NodeImpl* m_pAdapter);
-        void reset_forloop_settings(NodeImpl* m_pAdapter);
-        bool is_continue_to_run(NodeImpl* m_pAdapter, CalcContext* pContext);
-        void increment(NodeImpl* m_pAdapter);
+        ZNode* get_foreach_begin(ZNode* m_pAdapter);
+        void reset_forloop_settings(ZNode* m_pAdapter);
+        bool is_continue_to_run(ZNode* m_pAdapter, CalcContext* pContext);
+        void increment(ZNode* m_pAdapter);
         IObject2* get_iterate_object();
         ZErrorCode apply(INodeData* ptrNodeData) override;
         void apply_foreach(INodeData* ptrNodeData, CalcContext* pContext);
-        void adjustCollectObjInfo(NodeImpl* ptrNodeData);
+        void adjustCollectObjInfo(ZNode* ptrNodeData);
         void clearCalcResults() override;
 
         zany2 m_iterate_object;

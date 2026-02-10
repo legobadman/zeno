@@ -1,7 +1,4 @@
 #include <zeno/core/ZNode.h>
-#include <zeno/core/ZNodeExecutor.h>
-#include <zeno/core/ZNodeParams.h>
-#include <zeno/core/ZNodeStatus.h>
 
 
 namespace zeno {
@@ -14,29 +11,39 @@ namespace zeno {
         Graph* pGraph,
         const CustomUI& customui
     )
+        : m_upParams(this, customui)
+        , m_upNodeExec(this, pNode, dtor)
+        , m_upNodeStatus(this, class_name, name)
     {
-        m_upParams = std::make_unique<ZNodeParams>(customui);
-        m_upNodeExec = std::make_unique<ZNodeExecutor>(this, pNode, dtor);
-        m_upNodeStatus = std::make_unique<ZNodeStatus>(this, class_name, name);
     }
 
-    ZNodeParams* ZNode::getNodeParams() const {
-        return m_upParams.get();
+    void ZNode::init(const NodeData& dat) {
+        m_upNodeStatus.initDat(dat);
+        m_upParams.initParams(dat);
+        m_upNodeExec.initAfterIO();
     }
 
-    ZNodeExecutor* ZNode::getNodeExecutor() const {
-        return m_upNodeExec.get();
+    ZNodeParams& ZNode::getNodeParams() {
+        return m_upParams;
     }
 
-    ZNodeStatus* ZNode::getNodeStatus() const {
-        return m_upNodeStatus.get();
+    ZNodeExecutor& ZNode::getNodeExecutor() {
+        return m_upNodeExec;
+    }
+
+    ZNodeStatus& ZNode::getNodeStatus() {
+        return m_upNodeStatus;
     }
 
     std::string ZNode::get_name() const {
-        return m_upNodeStatus->get_name();
+        return m_upNodeStatus.get_name();
     }
 
     std::string ZNode::get_path() const {
-        return m_upNodeStatus->get_path();
+        return m_upNodeStatus.get_path();
+    }
+
+    std::string ZNode::get_uuid() const {
+        return m_upNodeStatus.get_uuid();
     }
 }

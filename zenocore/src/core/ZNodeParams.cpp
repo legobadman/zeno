@@ -27,7 +27,9 @@ namespace zeno {
 
     ZNodeParams::ZNodeParams(ZNode* pNode, const CustomUI& cui)
         : m_pNode(pNode)
+        , m_customUI(cui)
     {
+        //cui可能为空的情况？
         for (const ParamObject& paramObj : cui.inputObjs) {
             auto iter = m_inputObjs.find(paramObj.name);
             if (iter == m_inputObjs.end()) {
@@ -72,6 +74,70 @@ namespace zeno {
         }
 
         for (const ParamObject& paramObj : cui.outputObjs) {
+            add_output_obj_param(paramObj);
+        }
+    }
+
+    void ZNodeParams::initParams(const NodeData& dat) {
+        //如果构造的时候就初始化，那init的意义在io?
+        for (const ParamObject& paramObj : dat.customUi.inputObjs)
+        {
+            auto iter = m_inputObjs.find(paramObj.name);
+            if (iter == m_inputObjs.end()) {
+                add_input_obj_param(paramObj);
+                continue;
+            }
+            auto& sparam = iter->second;
+
+            //如果不是子图，不能读写socketType，一律以节点定义处为准。（TODO: 如果涉及到转为owning，甚至有些obj连线要去掉）
+            if (dat.type == Node_SubgraphNode || dat.type == Node_AssetInstance) {
+                sparam.socketType = paramObj.socketType;
+            }
+        }
+        for (auto tab : dat.customUi.inputPrims)
+        {
+            for (auto group : tab.groups)
+            {
+                for (auto param : group.params)
+                {
+                    auto iter = m_inputPrims.find(param.name);
+                    if (iter == m_inputPrims.end()) {
+                        add_input_prim_param(param);
+                        continue;
+                    }
+                    auto& sparam = iter->second;
+                    convertToEditVar(param.defl, param.type);
+                    sparam.defl = param.defl;
+                    convertToEditVar(sparam.defl, param.type);
+                    if (!sparam.defl.has_value()) {
+                        sparam.defl = initAnyDeflValue(param.type);
+                    }
+
+                    // 普通子图的控件及参数类型，是由定义处决定的，而非IO值。
+                    //sparam.control = param.control;
+                    //sparam.ctrlProps = param.ctrlProps;
+                    //sparam.type = param.type;
+                    sparam.bSocketVisible = param.bSocketVisible;
+
+                    //graph记录$F相关节点
+                    if (Graph* spGraph = m_pNode->getNodeStatus().getGraph())
+                        spGraph->parseNodeParamDependency(&sparam, sparam.defl);
+                }
+            }
+        }
+        for (const ParamPrimitive& param : dat.customUi.outputPrims)
+        {
+            auto iter = m_outputPrims.find(param.name);
+            if (iter == m_outputPrims.end()) {
+                add_output_prim_param(param);
+                continue;
+            }
+            auto& sparam = iter->second;
+            sparam.bSocketVisible = param.bSocketVisible;
+            //sparam.type = param.type;
+        }
+        for (const ParamObject& paramObj : dat.customUi.outputObjs)
+        {
             add_output_obj_param(paramObj);
         }
     }
@@ -276,8 +342,13 @@ namespace zeno {
         }
     }
 
+    IObject2* ZNodeParams::get_output_obj(std::string const& param) {
+        auto& spParam = safe_at(m_outputObjs, param, "miss output param `" + param + "` on node `" + param + "`");
+        return spParam.spObject.get();
+    }
+
     Graph* ZNodeParams::getGraph() const {
-        return m_pNode->getNodeStatus()->getGraph();
+        return m_pNode->getNodeStatus().getGraph();
     }
 
     zeno::reflect::Any ZNodeParams::get_param_result(std::string const& name)
@@ -316,7 +387,7 @@ namespace zeno {
             }
         }
 
-        ParamPath uuidpath = m_pNode->getNodeStatus()->get_uuid_path() + "/" + param;
+        ParamPath uuidpath = m_pNode->getNodeStatus().get_uuid_path() + "/" + param;
         shader.curr_param = uuidpath;
         return shader;
     }
@@ -399,7 +470,7 @@ namespace zeno {
     bool ZNodeParams::update_param_socket_type(const std::string& param, SocketType type)
     {
         CORE_API_BATCH
-        auto name = m_pNode->getNodeStatus()->get_name();
+        auto name = m_pNode->getNodeStatus().get_name();
         auto& spParam = safe_at(m_inputObjs, param, "miss input param `" + param + "` on node `" + name + "`");
         if (type != spParam.socketType)
         {
@@ -411,7 +482,7 @@ namespace zeno {
                 spGraph->removeLinks(m_name, true, param);
             }
     #endif
-            m_pNode->getNodeExecutor()->mark_dirty(true);
+            m_pNode->getNodeExecutor().mark_dirty(true);
             CALLBACK_NOTIFY(update_param_socket_type, param, type)
             return true;
         }
@@ -485,7 +556,7 @@ namespace zeno {
     bool ZNodeParams::update_param_socket_visible(const std::string& param, bool bVisible, bool bInput)
     {
         CORE_API_BATCH
-        auto name = m_pNode->getNodeStatus()->get_name();
+        auto name = m_pNode->getNodeStatus().get_name();
         if (bInput) {
             auto& spParam = safe_at(m_inputPrims, param, "miss input param `" + param + "` on node `" + name + "`");
             if (spParam.bSocketVisible != bVisible)
@@ -754,7 +825,7 @@ namespace zeno {
                     }
                 }
                 else {
-                    auto path = m_pNode->getNodeStatus()->get_path();
+                    auto path = m_pNode->getNodeStatus().get_path();
                     throw makeNodeError<KeyError>(path, oldname, "the name does not exist on the node");
                 }
             }
@@ -844,14 +915,14 @@ namespace zeno {
                     }
                 }
                 else {
-                    auto path = m_pNode->getNodeStatus()->get_path();
+                    auto path = m_pNode->getNodeStatus().get_path();
                     throw makeNodeError<KeyError>(path, oldname, "the name does not exist on the node");
                 }
             }
         }
 
         Graph* spGraph = getGraph();
-        const auto& name = m_pNode->getNodeStatus()->get_name();
+        const auto& name = m_pNode->getNodeStatus().get_name();
 
         //the left names are the names of params which will be removed.
         for (auto rem_name : inputs_old) {
@@ -932,7 +1003,7 @@ namespace zeno {
     {
         for (auto& [name, param] : m_inputPrims) {
             assert(param.defl.has_value());
-            const std::string& uuid = m_pNode->getNodeStatus()->get_uuid();
+            const std::string& uuid = m_pNode->getNodeStatus().get_uuid();
             if (gParamType_String == param.type) {
                 if (param.defl.type().hash_code() == gParamType_PrimVariant) {//type是string，实际defl可能是primvar
                     const zeno::PrimVar& editVar = zeno::reflect::any_cast<zeno::PrimVar>(param.defl);
@@ -1439,7 +1510,7 @@ namespace zeno {
         //如果边已存在，删除这条边再添加引用边
         if (outParamIsOutput) {
             if (auto outnode = getGraph()->getNode(edge.outNode)) {
-                std::vector<EdgeInfo> links = outnode->getNodeParams()-> getLinksByParam(false, edge.outParam);
+                std::vector<EdgeInfo> links = outnode->getNodeParams(). getLinksByParam(false, edge.outParam);
                 for (auto link : links) {
                     if (link == edge) {
                         getGraph()->removeLink(edge);
@@ -1475,7 +1546,7 @@ namespace zeno {
             for (const auto& refSrcInfo : refSources)
             {
                 auto spSrcNode = remote_source->m_wpNode;
-                if (spSrcNode->getNodeStatus()->get_uuid_path() == refSrcInfo.uuidPath &&
+                if (spSrcNode->getNodeStatus().get_uuid_path() == refSrcInfo.uuidPath &&
                     remote_source->name == refSrcInfo.paramName &&
                     remote_source->bInput == (refSrcInfo.funcName == "ref")) {
                     //已经有了
@@ -1518,8 +1589,8 @@ namespace zeno {
             if (refSrcInfo.funcName != "refout") {
                 bool isSubInput = sourcenode_uuid.find("SubInput") != std::string::npos;
                 auto& inoutPrims = isSubInput ? 
-                    srcNode->getNodeParams()->m_outputPrims :
-                    srcNode->getNodeParams()->m_inputPrims;
+                    srcNode->getNodeParams().m_outputPrims :
+                    srcNode->getNodeParams().m_inputPrims;
                 auto iterSrcParam = inoutPrims.find(refSrcInfo.paramName);
                 if (iterSrcParam != inoutPrims.end()) {
                     PrimitiveParam& srcparam = iterSrcParam->second;
@@ -1538,8 +1609,8 @@ namespace zeno {
             }
             if (refSrcInfo.funcName != "ref") {
                 bool isSubOutput = sourcenode_uuid.find("SubOutput") != std::string::npos;
-                auto& inoutPrims = isSubOutput ? srcNode->getNodeParams()->m_inputPrims : srcNode->getNodeParams()->m_outputPrims;
-                auto& inoutObjs = isSubOutput ? srcNode->getNodeParams()->m_inputObjs : srcNode->getNodeParams()->m_outputObjs;
+                auto& inoutPrims = isSubOutput ? srcNode->getNodeParams().m_inputPrims : srcNode->getNodeParams().m_outputPrims;
+                auto& inoutObjs = isSubOutput ? srcNode->getNodeParams().m_inputObjs : srcNode->getNodeParams().m_outputObjs;
 
                 auto iterSrcObj = inoutObjs.find(refSrcInfo.paramName);
                 if (iterSrcObj != inoutObjs.end()) {
@@ -1713,11 +1784,11 @@ namespace zeno {
         auto innode = getGraph()->getNode(link.inNode);
         if (outnode && innode) {
             CoreParam* outCoreParam = nullptr;
-            auto& outPrims = bOutParamIsOutput ? outnode->getNodeParams()->m_outputPrims : outnode->getNodeParams()->m_inputPrims;
+            auto& outPrims = bOutParamIsOutput ? outnode->getNodeParams().m_outputPrims : outnode->getNodeParams().m_inputPrims;
             auto outPrimParamIt = outPrims.find(link.outParam);
             if (outPrimParamIt == outPrims.end()) {
-                auto outObjParamIt = outnode->getNodeParams()->m_outputObjs.find(link.outParam);
-                if (outObjParamIt == outnode->getNodeParams()->m_outputObjs.end()) {
+                auto outObjParamIt = outnode->getNodeParams().m_outputObjs.find(link.outParam);
+                if (outObjParamIt == outnode->getNodeParams().m_outputObjs.end()) {
                     return;
                 }
                 outCoreParam = &outObjParamIt->second;
@@ -1725,8 +1796,8 @@ namespace zeno {
             else {
                 outCoreParam = &outPrimParamIt->second;
             }
-            auto inParamIt = innode->getNodeParams()->m_inputPrims.find(link.inParam);
-            if (inParamIt == innode->getNodeParams()->m_inputPrims.end()) {
+            auto inParamIt = innode->getNodeParams().m_inputPrims.find(link.inParam);
+            if (inParamIt == innode->getNodeParams().m_inputPrims.end()) {
                 return;
             }
             if (bAddRef) {

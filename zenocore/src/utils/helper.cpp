@@ -1564,7 +1564,7 @@ namespace zeno {
         return dynamic_cast<zeno::SubnetNode*>(pAdapter);
     }
 
-    void propagateDirty(NodeImpl* spCurrNode, std::string varName)
+    void propagateDirty(ZNode* spCurrNode, std::string varName)
     {
         std::set<ObjPath> upstreamDepNodes;
         std::set<ObjPath> upstreams;

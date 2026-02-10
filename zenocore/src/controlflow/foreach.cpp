@@ -17,7 +17,7 @@ namespace zeno {
         //recv[strlen(icon)] = '\0';
     }
 
-    NodeImpl* ForEachBegin::get_foreachend(NodeImpl* m_pAdapter) {
+    ZNode* ForEachBegin::get_foreachend(ZNode* m_pAdapter) {
         auto graph = m_pAdapter->getGraph();
         std::string m_foreach_end_path = m_pAdapter->get_input2_string("ForEachEnd Path");
         auto foreach_end = graph->getNode(m_foreach_end_path);
@@ -28,7 +28,7 @@ namespace zeno {
     }
 
     ZErrorCode ForEachBegin::apply(INodeData* ptrNodeData) {
-        NodeImpl* m_pAdapter = static_cast<NodeImpl*>(ptrNodeData);
+        ZNode* m_pAdapter = static_cast<ZNode*>(ptrNodeData);
         IObject2* init_object = m_pAdapter->get_input_obj("Initial Object");
         std::string m_fetch_mehod = m_pAdapter->get_input2_string("Fetch Method");
         std::string m_foreach_end_path = m_pAdapter->get_input2_string("ForEachEnd Path");
@@ -103,12 +103,12 @@ namespace zeno {
         return ZErr_OK;
     }
 
-    int ForEachBegin::get_current_iteration(NodeImpl* m_pAdapter) {
+    int ForEachBegin::get_current_iteration(ZNode* m_pAdapter) {
         int current_iteration = zeno::reflect::any_cast<int>(m_pAdapter->get_defl_value("Current Iteration"));
         return current_iteration;
     }
 
-    void ForEachBegin::update_iteration(NodeImpl* m_pAdapter, int new_iteration) {
+    void ForEachBegin::update_iteration(ZNode* m_pAdapter, int new_iteration) {
         //m_current_iteration = new_iteration;
         //不能引发事务重新执行，执行权必须由外部Graph发起
         m_pAdapter->update_param_impl("Current Iteration", new_iteration);
@@ -138,7 +138,7 @@ namespace zeno {
         m_collect_objs = create_ListObject();
     }
 
-    NodeImpl* ForEachEnd::get_foreach_begin(NodeImpl* m_pAdapter) {
+    ZNode* ForEachEnd::get_foreach_begin(ZNode* m_pAdapter) {
         //这里不能用m_foreach_begin_path，因为可能还没从基类数据同步过来，后者需要apply操作前才会同步
         std::string foreach_begin_path = zeno::any_cast_to_string(m_pAdapter->get_defl_value("ForEachBegin Path"));
         auto graph = m_pAdapter->getGraph();
@@ -149,7 +149,7 @@ namespace zeno {
         return foreach_begin_node;
     }
 
-    void ForEachEnd::reset_forloop_settings(NodeImpl* m_pAdapter) {
+    void ForEachEnd::reset_forloop_settings(ZNode* m_pAdapter) {
         if (m_collect_objs)
             m_collect_objs->clear();
         auto foreach_begin_node = get_foreach_begin(m_pAdapter);
@@ -158,7 +158,7 @@ namespace zeno {
         foreach_begin->update_iteration(foreach_begin_node, start_value);
     }
 
-    bool ForEachEnd::is_continue_to_run(NodeImpl* m_pAdapter, CalcContext* pContext) {
+    bool ForEachEnd::is_continue_to_run(ZNode* m_pAdapter, CalcContext* pContext) {
         std::string iter_method = m_pAdapter->get_input2_string("Iterate Method");
 
         auto foreach_begin_node = get_foreach_begin(m_pAdapter);
@@ -223,10 +223,10 @@ namespace zeno {
         }
     }
 
-    void ForEachEnd::increment(NodeImpl* m_pAdapter) {
+    void ForEachEnd::increment(ZNode* m_pAdapter) {
         std::string m_iterate_method = m_pAdapter->get_input2_string("Iterate Method");
         if (m_iterate_method == "By Count" || m_iterate_method == "By Container") {
-            NodeImpl* foreach_begin_node = get_foreach_begin(m_pAdapter);
+            ZNode* foreach_begin_node = get_foreach_begin(m_pAdapter);
             auto foreach_begin = static_cast<ForEachBegin*>(foreach_begin_node->coreNode());
             int current_iter = foreach_begin->get_current_iteration(foreach_begin_node);
             int m_increment = m_pAdapter->get_input2_int("Increment");
@@ -245,7 +245,7 @@ namespace zeno {
     ZErrorCode ForEachEnd::apply(INodeData* ptrNodeData) { return ZErr_OK; }
 
     void ForEachEnd::apply_foreach(INodeData* ptrNodeData, CalcContext* pContext) {
-        NodeImpl* thisNodeData = static_cast<NodeImpl*>(ptrNodeData);
+        ZNode* thisNodeData = static_cast<ZNode*>(ptrNodeData);
         zany2 iterate_object = zany2(ptrNodeData->clone_input_object("Iterate Object"));
         if (!iterate_object) {
             throw makeError<UnimplError>("No Iterate Object given to `ForEachEnd`");
@@ -332,7 +332,7 @@ namespace zeno {
         m_iterate_object.reset();
     }
 
-    void ForEachEnd::adjustCollectObjInfo(NodeImpl* ptrNodeData) {
+    void ForEachEnd::adjustCollectObjInfo(ZNode* ptrNodeData) {
         std::function<void(IObject2*)> flattenList = [&flattenList, this](IObject2* obj) {
             if (auto _spList = dynamic_cast<zeno::ListObject*>(obj)) {
                 for (int i = 0; i < _spList->size(); ++i) {
@@ -367,7 +367,7 @@ namespace zeno {
         }
 
         if (ptrNodeData->get_input2_bool("Clear Cache In ForEach Begin")) {
-            NodeImpl* foreach_begin_node = get_foreach_begin(ptrNodeData);
+            ZNode* foreach_begin_node = get_foreach_begin(ptrNodeData);
             ForEachBegin* foreach_begin = static_cast<ForEachBegin*>(foreach_begin_node->coreNode());
             //foreach_begin->m_pAdapter->mark_takeover();
         }

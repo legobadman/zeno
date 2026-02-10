@@ -80,6 +80,7 @@ namespace zeno {
         std::pair<float, float> m_pos;
         std::string m_uuidPath;
         Graph* m_pGraph = nullptr;
+        ZNode* m_pNodeRepo {};
         bool m_bView = false;
         bool m_bypass = false;
         bool m_nocache = false;

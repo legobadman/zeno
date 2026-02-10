@@ -88,7 +88,7 @@ namespace zeno {
     ZENO_API zeno::SubnetNode* getSubnetNode(zeno::NodeImpl* pAdapter);
 
     //变量传播dirty相关
-    ZENO_API void propagateDirty(NodeImpl* spCurrNode, std::string varName);
+    ZENO_API void propagateDirty(ZNode* spCurrNode, std::string varName);
     void getUpstreamNodes(NodeImpl* spCurrNode, std::set<ObjPath>& upstreamDepNodes, std::set<ObjPath>& upstreams, std::string outParamName = "");
     void mark_dirty_by_dependNodes(NodeImpl* spCurrNode, bool bOn, std::set<ObjPath> nodesRange, std::string inParamName = "");
     bool isSubnetInputOutputParam(NodeImpl* spParentnode, std::string paramName);

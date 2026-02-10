@@ -1,4 +1,7 @@
 #include <zeno/core/ZNodeStatus.h>
+#include <zeno/core/ZNode.h>
+#include <zeno/core/Graph.h>
+
 
 namespace zeno {
 
@@ -8,15 +11,48 @@ namespace zeno {
         const std::string& name)
         : m_name(name)
         , m_nodecls(class_name)
+        , m_pNodeRepo(pNodeRepo)
     {
-        (void)pNodeRepo;
     }
-
-    // ---------------- basic info ----------------
 
     void ZNodeStatus::initDat(const NodeData& dat)
     {
-        (void)dat;
+        //IO init
+        if (!dat.name.empty())
+            m_name = dat.name;
+
+        if (m_name == "Create_body_base") {
+            int j;
+            j = -0;
+        }
+
+        m_pos = dat.uipos;
+        m_bView = dat.bView;
+        m_bypass = dat.bypass;
+        m_nocache = dat.bnocache;
+
+        if (m_bView) {
+            Graph* spGraph = m_pGraph;
+            assert(spGraph);
+            spGraph->viewNodeUpdated(m_name, m_bView);
+        }
+        if (SubnetNode* pSubnetNode = dynamic_cast<SubnetNode*>(this))
+        {
+            zeno::NodeType nodetype = pSubnetNode->nodeType();
+            if (nodetype != zeno::Node_AssetInstance && nodetype != zeno::Node_AssetReference) {//asset初始化时已设置过customui
+                pSubnetNode->setCustomUi(dat.customUi);
+            }
+        }
+        //initParams(dat);
+        //m_dirty = true;
+        //if (m_nodecls == "FrameCache") {
+        //    //有可能上一次已经缓存了内容，如果我们允许上一次的缓存留下来的话，就可以标为FrameChanged
+        //    //那就意味着，如果想清理缓存，只能让用户手动清理，因为机制不好理解什么时候缓存失效
+        //    m_dirtyReason = Dirty_FrameChanged;
+        //}
+        //else {
+        //    m_dirtyReason = Dirty_All;
+        //}
     }
 
     std::string ZNodeStatus::get_nodecls() const
@@ -26,32 +62,76 @@ namespace zeno {
 
     std::string ZNodeStatus::get_ident() const
     {
-        return {};
+        return m_name;
     }
 
     std::string ZNodeStatus::get_show_name() const
     {
-        return m_name;
+        const auto& cui = m_pNodeRepo->getNodeParams().get_customui();
+        if (!cui.nickname.empty())
+            return cui.nickname;
+        return m_nodecls;
     }
 
     std::string ZNodeStatus::get_show_icon() const
     {
-        return {};
+        const auto& cui = m_pNodeRepo->getNodeParams().get_customui();
+        return cui.uistyle.iconResPath;
     }
 
     ObjPath ZNodeStatus::get_path() const
     {
-        return {};
+        ObjPath path;
+        path = m_name;
+
+        Graph* pGraph = m_pGraph;
+
+        while (pGraph) {
+            const std::string name = pGraph->getName();
+            if (name == "main") {
+                path = "/main/" + path;
+                break;
+            }
+            else {
+                path = name + "/" + path;
+                if (!pGraph->getParentSubnetNode())
+                    break;
+                auto pSubnetNode = pGraph->getParentSubnetNode();
+                assert(pSubnetNode);
+                pGraph = pSubnetNode->getNodeStatus().getGraph();
+            }
+        }
+        return path;
     }
 
     ObjPath ZNodeStatus::get_graph_path() const
     {
-        return {};
+        ObjPath path;
+        path = "";
+
+        Graph* pGraph = m_pGraph;
+
+        while (pGraph) {
+            const std::string name = pGraph->getName();
+            if (name == "main") {
+                path = "/main/" + path;
+                break;
+            }
+            else {
+                if (!pGraph->getParentSubnetNode())
+                    break;
+                auto pSubnetNode = pGraph->getParentSubnetNode();
+                assert(pSubnetNode);
+                path = pSubnetNode->getNodeStatus().get_name() + "/" + path;
+                pGraph = pSubnetNode->getNodeStatus().getGraph();
+            }
+        }
+        return path;
     }
 
     ObjPath ZNodeStatus::get_uuid_path() const
     {
-        return {};
+        return m_uuidPath;
     }
 
     std::string ZNodeStatus::get_uuid() const
@@ -61,33 +141,58 @@ namespace zeno {
 
     void ZNodeStatus::initUuid(Graph* pGraph, const std::string nodecls)
     {
-        (void)pGraph;
-        (void)nodecls;
-    }
+        //TODO: 考虑asset的情况
+        m_nodecls = nodecls;
+        this->m_pGraph = pGraph;
 
-    // ---------------- virtuals ----------------
+        m_uuid = generateUUID(nodecls);
+        ObjPath path;
+        path += m_uuid;
+        while (pGraph) {
+            const std::string name = pGraph->getName();
+            if (name == "main") {
+                break;
+            }
+            else {
+                if (!pGraph->getParentSubnetNode())
+                    break;
+                auto pSubnetNode = pGraph->getParentSubnetNode();
+                assert(pSubnetNode);
+                path = (pSubnetNode->getNodeStatus().get_uuid()) + "/" + path;
+                pGraph = pSubnetNode->getNodeStatus().getGraph();
+            }
+        }
+        m_uuidPath = path;
+    }
 
     NodeType ZNodeStatus::nodeType() const
     {
-        return NodeType{};
+        INode2* pImplNode = m_pNodeRepo->getNodeExecutor().coreNode();
+        if (pImplNode) {
+            return pImplNode->type();
+        }
+        else {
+            return NoVersionNode;
+        }
     }
 
     bool ZNodeStatus::is_locked() const
     {
+        //子图派生类才用到，故原代码mark为virtual
         return false;
     }
 
     void ZNodeStatus::set_locked(bool b)
     {
+        //子图派生类才用到，故原代码mark为virtual
         (void)b;
     }
 
     void ZNodeStatus::convert_to_assetinst(const std::string& asset_name)
     {
-        (void)asset_name;
+        //原代码也是virtual
+        m_nodecls = asset_name;
     }
-
-    // ---------------- flags ----------------
 
     void ZNodeStatus::set_view(bool bOn)
     {
@@ -118,8 +223,6 @@ namespace zeno {
     {
         return m_nocache;
     }
-
-    // ---------------- name / pos ----------------
 
     void ZNodeStatus::set_name(const std::string& name)
     {
