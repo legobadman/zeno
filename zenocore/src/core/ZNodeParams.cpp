@@ -13,6 +13,7 @@
 #include <zeno/core/ZNodeStatus.h>
 #include <zeno/core/ZNodeExecutor.h>
 #include <zeno/core/Graph.h>
+#include <zeno/core/typeinfo.h>
 #include <zeno/formula/zfxexecute.h>
 #include <zeno/extra/GraphException.h>
 #include <zeno/utils/interfaceutil.h>
@@ -80,6 +81,13 @@ namespace zeno {
 
     void ZNodeParams::initParams(const NodeData& dat) {
         //如果构造的时候就初始化，那init的意义在io?
+        CustomUI customUIInfo;
+        auto nodeType = m_pNode->getNodeStatus().nodeType();
+        if (nodeType == Node_SubgraphNode) {
+            //保证颜色图标
+            m_customUI.uistyle.background = "#1D5F51";
+            m_customUI.uistyle.iconResPath = ":/icons/node/subnet.svg";
+        }
         for (const ParamObject& paramObj : dat.customUi.inputObjs)
         {
             auto iter = m_inputObjs.find(paramObj.name);
@@ -345,6 +353,11 @@ namespace zeno {
     IObject2* ZNodeParams::get_output_obj(std::string const& param) {
         auto& spParam = safe_at(m_outputObjs, param, "miss output param `" + param + "` on node `" + param + "`");
         return spParam.spObject.get();
+    }
+
+    std::string ZNodeParams::get_input2_string(const std::string& param) {
+        auto str = any_cast<std::string>(get_param_result(std::string(param)));
+        return str;
     }
 
     Graph* ZNodeParams::getGraph() const {
@@ -1650,6 +1663,38 @@ namespace zeno {
 
         const Any& param_defl = iter->second.defl;
         initReferLinks(&iter->second);
+    }
+
+    void ZNodeParams::clear_container_info() {
+        for (auto& [_, param] : m_inputObjs) {
+            for (auto spLink : param.links) {
+                spLink->bTraceAndTaken = false;
+            }
+            if (param.type == gParamType_List && param.spObject) {
+                _gParamType_List;
+                auto spList = static_cast<ListObject*>(param.spObject.get());
+                spList->clear_crud_info();
+            }
+        }
+        for (auto& [_, param] : m_outputObjs) {
+            for (auto spLink : param.links) {
+                spLink->bTraceAndTaken = false;
+            }
+            if (param.type == gParamType_List && param.spObject) {
+                auto spList = static_cast<ListObject*>(param.spObject.get());
+                spList->clear_crud_info();
+            }
+        }
+    }
+
+    IObject2* ZNodeParams::get_default_output_object() {
+        if (m_pNode->getNodeStatus().get_nodecls() == "SubOutput") {
+            return get_input_object("port");
+        }
+        if (m_outputObjs.empty()) {
+            return nullptr;
+        }
+        return m_outputObjs.begin()->second.spObject.get();
     }
 
     void ZNodeParams::checkParamsConstrain()

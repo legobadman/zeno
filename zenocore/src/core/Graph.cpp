@@ -53,7 +53,7 @@ void Graph::clearNodes() {
 
 void Graph::clearContainerUpdateInfo() {
     for (const auto& [uuid, node] : m_nodes) {
-        node->clear_container_info();
+        node->getNodeParams().clear_container_info();
     }
 }
 
@@ -81,24 +81,24 @@ Graph *Graph::getSubnetGraph(std::string const & node_name) const {
 render_update_info Graph::applyNode(std::string const &node_name, CalcContext* pContext) {
     const std::string uuid = safe_at(m_name2uuid, node_name, "uuid");
     auto node = safe_at(m_nodes, uuid, "node name").get();
-    if (!node->is_dirty()) {
+    if (!node->getNodeExecutor().is_dirty()) {
         return render_update_info();
     }
 
-    node->execute(pContext);
+    node->getNodeExecutor().execute(pContext);
 
     render_update_info info;
-    if (node->is_view()) {
+    if (node->getNodeStatus().is_view()) {
         info.reason = Update_Reconstruct;
-        auto pObj = node->get_default_output_object();
+        auto pObj = node->getNodeParams().get_default_output_object();
         if (pObj) {
             info.spObject = zany2(pObj->clone());
         }
-        info.uuidpath_node_objkey = node->get_uuid_path();
+        info.uuidpath_node_objkey = node->getNodeStatus().get_uuid_path();
 
-        if (node->is_nocache()) {
+        if (node->getNodeStatus().is_nocache()) {
             //销毁对象，所属权已经移交到info上
-            node->mark_takeover();
+            node->getNodeExecutor().mark_takeover();
         }
     }
     return info;

@@ -66,6 +66,7 @@ namespace zeno {
         zeno::reflect::Any get_param_result(std::string const& name);
         ShaderData get_input_shader(const std::string& param, zeno::reflect::Any defl = zeno::reflect::Any());
         ParamType get_anyparam_type(bool bInput, const std::string& name);
+        IObject2* get_default_output_object();
         std::string get_viewobject_output_param() const;
         bool set_output(std::string const& param, zany2&& obj);
         bool update_param_impl(const std::string& param, const zeno::reflect::Any& new_value);
@@ -127,6 +128,7 @@ namespace zeno {
         void getParamTypeAndSocketType(const std::string& param_name, bool bPrim, bool bInput, ParamType& paramType, SocketType& socketType, bool& bWildcard);
         void constructReference(const std::string& param_name);
         void checkParamsConstrain();
+        void clear_container_info();
 
         //referLinkœ‡πÿ
         std::vector<RefLinkInfo> getReflinkInfo(bool bOnlySearchByDestNode = true);
@@ -156,6 +158,7 @@ namespace zeno {
         }
 
         IObject2* get_output_obj(std::string const& param);
+        std::string get_input2_string(const std::string& param);
 
     public://INodeData
         IObject2* get_input_object(const char* param) override;

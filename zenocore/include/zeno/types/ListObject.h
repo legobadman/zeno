@@ -63,6 +63,7 @@ public:
     //void set(const zeno::Vector<zany2>& arr);
     void set_obj(size_t index, zany2&& obj);
     bool has_change_info() const;
+    void clear_crud_info();
     bool empty() const;
 
     template <class T = IObject2>

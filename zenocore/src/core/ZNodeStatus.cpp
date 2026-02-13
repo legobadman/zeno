@@ -36,13 +36,19 @@ namespace zeno {
             assert(spGraph);
             spGraph->viewNodeUpdated(m_name, m_bView);
         }
-        if (SubnetNode* pSubnetNode = dynamic_cast<SubnetNode*>(this))
-        {
-            zeno::NodeType nodetype = pSubnetNode->nodeType();
-            if (nodetype != zeno::Node_AssetInstance && nodetype != zeno::Node_AssetReference) {//asset初始化时已设置过customui
-                pSubnetNode->setCustomUi(dat.customUi);
-            }
+
+        auto& optSbn = m_pNodeRepo->getSubnetInfo();
+        if (optSbn.has_value()) {
+            optSbn;
         }
+
+        //if (SubnetNode* pSubnetNode = dynamic_cast<SubnetNode*>(this))
+        //{
+        //    zeno::NodeType nodetype = pSubnetNode->nodeType();
+        //    if (nodetype != zeno::Node_AssetInstance && nodetype != zeno::Node_AssetReference) {//asset初始化时已设置过customui
+        //        pSubnetNode->setCustomUi(dat.customUi);
+        //    }
+        //}
         //initParams(dat);
         //m_dirty = true;
         //if (m_nodecls == "FrameCache") {
@@ -179,6 +185,7 @@ namespace zeno {
     bool ZNodeStatus::is_locked() const
     {
         //子图派生类才用到，故原代码mark为virtual
+
         return false;
     }
 

@@ -26,6 +26,8 @@
 #include <zeno/core/ZNodeExecutor.h>
 #include <zeno/core/ZNodeParams.h>
 #include <zeno/core/ZNodeStatus.h>
+#include <zeno/core/ZSubnetInfo.h>
+#include <optional>
 
 
 namespace zeno
@@ -52,6 +54,7 @@ namespace zeno
         ZNodeParams& getNodeParams();
         ZNodeExecutor& getNodeExecutor();
         ZNodeStatus& getNodeStatus();
+        std::optional<ZSubnetInfo>& getSubnetInfo();
 
         std::string get_name() const;
         std::string get_path() const;
@@ -61,6 +64,7 @@ namespace zeno
         ZNodeParams m_upParams;
         ZNodeExecutor m_upNodeExec;
         ZNodeStatus m_upNodeStatus;
+        std::optional<ZSubnetInfo> m_opt_subnet_info;
     };
 
 }

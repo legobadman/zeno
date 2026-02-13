@@ -35,6 +35,10 @@ namespace zeno {
         return m_upNodeStatus;
     }
 
+    std::optional<ZSubnetInfo>& ZNode::getSubnetInfo() {
+        return m_opt_subnet_info;
+    }
+
     std::string ZNode::get_name() const {
         return m_upNodeStatus.get_name();
     }

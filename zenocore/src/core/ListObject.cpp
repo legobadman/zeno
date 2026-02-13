@@ -47,6 +47,12 @@ namespace zeno
         return !m_modify.empty() || !m_new_added.empty() || !m_new_removed.empty();
     }
 
+    void ListObject::clear_crud_info() {
+        m_new_added.clear();
+        m_new_removed.clear();
+        m_modify.clear();
+    }
+
     bool ListObject::empty() const {
         return m_objects.empty();
     }
