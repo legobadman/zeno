@@ -44,13 +44,13 @@ public:
 
     void terminate_solve();
     void terminate_job();
-    void objs_cleaned(NodeImpl* m_pAdapter);
+    void objs_cleaned(ZNode* m_pAdapter);
     void CloseIPCHandles();
     void initHandles();
     zany2 checkCache(std::string cache_path, int frame);
-    std::string get_cachepath(NodeImpl* m_pAdapter) const;
-    void clear_cache(NodeImpl* m_pAdapter) const;
-    void on_dirty_changed(NodeImpl* m_pAdapter, bool bOn, DirtyReason reason, bool bWholeSubnet, bool bRecursively);
+    std::string get_cachepath(ZNode* m_pAdapter) const;
+    void clear_cache(ZNode* m_pAdapter) const;
+    void on_dirty_changed(ZNode* m_pAdapter, bool bOn, DirtyReason reason, bool bWholeSubnet, bool bRecursively);
 
     HANDLE get_pipe_read() const;
     HANDLE get_pipe_write() const;

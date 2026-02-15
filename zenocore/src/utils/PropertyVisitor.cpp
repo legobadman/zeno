@@ -3,7 +3,7 @@
 
 #if 0
 
-zeno::reflect::NodeParameterBase::NodeParameterBase(zeno::NodeImpl *Node) : Target(Node) {}
+zeno::reflect::NodeParameterBase::NodeParameterBase(zeno::ZNode *Node) : Target(Node) {}
 
 zeno::reflect::NodeParameterBase::~NodeParameterBase() = default;
 

@@ -1,6 +1,7 @@
 #include <zeno/core/ZNodeStatus.h>
 #include <zeno/core/ZNode.h>
 #include <zeno/core/Graph.h>
+#include <zeno/utils/helper.h>
 
 
 namespace zeno {
@@ -239,6 +240,100 @@ namespace zeno {
     std::string ZNodeStatus::get_name() const
     {
         return m_name;
+    }
+
+    void ZNodeStatus::onNodeNameUpdated(const std::string& oldname, const std::string& newname) {
+        std::string graphpath = get_graph_path();
+        std::string oldpath = graphpath + '/' + oldname;
+        std::string newpath = graphpath + '/' + newname;
+
+        //检查所有reflink，将目标参数的引用名称调整一下
+        auto& _inputPrims = m_pNodeRepo->getNodeParams().get_input_prim_params2();
+        for (const auto& [_, param] : _inputPrims) {
+            for (auto reflink : param.reflinks) {
+                if (reflink->dest_inparam != &param) {
+                    //直接修改dest_inparam->defl.
+                    bool bUpdate = false;
+
+                    auto fUpdateParamDefl = [oldpath, newpath, graphpath, &bUpdate](std::string& arg) {
+                        auto matchs = zeno::getReferPath(arg);
+                        for (const auto& str : matchs)
+                        {
+                            std::string absolutePath = zeno::absolutePath(graphpath, str);
+                            if (absolutePath.find(oldpath) != std::string::npos)
+                            {
+                                std::regex num_rgx("[0-9]+");
+                                //如果是数字，需要将整个refer替换
+                                if (std::regex_match(newpath, num_rgx))
+                                {
+                                    arg = newpath;
+                                    bUpdate = true;
+                                    break;
+                                }
+                                else
+                                {
+                                    std::regex pattern(oldpath);
+                                    std::string format = regex_replace(absolutePath, pattern, newpath);
+                                    //relative path
+                                    if (absolutePath != str)
+                                    {
+                                        format = zeno::relativePath(graphpath, format);
+                                    }
+                                    std::regex rgx(str);
+                                    arg = regex_replace(arg, rgx, format);
+                                }
+                                bUpdate = true;
+                            }
+                        }
+                    };
+
+                    zeno::reflect::Any adjustParamVal = reflink->dest_inparam->defl;
+
+                    assert(adjustParamVal.has_value());
+                    ParamType type = adjustParamVal.type().hash_code();
+                    if (type == zeno::types::gParamType_PrimVariant) {
+                        PrimVar var = zeno::reflect::any_cast<PrimVar>(adjustParamVal);
+                        std::visit([&](auto& arg) {
+                            using T = std::decay_t<decltype(arg)>;
+                            if constexpr (std::is_same_v<T, std::string>) {
+                                fUpdateParamDefl(arg);
+                            }
+                            else {
+                                assert(false);
+                                zeno::log_warn("error param type");
+                            }
+                            }, var);
+                        if (bUpdate) {
+                            adjustParamVal = zeno::reflect::move(var);
+                        }
+                    }
+                    else if (type == zeno::types::gParamType_VecEdit) {
+                        vecvar var = zeno::reflect::any_cast<vecvar>(adjustParamVal);
+                        for (PrimVar& elem : var)
+                        {
+                            std::visit([&](auto& arg) {
+                                using T = std::decay_t<decltype(arg)>;
+                                if constexpr (std::is_same_v<T, std::string>) {
+                                    fUpdateParamDefl(arg);
+                                }
+                                }, elem);
+                        }
+                        if (bUpdate) {
+                            adjustParamVal = zeno::reflect::move(var);
+                        }
+                    }
+                    else {
+                        assert(false);
+                        zeno::log_error("unknown param type of refer param");
+                    }
+
+                    if (bUpdate) {
+                        auto spDestNode = reflink->dest_inparam->m_wpNode;
+                        spDestNode->getNodeParams().update_param(reflink->dest_inparam->name, adjustParamVal);
+                    }
+                }
+            }
+        }
     }
 
     void ZNodeStatus::set_pos(std::pair<float, float> pos)

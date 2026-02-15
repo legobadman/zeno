@@ -1,4 +1,4 @@
-#include <zeno/core/NodeImpl.h>
+#include <zeno/core/ZNode.h>
 #include <zeno/core/IObject.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/types/GeometryObject.h>

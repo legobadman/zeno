@@ -161,7 +161,7 @@ Zpy_Camera::Zpy_Camera(
     zeno::getSession().mainGraph()->applyNodes({ nodename }, render_);
 }
 
-Zpy_Camera::Zpy_Camera(zeno::NodeImpl* wpNode)
+Zpy_Camera::Zpy_Camera(zeno::ZNode* wpNode)
     : m_wpNode(wpNode)
 {
 }
@@ -324,7 +324,7 @@ Zpy_Light::Zpy_Light(
     zeno::getSession().mainGraph()->applyNodes({ nodename }, render_);
 }
 
-Zpy_Light::Zpy_Light(zeno::NodeImpl* wpNode)
+Zpy_Light::Zpy_Light(zeno::ZNode* wpNode)
     : m_wpNode(wpNode)
 {
 }

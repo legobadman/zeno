@@ -8,7 +8,7 @@
 #include <zeno/types/StringObject.h>
 #include <zeno/utils/arrayindex.h>
 #include <zeno/utils/variantswitch.h>
-#include <zeno/core/NodeImpl.h>
+#include <zeno/core/ZNode.h>
 #include <zeno/zeno.h>
 #if defined(_OPENMP)
 #define WXL 1

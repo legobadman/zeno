@@ -3,7 +3,7 @@
 #include <zeno/utils/api.h>
 #include <zeno/core/Descriptor.h>
 #include <zeno/core/data.h>
-#include <zeno/core/NodeImpl.h>
+#include <zeno/core/ZNode.h>
 #include <zeno/core/Graph.h>
 #include <reflect/core.hpp>
 #include <reflect/type.hpp>
@@ -23,7 +23,7 @@ namespace zeno {
 
         ZENO_API INodeClass(CustomUI const& customui, std::string const& classname);
         ZENO_API virtual ~INodeClass();
-        virtual std::unique_ptr<NodeImpl> new_instance(Graph* pGraph, std::string const& classname) = 0;
+        virtual std::unique_ptr<ZNode> new_instance(Graph* pGraph, std::string const& classname) = 0;
         virtual std::unique_ptr<INode2> new_coreinst() = 0;
     };
 
@@ -32,7 +32,7 @@ namespace zeno {
         void (*dtor)(INode2*);
 
         ImplNodeClass(INode2*(*ctor)(), void (*dtor)(INode2*), CustomUI const& customui, std::string const& name);
-        std::unique_ptr<NodeImpl> new_instance(Graph* pGraph, std::string const& name) override;
+        std::unique_ptr<ZNode> new_instance(Graph* pGraph, std::string const& name) override;
         std::unique_ptr<INode2> new_coreinst() override;
     };
 }

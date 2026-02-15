@@ -80,18 +80,16 @@ namespace zeno {
 
     void getNameMappingFromReflectUI(
         zeno::reflect::TypeBase* typeBase,
-        NodeImpl* node,
+        ZNode* node,
         std::map<std::string, std::string>& inputParams,
         std::vector<std::string>& outputParams);
     ZENO_API bool isDerivedFromSubnetNodeName(const std::string& clsname);    //判断clsname是否为继承自subnetNode的节点
 
-    ZENO_API zeno::SubnetNode* getSubnetNode(zeno::NodeImpl* pAdapter);
-
     //变量传播dirty相关
     ZENO_API void propagateDirty(ZNode* spCurrNode, std::string varName);
-    void getUpstreamNodes(NodeImpl* spCurrNode, std::set<ObjPath>& upstreamDepNodes, std::set<ObjPath>& upstreams, std::string outParamName = "");
-    void mark_dirty_by_dependNodes(NodeImpl* spCurrNode, bool bOn, std::set<ObjPath> nodesRange, std::string inParamName = "");
-    bool isSubnetInputOutputParam(NodeImpl* spParentnode, std::string paramName);
+    void getUpstreamNodes(ZNode* spCurrNode, std::set<ObjPath>& upstreamDepNodes, std::set<ObjPath>& upstreams, std::string outParamName = "");
+    void mark_dirty_by_dependNodes(ZNode* spCurrNode, bool bOn, std::set<ObjPath> nodesRange, std::string inParamName = "");
+    bool isSubnetInputOutputParam(ZNode* spParentnode, std::string paramName);
 
     void update_list_root_key(ListObject* listobj, const std::string& key);
 

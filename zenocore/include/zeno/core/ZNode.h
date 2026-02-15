@@ -36,7 +36,7 @@ namespace zeno
     class ZNodeExecutor;
     class ZNodeStatus;
 
-    class ZNode {
+    class ZENO_API ZNode {
     public:
         ZNode(
             const std::string& class_name,
@@ -54,17 +54,25 @@ namespace zeno
         ZNodeParams& getNodeParams();
         ZNodeExecutor& getNodeExecutor();
         ZNodeStatus& getNodeStatus();
+        void initSubnetInfo();
         std::optional<ZSubnetInfo>& getSubnetInfo();
+        bool is_subnet() const;
+        NodeData exportInfo() const;
+        bool in_asset_file() const;
 
         std::string get_name() const;
         std::string get_path() const;
         std::string get_uuid() const;
+        std::string get_nodecls() const;
+
+        void on_node_about_to_remove();
 
     private:
         ZNodeParams m_upParams;
         ZNodeExecutor m_upNodeExec;
         ZNodeStatus m_upNodeStatus;
         std::optional<ZSubnetInfo> m_opt_subnet_info;
+        std::unordered_map<std::string, std::function<void()>> m_cbRemoveSelfCallback;
     };
 
 }

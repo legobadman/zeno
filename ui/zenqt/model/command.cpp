@@ -2,7 +2,6 @@
 #include "variantptr.h"
 #include <zeno/utils/helper.h>
 #include <zeno/core/typeinfo.h>
-#include <zeno/extra/SubnetNode.h>
 #include "model/parammodel.h"
 #include "util/uihelper.h"
 #include "zenoapplication.h"

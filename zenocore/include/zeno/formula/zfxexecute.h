@@ -5,7 +5,7 @@
 #include <memory>
 #include <regex>
 #include <zeno/core/data.h>
-#include <zeno/core/NodeImpl.h>
+#include <zeno/core/ZNode.h>
 #include "syntax_tree.h"
 
 namespace zeno {

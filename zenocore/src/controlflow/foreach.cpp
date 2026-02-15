@@ -197,10 +197,10 @@ namespace zeno {
         else if (iter_method == "By Container") {
             auto foreachbegin_impl = foreach_begin_node;
             IObject2* initobj = foreachbegin_impl->getNodeParams().get_input_object("Initial Object");
-            if (!initobj && foreachbegin_impl->is_dirty()) {
+            if (!initobj && foreachbegin_impl->getNodeExecutor().is_dirty()) {
                 //可能上游还没算，先把上游的依赖解了
                 //foreach_begin->preApply(nullptr);
-                foreachbegin_impl->execute(pContext);
+                foreachbegin_impl->getNodeExecutor().execute(pContext);
                 initobj = foreachbegin_impl->getNodeParams().get_input_object("Initial Object");
             }
             if (auto spList = dynamic_cast<ListObject*>(initobj)) {
@@ -246,22 +246,22 @@ namespace zeno {
     ZErrorCode ForEachEnd::apply(INodeData* ptrNodeData) { return ZErr_OK; }
 
     void ForEachEnd::apply_foreach(INodeData* ptrNodeData, CalcContext* pContext) {
-        ZNodeParams* thisNodeData = static_cast<ZNodeParams*>(ptrNodeData);
-        ZNode* pThisNode = thisNodeData->getNode();
+        ZNodeParams* thisNodeParams = static_cast<ZNodeParams*>(ptrNodeData);
+        ZNode* pThisNode = thisNodeParams->getNode();
         zany2 iterate_object = zany2(ptrNodeData->clone_input_object("Iterate Object"));
         if (!iterate_object) {
             throw makeError<UnimplError>("No Iterate Object given to `ForEachEnd`");
         }
         m_iterate_object = std::move(iterate_object);
 
-        std::string m_iterate_method = thisNodeData->get_input2_string("Iterate Method");
-        std::string m_collect_method = thisNodeData->get_input2_string("Collect Method");
-        std::string m_foreach_begin_path = thisNodeData->get_input2_string("ForEachBegin Path");
-        int m_iterations = thisNodeData->get_input2_int("Iterations");
-        int m_increment = thisNodeData->get_input2_int("Increment");
-        int m_start_value = thisNodeData->get_input2_int("Start Value");
-        int m_stop_condition = thisNodeData->get_input2_int("Stop Condition");
-        bool output_list = thisNodeData->get_input2_bool("Output List");
+        std::string m_iterate_method = thisNodeParams->get_input2_string("Iterate Method");
+        std::string m_collect_method = thisNodeParams->get_input2_string("Collect Method");
+        std::string m_foreach_begin_path = thisNodeParams->get_input2_string("ForEachBegin Path");
+        int m_iterations = thisNodeParams->get_input2_int("Iterations");
+        int m_increment = thisNodeParams->get_input2_int("Increment");
+        int m_start_value = thisNodeParams->get_input2_int("Start Value");
+        int m_stop_condition = thisNodeParams->get_input2_int("Stop Condition");
+        bool output_list = thisNodeParams->get_input2_bool("Output List");
 
         //construct the `result` object
         const std::string& uuidpath = pThisNode->getNodeStatus().get_uuid_path();
@@ -276,12 +276,12 @@ namespace zeno {
                 else {
                     iobj->update_key(uuidpath.c_str());
                 }
-                thisNodeData->set_output("Output Object", std::move(iobj));
+                thisNodeParams->set_output("Output Object", std::move(iobj));
                 return;
             }
             else if (m_collect_method == "Gather Each Iteration") {
-                auto foreach_begin_node = get_foreach_begin(thisNodeData);
-                auto foreach_begin = static_cast<ForEachBegin*>(foreach_begin_node->coreNode());
+                auto foreach_begin_node = get_foreach_begin(pThisNode);
+                auto foreach_begin = static_cast<ForEachBegin*>(foreach_begin_node->getNodeExecutor().coreNode());
                 int current_iter = foreach_begin->get_current_iteration(foreach_begin_node);
 
                 zany2 iobj(m_iterate_object->clone());
@@ -315,12 +315,12 @@ namespace zeno {
                         }
                     }
                     //如果收集的对象里没有几何对象，那就直接输出list
-                    thisNodeData->set_output_object("Output Object", m_collect_objs->clone());
+                    thisNodeParams->set_output_object("Output Object", m_collect_objs->clone());
                 }
             }
             else {
                 assert(false);
-                thisNodeData->set_output_object("Output Object", nullptr);
+                thisNodeParams->set_output_object("Output Object", nullptr);
             }
         }
         else {
@@ -363,14 +363,14 @@ namespace zeno {
         m_last_collect_objs = m_collect_objs->get();
 #endif
 
-        bool output_list = ptrNodeData->get_input2_bool("Output List");
+        bool output_list = ptrNodeData->getNodeParams().get_input2_bool("Output List");
         if (output_list) {
-            ptrNodeData->set_output_object("Output Object", m_collect_objs->clone());
+            ptrNodeData->getNodeParams().set_output_object("Output Object", m_collect_objs->clone());
         }
 
-        if (ptrNodeData->get_input2_bool("Clear Cache In ForEach Begin")) {
+        if (ptrNodeData->getNodeParams().get_input2_bool("Clear Cache In ForEach Begin")) {
             ZNode* foreach_begin_node = get_foreach_begin(ptrNodeData);
-            ForEachBegin* foreach_begin = static_cast<ForEachBegin*>(foreach_begin_node->coreNode());
+            //ForEachBegin* foreach_begin = static_cast<ForEachBegin*>(foreach_begin_node->getNodeExecutor().coreNode());
             //foreach_begin->m_pAdapter->mark_takeover();
         }
     }

@@ -497,12 +497,12 @@ namespace zeno {
         }
     };
 
-    struct NodeImpl;
+    struct ZNode;
 
     struct ObjectNodeInfo {
         std::optional<IObject2*> rootObj;        //list/dict case.
         IObject2* transformingObj;
-        NodeImpl* spViewNode;
+        ZNode* spViewNode;
     };
 
     //一条计算链路的更新信息：

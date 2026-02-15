@@ -1,8 +1,8 @@
 #include <zeno/core/Assets.h>
-#include <zeno/extra/SubnetNode.h>
 #include <zeno/core/CoreParam.h>
 #include <filesystem>
 #include <zeno/io/zdareader.h>
+#include <zeno/core/ZNode.h>
 #ifdef _WIN32
 #include <windows.h>
 #include <shlobj.h>
@@ -326,7 +326,7 @@ ZENO_API void AssetsMgr::updateAssets(const std::string& name, const ParamsUpdat
 
     //update subnetnode.
     for (auto name : changes.new_inputs) {
-        NodeImpl* subInput = assets.sharedGraph->createNode("SubInput", name);
+        auto subInput = assets.sharedGraph->createNode("SubInput", name);
 
         for (const zeno::ParamUpdateInfo paraminfo : info) {
             bool bFinded = std::visit([&](auto&& var)->bool {
@@ -338,14 +338,14 @@ ZENO_API void AssetsMgr::updateAssets(const std::string& name, const ParamsUpdat
                         primitive.name = "port";
                         primitive.type = var.type;
                         primitive.defl = var.defl;
-                        subInput->add_output_prim_param(primitive);
+                        subInput->getNodeParams().add_output_prim_param(primitive);
 
                         //通知ui更新
                         params_change_info changes;
                         changes.new_outputs.insert("port");
                         changes.outputs.push_back("port");
                         changes.outputs.push_back("hasValue");
-                        subInput->update_layout(changes);
+                        subInput->getNodeParams().update_layout(changes);
                         return true;
                     }
                 }
@@ -355,13 +355,13 @@ ZENO_API void AssetsMgr::updateAssets(const std::string& name, const ParamsUpdat
                         paramObj.bInput = false;
                         paramObj.name = "port";
                         paramObj.type = var.type;        //TODO: 如何获取类型？
-                        subInput->add_output_obj_param(paramObj);
+                        subInput->getNodeParams().add_output_obj_param(paramObj);
 
                         params_change_info changes;
                         changes.new_outputs.insert("port");
                         changes.outputs.push_back("port");
                         changes.outputs.push_back("hasValue");
-                        subInput->update_layout(changes);
+                        subInput->getNodeParams().update_layout(changes);
                         return true;
                     }
                 }
@@ -380,7 +380,7 @@ ZENO_API void AssetsMgr::updateAssets(const std::string& name, const ParamsUpdat
     }
 
     for (auto name : changes.new_outputs) {
-        NodeImpl* subOutput = assets.sharedGraph->createNode("SubOutput", name);
+        auto subOutput = assets.sharedGraph->createNode("SubOutput", name);
 
         for (const zeno::ParamUpdateInfo paraminfo : info) {
             bool bFinded = std::visit([&](auto&& var)->bool {
@@ -392,12 +392,12 @@ ZENO_API void AssetsMgr::updateAssets(const std::string& name, const ParamsUpdat
                         primitive.name = "port";
                         primitive.type = var.type;
                         primitive.defl = var.defl;
-                        subOutput->add_input_prim_param(primitive);
+                        subOutput->getNodeParams().add_input_prim_param(primitive);
 
                         params_change_info changes;
                         changes.new_inputs.insert("port");
                         changes.inputs.push_back("port");
-                        subOutput->update_layout(changes);
+                        subOutput->getNodeParams().update_layout(changes);
                         return true;
                     }
                 }
@@ -407,12 +407,12 @@ ZENO_API void AssetsMgr::updateAssets(const std::string& name, const ParamsUpdat
                         paramObj.bInput = true;
                         paramObj.name = "port";
                         paramObj.type = var.type;        //TODO: 如何获取类型？
-                        subOutput->add_input_obj_param(paramObj);
+                        subOutput->getNodeParams().add_input_obj_param(paramObj);
 
                         params_change_info changes;
                         changes.new_inputs.insert("port");
                         changes.inputs.push_back("port");
-                        subOutput->update_layout(changes);
+                        subOutput->getNodeParams().update_layout(changes);
                         return true;
                     }
                 }
@@ -455,32 +455,33 @@ ZENO_API void AssetsMgr::updateAssets(const std::string& name, const ParamsUpdat
     assets.m_customui = customui;
 }
 
-std::shared_ptr<Graph> AssetsMgr::syncInstToAssets(NodeImpl* assetInstNode)
+std::shared_ptr<Graph> AssetsMgr::syncInstToAssets(ZNode* assetInstNode)
 {
-    if (assetInstNode->nodeType() == Node_AssetInstance) {
-        SubnetNode* pInstNode = static_cast<SubnetNode*>(assetInstNode);
-        const std::string& assetname = pInstNode->get_nodecls();
+    if (assetInstNode->getNodeStatus().nodeType() == Node_AssetInstance) {
+        auto& optSbnInfo = assetInstNode->getSubnetInfo();
+        assert(optSbnInfo.has_value());
+        Graph* pSubnetGraph = optSbnInfo->get_subgraph();
+        const std::string& assetname = assetInstNode->getNodeStatus().get_nodecls();
 
-        Graph* pSubnetGraph = pInstNode->get_subgraph();
         std::shared_ptr<Graph> newAssetGraph = std::make_shared<Graph>(assetname, true);
         for (const auto& [uuid, spNode] : pSubnetGraph->getNodes())
         {
             zeno::NodeData nodeDat;
-            const std::string& name = spNode->get_name();
-            const std::string& cls = spNode->get_nodecls();
-            if (auto spSubnetNode = dynamic_cast<SubnetNode*>(spNode)) {
+            const std::string& name = spNode->getNodeStatus().get_name();
+            const std::string& cls = spNode->getNodeStatus().get_nodecls();
+            if (spNode->is_subnet()) {
                 if (m_assets.find(cls) != m_assets.end()) {
                     //资产节点
                 }
                 else {
                     //普通子图
-                    NodeImpl* spNewNode = newAssetGraph->createNode(cls, name);
+                    auto spNewNode = newAssetGraph->createNode(cls, name);
                     nodeDat = spNode->exportInfo();
                     spNewNode->init(nodeDat);
                 }
             }
             else {
-                NodeImpl* spNewNode = newAssetGraph->createNode(cls, name);
+                auto spNewNode = newAssetGraph->createNode(cls, name);
                 nodeDat = spNode->exportInfo();
                 spNewNode->init(nodeDat);
             }
@@ -495,33 +496,33 @@ std::shared_ptr<Graph> AssetsMgr::syncInstToAssets(NodeImpl* assetInstNode)
     return nullptr;
 }
 
-std::shared_ptr<Graph> AssetsMgr::forkAssetGraph(std::shared_ptr<Graph> assetGraph, NodeImpl* subNode)
+std::unique_ptr<Graph> AssetsMgr::forkAssetGraph(std::shared_ptr<Graph> assetGraph, ZNode* subNode)
 {
-    std::shared_ptr<Graph> newGraph = std::make_shared<Graph>(assetGraph->getName(), true);
+    std::unique_ptr<Graph> newGraph = std::make_unique<Graph>(assetGraph->getName(), true);
     newGraph->initParentSubnetNode(subNode);
     for (const auto& [uuid, spNode] : assetGraph->getNodes())
     {
         zeno::NodeData nodeDat;
-        const std::string& name = spNode->get_name();
-        const std::string& cls = spNode->get_nodecls();
+        const std::string& name = spNode->getNodeStatus().get_name();
+        const std::string& cls = spNode->getNodeStatus().get_nodecls();
 
-        if (auto spSubnetNode = dynamic_cast<SubnetNode*>(spNode))
+        if (spNode->is_subnet())
         {
             if (m_assets.find(cls) != m_assets.end()) {
                 //asset node
-                auto spNewSubnetNode = newGraph->createNode(cls, name, true, spNode->get_pos());
+                auto spNewSubnetNode = newGraph->createNode(cls, name, true, spNode->getNodeStatus().get_pos());
                 nodeDat = spNode->exportInfo();
                 spNewSubnetNode->init(nodeDat);
             }
             else {
                 //打开ioinit,这里类似io的导入数据，而非直接创建
-                NodeImpl* spNewNode = newGraph->createNode(cls, name, false, spNode->get_pos(), true);
+                auto spNewNode = newGraph->createNode(cls, name, false, spNode->getNodeStatus().get_pos(), true);
                 nodeDat = spNode->exportInfo();
                 spNewNode->init(nodeDat);
             }
         }
         else {
-            NodeImpl* spNewNode = newGraph->createNode(cls, name);
+            auto spNewNode = newGraph->createNode(cls, name);
             nodeDat = spNode->exportInfo();
             spNewNode->init(nodeDat);
         }
@@ -536,7 +537,7 @@ std::shared_ptr<Graph> AssetsMgr::forkAssetGraph(std::shared_ptr<Graph> assetGra
 
 void AssetsMgr::initAssetSubInputOutput(Asset& newAsst)
 {
-    NodeImpl* input1Node = newAsst.sharedGraph->getNode("data_input");
+    auto input1Node = newAsst.sharedGraph->getNode("data_input");
 
     //SubInput的port是一个output参数
     zeno::ParamPrimitive paramInput;
@@ -546,26 +547,26 @@ void AssetsMgr::initAssetSubInputOutput(Asset& newAsst)
     paramInput.defl = newAsst.primitive_inputs[0].defl;
     paramInput.type = newAsst.primitive_inputs[0].type;
     paramInput.bSocketVisible = false;
-    input1Node->add_output_prim_param(paramInput);
+    input1Node->getNodeParams().add_output_prim_param(paramInput);
 
-    NodeImpl* output1Node = newAsst.sharedGraph->getNode("data_output");
+    auto output1Node = newAsst.sharedGraph->getNode("data_output");
     zeno::ParamPrimitive paramOutput;
     paramOutput.bInput = true;
     paramOutput.name = "port";
     paramOutput.defl = newAsst.primitive_outputs[0].defl;   //仅仅保证有个值，实质没什么意义
     paramOutput.type = newAsst.primitive_outputs[0].type;
-    output1Node->add_input_prim_param(paramOutput);
+    output1Node->getNodeParams().add_input_prim_param(paramOutput);
 
-    NodeImpl* objInput1Node = newAsst.sharedGraph->getNode("Input");
+    auto objInput1Node = newAsst.sharedGraph->getNode("Input");
     zeno::ParamObject paramObj;
     paramObj.bInput = false;
     paramObj.name = "port";
     paramObj.type = newAsst.object_inputs[0].type;
-    objInput1Node->add_output_obj_param(paramObj);
+    objInput1Node->getNodeParams().add_output_obj_param(paramObj);
 
-    NodeImpl* objOutput1Node = newAsst.sharedGraph->getNode("Output");
+    auto objOutput1Node = newAsst.sharedGraph->getNode("Output");
     paramObj.bInput = true;
-    objOutput1Node->add_input_obj_param(paramObj);
+    objOutput1Node->getNodeParams().add_input_obj_param(paramObj);
 }
 
 ZENO_API bool AssetsMgr::isAssetGraph(Graph* spGraph) const
@@ -592,7 +593,7 @@ ZENO_API bool AssetsMgr::generateAssetName(std::string& name)
     return true;
 }
 
-ZENO_API std::unique_ptr<NodeImpl> AssetsMgr::newInstance(
+ZENO_API std::unique_ptr<ZNode> AssetsMgr::newInstance(
         Graph* pGraph,
         const std::string& assetName,
         const std::string& nodeName,
@@ -611,33 +612,34 @@ ZENO_API std::unique_ptr<NodeImpl> AssetsMgr::newInstance(
     assert(assets.sharedGraph);
 
     //也许不需要coreNode(也就是subnet)
-    std::unique_ptr<SubnetNode> pNode = std::make_unique<SubnetNode>(nullptr, nullptr);
-
-    pNode->initUuid(pGraph, assetName);
-    std::shared_ptr<Graph> assetGraph;
+    auto pNode = std::make_unique<ZNode>(assetName, nodeName, nullptr, nullptr, pGraph, assets.m_customui);
+    //std::unique_ptr<SubnetNode> pNode = std::make_unique<SubnetNode>(nullptr, nullptr);
+    pNode->initSubnetInfo();
+    pNode->getNodeStatus().initUuid(pGraph, assetName);
+    std::unique_ptr<Graph> assetGraph;
     if (!createInAsset && bAssetLocked) {
         //should expand the asset graph into a tree.
         assetGraph = forkAssetGraph(assets.sharedGraph, pNode.get());
-        pNode->init_graph(assetGraph);
+        pNode->getSubnetInfo()->init_graph(std::move(assetGraph));
     }
     else {
         //只是一个引用，不需要graph.
     }
 
-    pNode->set_name(nodeName);
-    pNode->setCustomUi(assets.m_customui);
+    pNode->getNodeStatus().set_name(nodeName);
+    pNode->getNodeParams().setCustomUi(assets.m_customui, true);
 
     for (const ParamPrimitive& param : assets.primitive_inputs) {
-        pNode->add_input_prim_param(param);
+        pNode->getNodeParams().add_input_prim_param(param);
     }
     for (const ParamPrimitive& param : assets.primitive_outputs) {
-        pNode->add_output_prim_param(param);
+        pNode->getNodeParams().add_output_prim_param(param);
     }
     for (const auto& param : assets.object_inputs) {
-        pNode->add_input_obj_param(param);
+        pNode->getNodeParams().add_input_obj_param(param);
     }
     for (const auto& param : assets.object_outputs) {
-        pNode->add_output_obj_param(param);
+        pNode->getNodeParams().add_output_obj_param(param);
     }
     return pNode;
 }
@@ -675,8 +677,11 @@ void zeno::AssetsMgr::updateAssetInfo(const std::string& assetName, std::shared_
     }
 }
 
-void zeno::AssetsMgr::updateAssetInstance(const std::string& assetName, SubnetNode* spNode)
+void zeno::AssetsMgr::updateAssetInstance(const std::string& assetName, ZNode* spNode)
 {
+    if (!spNode)
+        return;
+
     if(m_assets.find(assetName) == m_assets.end()) {
         return;
     }
@@ -685,32 +690,21 @@ void zeno::AssetsMgr::updateAssetInstance(const std::string& assetName, SubnetNo
     if (!assets.sharedGraph) {
         getAssetGraph(assetName, true);
     }
-    assert(assets.sharedGraph);
-    std::shared_ptr<Graph> assetGraph = forkAssetGraph(assets.sharedGraph, spNode);
+    assert(assets.sharedGraph && spNode->is_subnet());
+    auto assetGraph = forkAssetGraph(assets.sharedGraph, spNode);
+    spNode->getSubnetInfo()->init_graph(std::move(assetGraph));
 
-    spNode->init_graph(assetGraph);
-
-    NodeImpl* pNodeImpl = spNode;
-    assert(pNodeImpl);
-
-    for (const ParamPrimitive& param : assets.primitive_inputs)
-    {
-        pNodeImpl->add_input_prim_param(param);
+    for (const ParamPrimitive& param : assets.primitive_inputs) {
+        spNode->getNodeParams().add_input_prim_param(param);
     }
-
-    for (const ParamPrimitive& param : assets.primitive_outputs)
-    {
-        pNodeImpl->add_output_prim_param(param);
+    for (const ParamPrimitive& param : assets.primitive_outputs) {
+        spNode->getNodeParams().add_output_prim_param(param);
     }
-
-    for (const auto& param : assets.object_inputs)
-    {
-        pNodeImpl->add_input_obj_param(param);
+    for (const auto& param : assets.object_inputs) {
+        spNode->getNodeParams().add_input_obj_param(param);
     }
-
-    for (const auto& param : assets.object_outputs)
-    {
-        pNodeImpl->add_output_obj_param(param);
+    for (const auto& param : assets.object_outputs) {
+        spNode->getNodeParams().add_output_obj_param(param);
     }
 }
 

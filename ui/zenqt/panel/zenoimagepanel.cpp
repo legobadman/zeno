@@ -7,7 +7,7 @@
 #include "viewport/zenovis.h"
 #include "zeno/utils/format.h"
 #include <zeno/types/UserData.h>
-#include <zeno/core/NodeImpl.h>
+#include <zeno/core/ZNode.h>
 #include <zeno/types/PrimitiveObject.h>
 #include "zeno/utils/vec.h"
 #include "zeno/utils/log.h"
@@ -98,7 +98,7 @@ void ZenoImagePanel::reload(const zeno::render_reload_info& info) {
     else {
         auto spNode = zeno::getSession().getNodeByUuidPath(update.uuidpath_node_objkey);
         assert(spNode);
-        auto spObject = spNode->get_default_output_object();
+        auto spObject = spNode->getNodeParams().get_default_output_object();
         if (spObject) {
             if (update.reason == zeno::Update_View) {
                 auto ud = spObject->userData();
@@ -250,7 +250,7 @@ ZenoImagePanel::ZenoImagePanel(QWidget *parent) : QWidget(parent) {
         const auto& update = m_info.objs[0];
         auto spNode = zeno::getSession().getNodeByUuidPath(update.uuidpath_node_objkey);
         assert(spNode);
-        auto spObject = spNode->get_default_output_object();
+        auto spObject = spNode->getNodeParams().get_default_output_object();
         if (!spObject) return;
 
         auto ud = spObject->userData();

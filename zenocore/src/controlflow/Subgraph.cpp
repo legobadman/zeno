@@ -1,7 +1,7 @@
 #include <zeno/zeno.h>
 #include <zeno/core/Graph.h>
 #include <zeno/types/DummyObject.h>
-#include <zeno/extra/SubnetNode.h>
+//#include <zeno/extra/SubnetNode.h>
 //#include <zeno/types/ConditionObject.h>
 //#include <zeno/utils/safe_at.h>
 //#include <cassert>

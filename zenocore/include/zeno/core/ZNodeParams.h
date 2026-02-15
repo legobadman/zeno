@@ -35,15 +35,20 @@ namespace zeno {
 
     class ZNode;
 
-    class ZNodeParams : public INodeData
+    class ZENO_API ZNodeParams : public INodeData
     {
     public:
         ZNodeParams(ZNode* pNode, const CustomUI& cui);
         ZNodeParams() = delete;
         ZNodeParams(const ZNodeParams& rhs) = delete;
+        ZNodeParams& operator=(const ZNodeParams&) = delete;
+
         void initParams(const NodeData& dat);
         ZNode* getNode() const { return m_pNode; }
         CustomUI get_customui() const { return m_customUI; }
+        void setCustomUi(const CustomUI& ui, bool isSubnet);
+        CustomUI exportCuiWithValue() const;
+        void removeRefLinks();
 
         CommonParam get_input_param(std::string const& name, bool* bExist = nullptr);
         CommonParam get_output_param(std::string const& name, bool* bExist = nullptr);
@@ -69,6 +74,11 @@ namespace zeno {
         IObject2* get_default_output_object();
         std::string get_viewobject_output_param() const;
         bool set_output(std::string const& param, zany2&& obj);
+        zany2 move_output(std::string const& id);
+        zany2 takeOutputObject(ObjectParam* out_param, ObjectParam* in_param, bool& bAllOutputTaken);
+        zany2 takeOutputObject(const std::string& out_param, const std::string& in_param, bool& bAllOutputTaken);
+        zany2 clone_input(std::string const& id) const;
+        zany2 clone_default_output_object();
         bool update_param_impl(const std::string& param, const zeno::reflect::Any& new_value);
         bool set_primitive_output(std::string const& id, const zeno::reflect::Any& val);
         bool set_primitive_input(std::string const& id, const zeno::reflect::Any& val);
@@ -124,6 +134,7 @@ namespace zeno {
         bool updateLinkKey(bool bInput, const zeno::EdgeInfo& edge, const std::string& oldkey, const std::string& newkey);
         bool moveUpLinkKey(bool bInput, const std::string& param_name, const std::string& key);
         bool removeLink(bool bInput, const EdgeInfo& edge);
+        void on_link_added_removed(bool bInput, const std::string& paramname, bool bAdded);
         std::vector<std::pair<std::string, bool>> getWildCardParams(const std::string& name, bool bPrim);
         void getParamTypeAndSocketType(const std::string& param_name, bool bPrim, bool bInput, ParamType& paramType, SocketType& socketType, bool& bWildcard);
         void constructReference(const std::string& param_name);
@@ -134,7 +145,7 @@ namespace zeno {
         std::vector<RefLinkInfo> getReflinkInfo(bool bOnlySearchByDestNode = true);
         void removeNodeUpdateRefLink(const zeno::EdgeInfo& link, bool bAddRef, bool bOutParamIsOutput);//前端删除节点时undo/redo相关param的reflink
 
-        CALLBACK_REGIST(update_visable_enable, void, zeno::NodeImpl*, std::set<std::string>, std::set<std::string>)
+        CALLBACK_REGIST(update_visable_enable, void, zeno::ZNode*, std::set<std::string>, std::set<std::string>)
         CALLBACK_REGIST(addRefLink, void, EdgeInfo, bool outParamIsOutput)
         CALLBACK_REGIST(removeRefLink, void, EdgeInfo, bool outParamIsOutput)
 
@@ -194,7 +205,6 @@ namespace zeno {
         void report_error(const char* error_info) override;
 
     private:
-        zany2 clone_input(std::string const& id) const;
         Graph* getGraph() const;
         bool addRefLink(const EdgeInfo& edge, bool outParamIsOutput);
         void initReferLinks(PrimitiveParam* target_param);
@@ -202,6 +212,7 @@ namespace zeno {
         GlobalState* getGlobalState() const;
         bool has_input(std::string const& id) const;
         bool has_link_input(std::string const& id) const;
+        bool checkAllOutputLinkTraced();
 
         CustomUI m_customUI;
         std::map<std::string, ObjectParam> m_inputObjs;

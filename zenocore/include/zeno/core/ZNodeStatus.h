@@ -28,7 +28,7 @@ namespace zeno {
 
     class ZNode;
 
-    class ZNodeStatus {
+    class ZENO_API ZNodeStatus {
     public:
         ZNodeStatus() = delete;
         ZNodeStatus(
@@ -66,6 +66,7 @@ namespace zeno {
 
         void set_name(const std::string& name);
         std::string get_name() const;
+        void onNodeNameUpdated(const std::string& oldname, const std::string& newname);
 
         void set_pos(std::pair<float, float> pos);
         CALLBACK_REGIST(set_pos, void, std::pair<float, float>)

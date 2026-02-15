@@ -2,6 +2,7 @@
 #include <zeno/extra/GlobalState.h>
 #include <zeno/utils/Error.h>
 #include <zeno/core/Graph.h>
+#include <zeno/core/ZNode.h>
 #include <zeno/utils/log.h>
 #include <zeno/utils/helper.h>
 #include <regex>
@@ -228,7 +229,7 @@ namespace zeno
         static ZfxVariable getParamValueFromRef(const std::string& ref, ZfxContext* pContext, bool bInput) {
             ParamPrimitive paramData;
             std::vector<std::string> items;
-            NodeImpl* refSourceNode = nullptr;
+            ZNode* refSourceNode = nullptr;
             std::string ref_param;
 
             if (zeno::starts_with(ref, "../")) {
@@ -236,20 +237,20 @@ namespace zeno
                 std::string parampath = ref.substr(3);
                 items = split_str(parampath, '.');
                 std::string paramname = items[0];
-                NodeImpl* parSbnNode = pContext->spNode->getGraph()->getParentSubnetNode();
+                auto parSbnNode = pContext->spNode->getNodeStatus().getGraph()->getParentSubnetNode();
                 if (!parSbnNode) {
                     throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "cannot locate parent subnetnode, when refering params");
                 }
                 bool bExisted = false;
                 if (bInput) {
-                    paramData = parSbnNode->get_input_prim_param(paramname, &bExisted);
+                    paramData = parSbnNode->getNodeParams().get_input_prim_param(paramname, &bExisted);
                 } else {
-                    paramData = parSbnNode->get_output_prim_param(paramname, &bExisted);
+                    paramData = parSbnNode->getNodeParams().get_output_prim_param(paramname, &bExisted);
 
                     //可能引用了一个Subnet的输出，若不存在，取SubOutput的默认值
                     if (!paramData.result.has_value() && parSbnNode->get_uuid().find("Subnet") != std::string::npos) {
-                        if (auto SbnNodeSuboutputNode = pContext->spNode->getGraph()->getNode(paramname)) {
-                            paramData = SbnNodeSuboutputNode->get_input_prim_param("port", &bExisted);
+                        if (auto SbnNodeSuboutputNode = pContext->spNode->getNodeStatus().getGraph()->getNode(paramname)) {
+                            paramData = SbnNodeSuboutputNode->getNodeParams().get_input_prim_param("port", &bExisted);
                         }
                     }
                 }
@@ -268,9 +269,9 @@ namespace zeno
 
                 bool bExist = false;
                 if (bInput) {
-                    paramData = refSourceNode->get_input_prim_param(ref_param, &bExist);
+                    paramData = refSourceNode->getNodeParams().get_input_prim_param(ref_param, &bExist);
                 } else {
-                    paramData = refSourceNode->get_output_prim_param(ref_param, &bExist);
+                    paramData = refSourceNode->getNodeParams().get_output_prim_param(ref_param, &bExist);
                 }
                 if (!bExist) {
                     throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "the refer param doesn't exist, may be deleted before");
@@ -387,9 +388,9 @@ namespace zeno
 
                 if (!paramData.result.has_value()) {
                     //可能引用的源头（比如节点本身）还没算，只能让它再算一下前置依赖
-                    refSourceNode->requireInput(ref_param, nullptr);
+                    refSourceNode->getNodeExecutor().requireInput(ref_param, nullptr);
                     bool bExist = false;
-                    paramData = refSourceNode->get_input_prim_param(ref_param, &bExist);
+                    paramData = refSourceNode->getNodeParams().get_input_prim_param(ref_param, &bExist);
                     if (!bExist) {
                         throw makeError<UnimplError>("the refer param doesn't exist");
                     }
@@ -448,7 +449,7 @@ namespace zeno
                 auto items = split_str(parampath, '.');
                 if (!items.empty()) {
                     std::string paramname = items[0];
-                    return spNode->get_output_obj(paramname);
+                    return spNode->getNodeParams().get_output_obj(paramname);
                 }
             }
             return nullptr;
@@ -492,14 +493,14 @@ namespace zeno
                     auto pnode = pContext->spNode;
                     ZfxLValue lval;
                     bool bExist = false;
-                    lval.var = pnode->get_input_obj_param(param, &bExist);
+                    lval.var = pnode->getNodeParams().get_input_obj_param(param, &bExist);
                     if (bExist) {
                         ZfxVariable res;
                         res.value = std::vector<ZfxLValue>{ lval };
                         return res;
                     }
                     else {
-                        lval.var = pnode->get_input_prim_param(param, &bExist);
+                        lval.var = pnode->getNodeParams().get_input_prim_param(param, &bExist);
                         if (bExist) {
                             ZfxVariable res;
                             res.value = std::vector<ZfxLValue>{ lval };
@@ -1818,7 +1819,7 @@ namespace zeno
             std::string parampath, _;
             auto spNode = zfx::getNodeAndParamFromRefString(nodepath, pContext, _, parampath);
             CalcContext ctx;
-            spNode->execute(&ctx);
+            spNode->getNodeExecutor().execute(&ctx);
             auto obj = getObjFromRef(nodepath, pContext);
             int res = 0;
             return initVarFromZvar(res);
@@ -2097,11 +2098,11 @@ namespace zeno
             }
             if (funcname == "bboxmin") {
                 const std::string& nodename = get_zfxvec_front_elem<std::string>(args[0].value);
-                NodeImpl* pObjNode = pContext->spNode->getGraph()->getNode(nodename);
+                ZNode* pObjNode = pContext->spNode->getNodeStatus().getGraph()->getNode(nodename);
                 if (!pObjNode) {
                     throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"unknown node `" + nodename + "`");
                 }
-                auto targetObj = pObjNode->get_default_output_object();
+                auto targetObj = pObjNode->getNodeParams().get_default_output_object();
                 if (!targetObj) {
                     throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"get nullptr obj from default output when `prim_has_attr` is called");
                 }
@@ -2330,11 +2331,11 @@ namespace zeno
                 const std::string& nodename = get_zfxvec_front_elem<std::string>(args[0].value);
                 const std::string& attrname = get_zfxvec_front_elem<std::string>(args[1].value);
 
-                NodeImpl* pObjNode = pContext->spNode->getGraph()->getNode(nodename);
+                ZNode* pObjNode = pContext->spNode->getNodeStatus().getGraph()->getNode(nodename);
                 if (!pObjNode) {
                     throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"unknown node `" + nodename + "`");
                 }
-                auto targetObj = pObjNode->get_default_output_object();
+                auto targetObj = pObjNode->getNodeParams().get_default_output_object();
                 if (!targetObj)
                     throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"get nullptr obj from default output when `prim_has_attr` is called");
 
@@ -2351,11 +2352,11 @@ namespace zeno
                 const std::string& objparam = get_zfxvec_front_elem<std::string>(args[1].value);
                 const std::string& key = get_zfxvec_front_elem<std::string>(args[2].value);
 
-                NodeImpl* pObjNode = pContext->spNode->getGraph()->getNode(nodename);
+                ZNode* pObjNode = pContext->spNode->getNodeStatus().getGraph()->getNode(nodename);
                 if (!pObjNode) {
                     throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"unknown node `" + nodename + "`");
                 }
-                auto targetObj = pObjNode->get_output_obj(objparam);
+                auto targetObj = pObjNode->getNodeParams().get_output_obj(objparam);
                 if (!targetObj)
                     throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"get nullptr obj from `" + objparam + "` when `getud` is called");
 

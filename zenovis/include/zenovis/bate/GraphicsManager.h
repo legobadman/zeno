@@ -11,6 +11,8 @@
 #include <zenovis/bate/IGraphic.h>
 #include <zenovis/Scene.h>
 #include <zeno/core/Graph.h>
+#include <zeno/core/ZNode.h>
+
 
 namespace zenovis {
 
@@ -127,7 +129,7 @@ struct GraphicsManager {
                 //其实是否可以在外面提前准备好对象列表？
                 for (auto viewnode : viewnodes) {
                     auto spNode = spGraph->getNode(viewnode);
-                    auto spObject = spNode->get_default_output_object();
+                    auto spObject = spNode->getNodeParams().get_default_output_object();
                     if (spObject) {
                         add_object(spObject);
                     }

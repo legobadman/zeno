@@ -22,12 +22,14 @@
 #include <zcommon.h>
 #include <inodedata.h>
 #include <inodeimpl.h>
-#include <zeno/core/ZNode.h>
+//#include <zeno/core/ZNode.h>
 #include <zeno/extra/CalcContext.h>
 #include <zeno/core/FunctionManager.h>
 
 
 namespace zeno {
+
+    class ZNode;
 
     struct ExecuteContext
     {
@@ -38,7 +40,7 @@ namespace zeno {
         CalcContext* pContext;
     };
 
-    class ZNodeExecutor {
+    class ZENO_API ZNodeExecutor {
     public:
         ZNodeExecutor() = delete;
         ZNodeExecutor(ZNode* pNodeRepop, INode2* pNode, void (*dtor)(INode2*));
@@ -76,6 +78,8 @@ namespace zeno {
         bool is_takenover() const;
         bool is_dirty() const;
         void check_break_and_return();
+        bool is_upstream_dirty(const std::string& in_param) const;
+        NodeRunStatus get_run_status() const { return m_status; }
         void complete();
         void apply();
         INode2* coreNode() const;
@@ -84,7 +88,7 @@ namespace zeno {
         void doApply_Parameter(std::string const& name, CalcContext* pContext); //引入数值输入参数，并不计算整个节点
         zeno::reflect::Any processPrimitive(PrimitiveParam* in_param);
         std::unique_ptr<ListObject> processList(ObjectParam* in_param, CalcContext* pContext);
-        bool receiveOutputObj(ObjectParam* in_param, NodeImpl* outNode, ObjectParam* out_param);
+        bool receiveOutputObj(ObjectParam* in_param, ZNode* outNode, ObjectParam* out_param);
         float resolve(const std::string& formulaOrKFrame, const ParamType type);
         std::string resolve_string(const std::string& fmla, const std::string& defl);
         zfxvariant execute_fmla(const std::string& expression);
@@ -104,19 +108,18 @@ namespace zeno {
         void preApplyTimeshift(CalcContext* pContext);
         //foreach特供
         void foreachend_apply(CalcContext* pContext);
-
-    private:
         bool requireInput(const std::string& ds, CalcContext* pContext);
 
+    private:
         std::unique_ptr<INode2, void (*)(INode2*)> m_upNode2;
         ZNode* m_pNodeRepo{};
         NodeRunStatus m_status = Node_DirtyReadyToRun;
         DirtyReason m_dirtyReason = NoDirty;
+        mutable std::mutex m_mutex;
 
         bool m_bView = false;
         bool m_bypass = false;
         bool m_nocache = false;
-
         bool m_dirty = true;
         bool m_takenover = false;   //标记为nocache的节点，在计算完毕后，其输出被“移动”到下游节点后，当前节点处于takenover的状态，即，不脏且无法取出数据
     };

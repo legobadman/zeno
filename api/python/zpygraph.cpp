@@ -41,7 +41,7 @@ void Zpy_Graph::removeNode(const std::string& name) {
 
 Zpy_Object Zpy_Graph::getInputObject(const std::string& node_name, const std::string& param) {
     THROW_WHEN_CORE_DESTROYED
-    zeno::NodeImpl* pNodeImpl = spGraph->getNodeByPath(node_name);
+    zeno::ZNode* pNodeImpl = spGraph->getNodeByPath(node_name);
     if (!pNodeImpl)
         throw std::runtime_error("no such node called `" + node_name + "`");
     bool bExist = false;

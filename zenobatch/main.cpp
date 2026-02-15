@@ -11,7 +11,7 @@
 #include <zeno/io/iohelper.h>
 #include <zeno/io/zenreader.h>
 #include <zeno/extra/EventCallbacks.h>
-#include <zeno/core/NodeImpl.h>
+#include <zeno/core/ZNode.h>
 #include <zenovis/Session.h>
 #include <zenovis/RenderEngine.h>
 #include <zenovis/Scene.h>
@@ -320,7 +320,7 @@ int main(int argc, char* argv[]) {
     sess.initEnv(ioresult);
 
     auto spGraph = sess.getGraphByPath("main");
-    spGraph->register_createNode([&](const std::string& name, zeno::NodeImpl* spNode) {
+    spGraph->register_createNode([&](const std::string& name, zeno::ZNode* spNode) {
         int j;
         j = 0;
     });

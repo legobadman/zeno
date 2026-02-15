@@ -2,7 +2,7 @@
 #include <zeno/extra/ShaderNode.h>
 #include <zeno/types/ShaderObject.h>
 #include <zeno/utils/type_traits.h>
-#include <zeno/core/NodeImpl.h>
+#include <zeno/core/ZNode.h>
 #include <sstream>
 #include <cassert>
 #include <zeno/utils/Exception.h>
@@ -20,9 +20,9 @@ static std::string ftos(T x) {
 ZENO_API ShaderNode::ShaderNode() = default;
 
 ZENO_API ZErrorCode ShaderNode::apply(INodeData* pNodeData) {
-    NodeImpl* m_pAdapter = static_cast<NodeImpl*>(pNodeData);
+    auto m_pAdapter = static_cast<ZNodeParams*>(pNodeData);
     ShaderData shader;
-    shader.data = m_pAdapter->get_uuid_path();
+    shader.data = m_pAdapter->getNode()->getNodeStatus().get_uuid_path();
     m_pAdapter->set_primitive_output("out", shader);
     return ZErr_OK;
 }
@@ -67,9 +67,9 @@ ZENO_API int EmissionPass::determineType(const ShaderData& shader) {
     }
     else {
         ShaderNodePath path = std::get<ShaderNodePath>(shader.data);
-        NodeImpl* pNode = zeno::getSession().getNodeByUuidPath(path);
+        auto pNode = zeno::getSession().getNodeByUuidPath(path);
         assert(pNode);
-        ShaderNode* treenode = dynamic_cast<ShaderNode*>(pNode->coreNode());
+        ShaderNode* treenode = dynamic_cast<ShaderNode*>(pNode->getNodeExecutor().coreNode());
         if (auto it = varmap.find(treenode); it != varmap.end())
             return variables.at(it->second).type;
         int type = treenode->determineType(this);
@@ -220,8 +220,8 @@ ZENO_API std::string EmissionPass::determineExpr(const ShaderData& shader) const
             return "constmp" + std::to_string(constmap.at(shader.curr_param));
         }
         else if constexpr (std::is_same_v<T, ShaderNodePath>) {
-            NodeImpl* pNode = zeno::getSession().getNodeByUuidPath(value);
-            ShaderNode* treenode = dynamic_cast<ShaderNode*>(pNode->coreNode());
+            auto pNode = zeno::getSession().getNodeByUuidPath(value);
+            ShaderNode* treenode = dynamic_cast<ShaderNode*>(pNode->getNodeExecutor().coreNode());
             return "tmp" + std::to_string(varmap.at(treenode));
         }
         else {

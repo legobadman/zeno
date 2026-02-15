@@ -1,7 +1,7 @@
 #pragma once
 
 #include <zeno/core/Graph.h>
-#include <zeno/core/NodeImpl.h>
+#include <zeno/core/ZNode.h>
 #include <memory>
 #include <cassert>
 
@@ -9,7 +9,7 @@
 namespace zeno {
 
 #if 0
-struct ContextManagedNode : NodeImpl {
+struct ContextManagedNode : ZNode {
     std::unique_ptr<Context> m_ctx = nullptr;
     bool bNewContext = false;
 

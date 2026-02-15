@@ -8,7 +8,7 @@
 #include "zenoapplication.h"
 #include "zenomainwindow.h"
 #include <zeno/core/common.h>
-#include <zeno/core/NodeImpl.h>
+#include <zeno/core/ZNode.h>
 #include <zeno/extra/CalcContext.h>
 #include <zeno/extra/GlobalState.h>
 #include "model/graphsmanager.h"
@@ -213,7 +213,7 @@ void CalculationMgr::onFrameSwitched(int frame) {
     if (false)//!sess.is_auto_run() && !sess.get_solver().empty())
     {
         auto solvernode_path = sess.get_solver();
-        zeno::NodeImpl* pSolverNode = sess.getNodeByUuidPath(solvernode_path);
+        zeno::ZNode* pSolverNode = sess.getNodeByUuidPath(solvernode_path);
         assert(pSolverNode);
         //zeno::CalcContext ctx;
         //如果frame没有解算结果，可能触发新的solver解算，要避免这一点。

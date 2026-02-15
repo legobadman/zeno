@@ -2,6 +2,7 @@
 #include <filesystem>
 #include <zeno/zeno.h>
 #include <zeno/core/data.h>
+#include <zeno/core/ZNode.h>
 #include <zeno/types/GeometryObject.h>
 #include <zeno/funcs/ObjectCodec.h>
 #include <zeno/geo/geometryutil.h>
@@ -58,7 +59,7 @@ namespace zeno {
         m_hJob = INVALID_HANDLE_VALUE;
     }
 
-    void FlipSolver::objs_cleaned(NodeImpl* m_pAdapter) {
+    void FlipSolver::objs_cleaned(ZNode* m_pAdapter) {
         clear_cache(m_pAdapter);
     }
 
@@ -118,8 +119,8 @@ namespace zeno {
         return nullptr;
     }
 
-    std::string FlipSolver::get_cachepath(NodeImpl* m_pAdapter) const {
-        const ParamPrimitive& param = m_pAdapter->get_input_prim_param("Cache Path");
+    std::string FlipSolver::get_cachepath(ZNode* m_pAdapter) const {
+        const ParamPrimitive& param = m_pAdapter->getNodeParams().get_input_prim_param("Cache Path");
         std::string cachepath;
         if (param.result.has_value()) {
             cachepath = zeno::any_cast_to_string(param.result);
@@ -130,7 +131,7 @@ namespace zeno {
         return cachepath;
     }
 
-    void FlipSolver::clear_cache(NodeImpl* m_pAdapter) const {
+    void FlipSolver::clear_cache(ZNode* m_pAdapter) const {
         const std::string& path = get_cachepath(m_pAdapter);
         std::filesystem::path dirToRemove = std::filesystem::u8path(path);
         if (std::filesystem::exists(dirToRemove) && path.find(".") == std::string::npos)
@@ -149,7 +150,7 @@ namespace zeno {
         }
     }
 
-    void FlipSolver::on_dirty_changed(NodeImpl* m_pAdapter, bool bOn, DirtyReason reason, bool bWholeSubnet, bool bRecursively) {
+    void FlipSolver::on_dirty_changed(ZNode* m_pAdapter, bool bOn, DirtyReason reason, bool bWholeSubnet, bool bRecursively) {
         if (reason != Dirty_FrameChanged) {
             //清空所有cache.
             clear_cache(m_pAdapter);
@@ -157,7 +158,7 @@ namespace zeno {
     }
 
     ZErrorCode FlipSolver::apply(INodeData* pNodeData) {
-        NodeImpl* m_pAdapter = static_cast<NodeImpl*>(pNodeData);
+        ZNodeParams* m_pAdapter = static_cast<ZNodeParams*>(pNodeData);
         auto init_fluid = static_cast<GeometryObject*>(m_pAdapter->get_input_Geometry("Initialize Fluid"));
         auto static_collider = static_cast<GeometryObject*>(m_pAdapter->get_input_Geometry("Static Collider"));
         zany2 emission_source = m_pAdapter->clone_input("Emission Source");
@@ -274,7 +275,7 @@ namespace zeno {
                 auto cmdargs = zeno::format("C:/zensolver/Debug/bin/zensolver.exe --pipe-write {} --pipe-read {} --cache-path \"{}\" --start-frame {} --end-frame {}  --init-fluid \"{}\" --size-init-fluid \"{}\" --static-collider \"{}\" --size-static-collider \"{}\"",
                     (unsigned long long)m_hPipe_sovler_write, (unsigned long long)m_hPipe_solver_read, cache_path, start_frame, end_frame, shm_initname, shm_initfluid_size, shm_staiccoll_name, shm_staticcoll_size);
 
-                zeno::getSession().set_solver(m_pAdapter->get_uuid_path());
+                zeno::getSession().set_solver(m_pAdapter->getNode()->getNodeStatus().get_uuid_path());
 
                 m_hJob = CreateJobObject(NULL, NULL);
                 JOBOBJECT_EXTENDED_LIMIT_INFORMATION jobInfo = {};

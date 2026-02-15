@@ -1,6 +1,6 @@
 #pragma once
 
-#include <zeno/core/NodeImpl.h>
+//#include <zeno/core/ZNode.h>
 #include <iobject2.h>
 #include <zeno/core/Session.h>
 #include <zeno/core/defNode.h>

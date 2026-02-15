@@ -15,7 +15,7 @@
 
 namespace zeno {
 
-    class NodeImpl;
+    //class ZNode;
     class ObjectParam;
     class PrimitiveParam;
     class CoreParam;

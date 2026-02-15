@@ -1,12 +1,12 @@
 #pragma once
 
-#include <zeno/core/NodeImpl.h>
+#include <zeno/core/ZNode.h>
 
 namespace zeno {
 
 struct Graph;
 
-struct ISubgraphNode : NodeImpl {
+struct ISubgraphNode : ZNode {
     virtual const char *get_subgraph_json() = 0;
     std::shared_ptr<Graph> grap;
 

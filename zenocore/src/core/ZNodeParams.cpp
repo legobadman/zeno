@@ -150,6 +150,15 @@ namespace zeno {
         }
     }
 
+    void ZNodeParams::setCustomUi(const CustomUI& ui, bool isSubnet) {
+        m_customUI = ui;
+        if (isSubnet) {
+            //保证颜色图标
+            m_customUI.uistyle.background = "#1D5F51";
+            m_customUI.uistyle.iconResPath = ":/icons/node/subnet.svg";
+        }
+    }
+
     std::map<std::string, ObjectParam>& ZNodeParams::get_input_object_params2() { return m_inputObjs; }
     std::map<std::string, ObjectParam>& ZNodeParams::get_output_object_params2() { return m_outputObjs; }
     std::map<std::string, PrimitiveParam>& ZNodeParams::get_input_prim_params2() { return m_inputPrims; }
@@ -1003,7 +1012,326 @@ namespace zeno {
                     changes.outputs.push_back(paramPrim->name);
             }
         }
+
+        //update subnetnode.
+        auto& optSbnInfo = m_pNode->getSubnetInfo();
+        if (optSbnInfo.has_value()) {
+            auto subg = optSbnInfo->get_subgraph();
+            //没有锁定的节点（包括资产实例和普通子图，都可以在这里更新Subnet的SubInput/SubOutput等）
+            if (!m_pNode->getNodeStatus().is_locked()) {
+                for (auto name : changes.new_inputs) {
+                    auto newNode = subg->createNode("SubInput", name);
+
+                    if (bSubnetInit) {
+                        if (name == "data_input") {
+                            newNode->getNodeStatus().set_pos({ 700, 0 });
+                        }
+                        else if (name == "Input") {
+                            newNode->getNodeStatus().set_pos({ 0, 0 });
+                        }
+                    }
+
+                    //这里SubInput的类型其实是和Subnet节点创建预设的参数对应，参考AddNodeCommand
+
+                    bool exist;     //subnet通过自定义参数面板创建SubInput节点时，根据实际情况添加primitive/obj类型的port端口
+                    bool isprim = isPrimitiveType(true, name, exist);
+                    if (isprim) {
+                        zeno::ParamPrimitive primitive;
+                        primitive.bInput = false;
+                        primitive.name = "port";
+                        primitive.socketType = Socket_Output;
+                        newNode->getNodeParams().add_output_prim_param(primitive);
+                    }
+                    else if (!isprim && exist) {
+                        zeno::ParamObject paramObj;
+                        paramObj.bInput = false;
+                        paramObj.name = "port";
+                        paramObj.type = get_anyparam_type(true, name);//  gParamType_Geometry;
+                        paramObj.socketType = Socket_Output;
+                        newNode->getNodeParams().add_output_obj_param(paramObj);
+                    }
+
+                    for (const auto& [param, _] : params) {     //创建Subinput时,更新Subinput的port接口类型
+                        if (auto paramPrim = std::get_if<ParamPrimitive>(&param)) {
+                            if (name == paramPrim->name) {
+                                newNode->getNodeParams().update_param_type("port", true, false, paramPrim->type);
+                                break;
+                            }
+                        }
+                    }
+                    params_change_info changes;
+                    changes.new_outputs.insert("port");
+                    changes.outputs.push_back("port");
+                    changes.outputs.push_back("hasValue");
+                    newNode->getNodeParams().update_layout(changes);
+                }
+                for (const auto& [old_name, new_name] : changes.rename_inputs) {
+                    //调整refelink
+                    if (auto subinputNode = subg->getNode(old_name)) {
+                        bool ret = subinputNode->getNodeParams().removeRefLinkDesParamIndx(false, true, "port", true);
+                        if (ret)
+                            subinputNode->getNodeParams().m_outputPrims["port"].reflinks.clear();
+                    }
+                    subg->updateNodeName(old_name, new_name);
+                }
+                for (auto name : changes.remove_inputs) {
+                    //调整refelink
+                    if (auto subinputNode = subg->getNode(name)) {
+                        bool ret = subinputNode->getNodeParams().removeRefLinkDesParamIndx(false, true, "port", true);
+                        if (ret)
+                            subinputNode->getNodeParams().m_outputPrims["port"].reflinks.clear();
+                    }
+                    subg->removeNode(name);
+                }
+
+                for (auto name : changes.new_outputs) {
+                    auto newNode = subg->createNode("SubOutput", name);
+                    if (bSubnetInit) {
+                        if (name == "data_output") {
+                            newNode->getNodeStatus().set_pos({ 700, 500 });
+                        }
+                        else if (name == "Output") {
+                            newNode->getNodeStatus().set_pos({ 0, 500 });
+                            //newNode->set_view(true);
+                        }
+                    }
+
+                    bool exist;
+                    bool isprim = isPrimitiveType(false, name, exist);
+                    if (isprim) {
+                        zeno::ParamPrimitive primitive;
+                        primitive.bInput = true;
+                        primitive.name = "port";
+                        primitive.type = gParamType_Int;
+                        primitive.socketType = Socket_Primitve;
+                        primitive.defl = 0;
+                        newNode->getNodeParams().add_input_prim_param(primitive);
+                    }
+                    else if (!isprim && exist) {
+                        zeno::ParamObject paramObj;
+                        paramObj.bInput = true;
+                        paramObj.name = "port";
+                        paramObj.type = get_anyparam_type(false, name); //gParamType_Geometry;
+                        paramObj.socketType = Socket_Clone;
+                        newNode->getNodeParams().add_input_obj_param(paramObj);
+                    }
+                    params_change_info changes;
+                    changes.new_inputs.insert("port");
+                    changes.inputs.push_back("port");
+                    newNode->getNodeParams().update_layout(changes);
+                }
+                for (const auto& [old_name, new_name] : changes.rename_outputs) {
+                    //调整refelink
+                    if (auto subOutputNode = subg->getNode(old_name)) {
+                        bool ret = subOutputNode->getNodeParams().removeRefLinkDesParamIndx(true, true, "port", true);
+                        if (ret)
+                            subOutputNode->getNodeParams().m_inputPrims["port"].reflinks.clear();
+                    }
+                    subg->updateNodeName(old_name, new_name);
+                }
+                for (auto name : changes.remove_outputs) {
+                    //调整refelink
+                    if (auto subOutputNode = subg->getNode(name)) {
+                        bool ret = subOutputNode->getNodeParams().removeRefLinkDesParamIndx(true, true, "port", true);
+                        if (ret)
+                            subOutputNode->getNodeParams().m_inputPrims["port"].reflinks.clear();
+                    }
+                    subg->removeNode(name);
+                }
+            }
+            //prim的输入类型变化时，可能需要更新对应subinput节点port端口的类型
+            for (auto _pair : params) {
+                if (const auto& pParam = std::get_if<ParamObject>(&_pair.param)) {
+                    //检测类型是否变化了
+                    const ParamObject& param = *pParam;
+                    auto subionode = subg->getNode(param.name);
+                    bool bInput = !param.bInput;    //输入参数对应输出参数的port，反之亦然
+                    if (subionode) {
+                        ParamType old_paramtype;
+                        SocketType old_socketype; //DEPRECATED
+                        bool _wildcard; //DEPRECATED
+                        subionode->getNodeParams().getParamTypeAndSocketType("port", false, bInput, old_paramtype, old_socketype, _wildcard);
+                        if (old_paramtype != param.type) {
+                            subionode->getNodeParams().update_param_type("port", false, bInput, param.type);
+                            //TODO:为了避免连线出问题，删掉所有连线
+                        }
+                    }
+                }
+                else if (const auto& pParam = std::get_if<ParamPrimitive>(&_pair.param)) {
+                    const ParamPrimitive& param = *pParam;
+                    param.bInput;
+                    if (changes.new_inputs.find(param.name) == changes.new_inputs.end() &&
+                        changes.remove_inputs.find(param.name) == changes.remove_inputs.end()) {
+                        //SubInput SubOutput
+                        auto subnode = subg->getNode(param.name);
+                        if (subnode) {
+                            ParamType paramtype;
+                            SocketType socketype;
+                            bool _wildcard;
+                            //SubInput的port是输出的，SubOutput的port是输入
+                            subnode->getNodeParams().getParamTypeAndSocketType("port", true, !param.bInput, paramtype, socketype, _wildcard);
+                            if (paramtype != param.type) {
+                                subnode->getNodeParams().update_param_type("port", true, !param.bInput, param.type);
+                                for (auto& link : subnode->getNodeParams().getLinksByParam(!param.bInput, "port")) {
+                                    if (auto linktonode = subg->getNode(link.inNode)) {
+                                        ParamType paramType;
+                                        SocketType socketType;
+                                        bool bWildcard;
+                                        linktonode->getNodeParams().getParamTypeAndSocketType(link.inParam, true, param.bInput, paramType, socketType, bWildcard);
+                                        if (param.bInput) {
+                                            if (!outParamTypeCanConvertInParamType(param.type, paramType, Role_OutputPrimitive, Role_InputPrimitive)) {
+                                                subg->removeLink(link);
+                                            }
+                                        }
+                                    }
+                                }
+                                for (auto& link : getLinksByParam(true, param.name)) {
+                                    if (auto spgraph = m_pNode->getNodeStatus().getGraph()) {
+                                        if (auto linktonode = spgraph->getNode(link.outNode)) {
+                                            ParamType paramType;
+                                            SocketType socketType;
+                                            bool bWildcard;
+                                            linktonode->getNodeParams().getParamTypeAndSocketType(link.outParam, true, false, paramType, socketType, bWildcard);
+                                            if (param.bInput) {
+                                                if (!outParamTypeCanConvertInParamType(paramType, param.type, Role_OutputPrimitive, Role_InputPrimitive)) {
+                                                    spgraph->removeLink(link);
+                                                }
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+        }
         return changes;
+    }
+
+    CustomUI ZNodeParams::exportCuiWithValue() const {
+        CustomUI uiwithdata = m_customUI;
+        uiwithdata.inputObjs.clear();
+        for (auto& [name, paramObj] : m_inputObjs)
+        {
+            uiwithdata.inputObjs.push_back(paramObj.exportParam());
+        }
+        if (m_pNode->getNodeStatus().get_nodecls() == "SubOutput") {
+            //SubOutput节点tabs-groups-params为空，需单独导出primitiveInputs
+            if (!uiwithdata.inputPrims.empty() && !uiwithdata.inputPrims[0].groups.empty()) {
+                for (auto& [name, paramPrimitive] : m_inputPrims) {
+                    uiwithdata.inputPrims[0].groups[0].params.push_back(paramPrimitive.exportParam());
+                }
+            }
+        }
+        else {
+            for (auto& tab : uiwithdata.inputPrims)
+            {
+                for (auto& group : tab.groups)
+                {
+                    for (auto& param : group.params)
+                    {
+                        auto iter = m_inputPrims.find(param.name);
+                        if (iter != m_inputPrims.end())
+                        {
+                            param = iter->second.exportParam();
+                        }
+                    }
+                }
+            }
+        }
+
+        uiwithdata.outputPrims.clear();
+        for (auto& [name, paramObj] : m_outputPrims)
+        {
+            uiwithdata.outputPrims.push_back(paramObj.exportParam());
+        }
+        uiwithdata.outputObjs.clear();
+        for (auto& [name, paramObj] : m_outputObjs)
+        {
+            uiwithdata.outputObjs.push_back(paramObj.exportParam());
+        }
+        return uiwithdata;
+    }
+
+    void ZNodeParams::removeRefLinks() {
+        //移除所有引用边的依赖关系
+        auto& primsRemoveReferLink = [](std::map<std::string, PrimitiveParam>& prims) {
+            for (auto& [_, input_param] : prims)
+            {
+                for (const std::shared_ptr<ReferLink>& reflink : input_param.reflinks) {
+                    if (reflink->source_inparam == &input_param) {
+                        //当前参数是引用源
+                        auto& otherLinks = reflink->dest_inparam->reflinks;
+                        otherLinks.erase(std::remove(otherLinks.begin(), otherLinks.end(), reflink));
+                        //参数值也改掉吧，把ref(...)改为 inv_ref(...)
+                        auto otherNode = reflink->dest_inparam->m_wpNode;
+                        assert(otherNode);
+
+                        auto defl = reflink->dest_inparam->defl;
+                        assert(defl.has_value());
+                        ParamType type = defl.type().hash_code();
+                        if (type == gParamType_PrimVariant) {
+                            PrimVar var = any_cast<PrimVar>(defl);
+                            std::visit([&](auto& arg) {
+                                using T = std::decay_t<decltype(arg)>;
+                                if constexpr (std::is_same_v<T, std::string>) {
+                                    auto iter = arg.find("ref(");
+                                    if (iter != std::string::npos) {
+                                        arg.replace(arg.find("ref("), 4, "ref_not_exist(");
+                                    }
+                                }
+                                }, var);
+                            otherNode->getNodeParams().update_param(reflink->dest_inparam->name, var);
+                        }
+                        else if (type == gParamType_VecEdit) {
+                            vecvar vec = any_cast<vecvar>(defl);
+                            for (auto& elem : vec) {
+                                std::visit([&](auto& arg) {
+                                    using T = std::decay_t<decltype(arg)>;
+                                    if constexpr (std::is_same_v<T, std::string>) {
+                                        auto iter = arg.find("ref(");
+                                        if (iter != std::string::npos) {
+                                            arg.replace(iter, 4, "ref_not_exist(");
+                                        }
+                                    }
+                                    }, elem);
+                            }
+                            otherNode->getNodeParams().update_param(reflink->dest_inparam->name, vec);
+                        }
+
+                        if (otherNode)
+                            otherNode->getNodeExecutor().mark_dirty(true);
+                    }
+                    else {
+                        //当前参数引用了别的节点参数
+                        auto& otherLinks = reflink->source_inparam->reflinks;
+                        otherLinks.erase(std::remove(otherLinks.begin(), otherLinks.end(), reflink));
+                        auto otherNode = reflink->source_inparam->m_wpNode;
+                        if (otherNode)
+                            otherNode->getNodeExecutor().mark_dirty(true);
+                    }
+                }
+                input_param.reflinks.clear();
+            }
+        };
+        primsRemoveReferLink(m_inputPrims);
+        primsRemoveReferLink(m_outputPrims);
+        for (auto& [_, output_obj] : m_outputObjs)
+        {
+            for (const std::shared_ptr<ReferLink>& reflink : output_obj.reflinks) {
+                if (reflink->source_inparam == &output_obj) {
+                    //当前参数是引用源
+                    auto& otherLinks = reflink->dest_inparam->reflinks;
+                    otherLinks.erase(std::remove(otherLinks.begin(), otherLinks.end(), reflink));
+
+                    auto otherNode = reflink->dest_inparam->m_wpNode;
+                    assert(otherNode);
+                    if (otherNode)
+                        otherNode->getNodeExecutor().mark_dirty(true);
+                }
+            }
+        }
     }
 
     void ZNodeParams::trigger_update_params(const std::string& param, bool changed, params_change_info changes)
@@ -1352,6 +1680,13 @@ namespace zeno {
             }
         }
         return false;
+    }
+
+    void ZNodeParams::on_link_added_removed(bool bInput, const std::string& paramname, bool bAdded) {
+        checkParamsConstrain();
+        if (!bInput && bAdded) {
+            auto iter = m_outputObjs.find(paramname);
+        }
     }
 
     std::vector<std::pair<std::string, bool>> ZNodeParams::getWildCardParams(const std::string& param_name, bool bPrim)
@@ -1894,6 +2229,14 @@ namespace zeno {
         return nullptr;
     }
 
+    zany2 ZNodeParams::clone_default_output_object() {
+        //TODO: mutex
+        if (IObject2* default_output_obj = get_default_output_object()) {
+            return zany2(default_output_obj->clone());
+        }
+        return nullptr;
+    }
+
     bool ZNodeParams::has_link_input(std::string const& id) const {
         //这个对应的是老版本的has_input
         auto iter = m_inputObjs.find(id);
@@ -1947,6 +2290,62 @@ namespace zeno {
             return iter2->second.spObject.get();
         }
         return nullptr;
+    }
+
+    zany2 ZNodeParams::move_output(std::string const& id) {
+        auto iter = m_outputObjs.find(id);
+        if (iter == m_outputObjs.end()) {
+            throw makeNodeError<KeyError>(m_pNode->get_path(), id, "move_input");
+        }
+        return std::move(iter->second.spObject);
+    }
+
+    bool ZNodeParams::checkAllOutputLinkTraced() {
+        bool bAllOutputTaken = true;
+        //检查是否当前节点是否所有边都被trace了
+        for (const auto& [_, outparam] : m_outputObjs) {
+            for (auto link : outparam.links) {
+                if (!link->bTraceAndTaken) {
+                    bAllOutputTaken = false;
+                    break;
+                }
+            }
+        }
+        for (const auto& [_, outparam] : m_outputPrims) {
+            for (auto link : outparam.links) {
+                if (!link->bTraceAndTaken) {
+                    bAllOutputTaken = false;
+                    break;
+                }
+            }
+        }
+        return bAllOutputTaken;
+    }
+
+    zany2 ZNodeParams::takeOutputObject(ObjectParam* out_param, ObjectParam* in_param, bool& bAllOutputTaken) {
+        for (auto link : out_param->links) {
+            if (link->toparam == in_param) {
+                link->bTraceAndTaken = true;
+                break;
+            }
+        }
+        bAllOutputTaken = checkAllOutputLinkTraced();
+        return std::move(out_param->spObject); //TODO: reset
+    }
+
+    zany2 ZNodeParams::takeOutputObject(const std::string& out_param, const std::string& in_param, bool& bAllOutputTaken) {
+        auto iter = m_outputObjs.find(out_param);
+        if (iter == m_outputObjs.end())
+            throw makeNodeError<KeyError>(m_pNode->get_path(), out_param, "no such output object param");
+        auto& outparam = iter->second;
+        for (auto link : outparam.links) {
+            if (link->toparam->name == in_param) {
+                link->bTraceAndTaken = true;
+                break;
+            }
+        }
+        bAllOutputTaken = checkAllOutputLinkTraced();
+        return std::move(outparam.spObject);
     }
 
     IObject2* ZNodeParams::clone_input_object(const char* param)
@@ -2144,6 +2543,10 @@ namespace zeno {
     int ZNodeParams::GetFrameId() const
     {
         return getGlobalState()->getFrameId();
+    }
+
+    void ZNodeParams::report_error(const char* error_info) {
+        zeno::getSession().globalState->report_error(std::string(error_info));
     }
 
 } // namespace zeno

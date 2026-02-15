@@ -1,5 +1,6 @@
 #include "zfxutil.h"
 #include <zeno/core/Session.h>
+#include <zeno/core/ZNode.h>
 #include <zeno/core/Graph.h>
 #include <zeno/utils/string.h>
 #include <zeno/types/GeometryObject.h>
@@ -653,7 +654,7 @@ namespace zeno
             }
         }
 
-        NodeImpl* getNodeAndParamFromRefString(
+        ZNode* getNodeAndParamFromRefString(
             const std::string& ref, 
             ZfxContext* pContext,
             std::string& paramName,
@@ -668,7 +669,7 @@ namespace zeno
                 //子图直接获取参数
                 if (zeno::starts_with(ref, "../")) {
                     auto thisNode = pContext->spNode;
-                    auto thisGraph = thisNode->getGraph();
+                    auto thisGraph = thisNode->getNodeStatus().getGraph();
                     paramPath = ref.substr(3);
                     auto paramPathItems = split_str(paramPath, '.');
                     if (paramPathItems.size() != 1) {
@@ -677,7 +678,7 @@ namespace zeno
                     }
                     paramName = paramPathItems[0];
                     //找出参数对应的SubInput节点
-                    NodeImpl* pSubInput = thisGraph->getNode(paramName);
+                    auto pSubInput = thisGraph->getNode(paramName);
                     paramName = "port";
                     return pSubInput;
                 }
@@ -712,7 +713,7 @@ namespace zeno
                 zeno::log_warn("no param name when resolve ref path");
             }
 
-            NodeImpl* pNodeImpl;
+            ZNode* pNodeImpl = nullptr;
 
             {
                 //尝试按照 节点名称.参数的方式进行解析

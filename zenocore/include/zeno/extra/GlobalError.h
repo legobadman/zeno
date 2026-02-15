@@ -7,7 +7,7 @@
 
 namespace zeno {
 
-struct NodeImpl;
+struct ZNode;
 
 struct GlobalError {
 

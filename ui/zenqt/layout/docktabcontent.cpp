@@ -34,7 +34,7 @@
 #include "dialog/ZOptixCameraSetting.h"
 #include <zeno/core/typeinfo.h>
 #include <zeno/core/Graph.h>
-#include <zeno/core/NodeImpl.h>
+#include <zeno/core/ZNode.h>
 #include <zeno/core/ObjectRecorder.h>
 #include <zeno/core/NodeRegister.h>
 #include <zeno/utils/helper.h>
@@ -572,7 +572,7 @@ void DockContent_Editor::initConnections()
         connect(pTestApi, &ZToolBarButton::clicked, this, [=]() {
             auto& sess = zeno::getSession();
             zeno::EdgeInfo edge;
-            std::shared_ptr<zeno::NodeImpl> spNode;
+            std::shared_ptr<zeno::ZNode> spNode;
 
             QFileDialog dlg;
 
@@ -1180,7 +1180,7 @@ void DockContent_View::initConnections()
             auto spNode = zeno::getSession().getNodeByUuidPath(nodeuuidpath);
             assert(spNode);
             if (spNode) {
-                auto pObject = spNode->get_default_output_object();
+                auto pObject = spNode->getNodeParams().get_default_output_object();
                 if (pObject) {
                     update.spObject.reset(pObject->clone());
                 }

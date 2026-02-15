@@ -19,7 +19,7 @@ namespace zeno
         ZfxVariable getAttrValue(const std::string& attrname, ZfxContext* pContext, char channel = 0);
         ZfxVariable initVarFromZvar(const zfxvariant& var);
         zfxvariant getZfxVarElement(const ZfxVector& vec, int idx);
-        NodeImpl* getNodeAndParamFromRefString(
+        ZNode* getNodeAndParamFromRefString(
             const std::string& ref, 
             ZfxContext* pContext, 
             std::string& paramName,

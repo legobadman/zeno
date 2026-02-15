@@ -8,10 +8,9 @@
 #include "variantptr.h"
 #include "graphsmanager.h"
 #include "GraphsTreeModel.h"
-#include <zeno/core/NodeImpl.h>
+#include <zeno/core/ZNode.h>
 #include <zeno/utils/helper.h>
 #include "declmetatype.h"
-#include <zeno/extra/SubnetNode.h>
 #include "zenoapplication.h"
 #include "style/colormanager.h"
 
@@ -115,11 +114,11 @@ private:
 class ParamModelImpl : public QObject
 {
 public:
-    ParamModelImpl(std::shared_ptr<zeno::NodeImpl> spNode, QObject* parent)
+    ParamModelImpl(std::shared_ptr<zeno::ZNode> spNode, QObject* parent)
         : QObject(parent)
         , m_wpNode(spNode)
     {}
-    std::weak_ptr<zeno::NodeImpl> m_wpNode;
+    std::weak_ptr<zeno::ZNode> m_wpNode;
 };
 
 ParamsModel::ParamsModel(const zeno::CustomUI& customui)
@@ -138,7 +137,7 @@ ParamsModel::ParamsModel(const zeno::CustomUI& customui)
     initCustomUI(customui);
 }
 
-ParamsModel::ParamsModel(zeno::NodeImpl* spNode, QObject* parent)
+ParamsModel::ParamsModel(zeno::ZNode* spNode, QObject* parent)
     : QAbstractListModel(parent)
     , m_wpNode(spNode)
     , m_customUIM(nullptr)
@@ -148,10 +147,10 @@ ParamsModel::ParamsModel(zeno::NodeImpl* spNode, QObject* parent)
     , m_outObjProxy(nullptr)
 {
     initProxyModels();
-    initParamItems(m_wpNode->export_customui());
-    initCustomUI(spNode->export_customui());
+    initParamItems(m_wpNode->getNodeParams().get_customui());
+    initCustomUI(m_wpNode->getNodeParams().get_customui());
 
-    cbUpdateParam = spNode->register_update_param(
+    cbUpdateParam = spNode->getNodeParams().register_update_param(
         [this](const std::string& name, zeno::reflect::Any old_value, zeno::reflect::Any new_value) {
             for (int i = 0; i < m_items.size(); i++) {
                 if (m_items[i].name.toStdString() == name) {
@@ -166,46 +165,46 @@ ParamsModel::ParamsModel(zeno::NodeImpl* spNode, QObject* parent)
             //根据需要更新节点布局
             auto spNode = m_wpNode/*.lock()*/;
             ZASSERT_EXIT(spNode);
-            spNode->trigger_update_params(name, false, zeno::params_change_info());
+            spNode->getNodeParams().trigger_update_params(name, false, zeno::params_change_info());
         });
 
-    spNode->register_update_param_socket_type(
+    spNode->getNodeParams().register_update_param_socket_type(
         [this](const std::string& name, zeno::SocketType type) {
             updateParamData(QString::fromStdString(name), type, QtRole::ROLE_SOCKET_TYPE);
         });
 
-    spNode->register_update_param_wildcard(
+    spNode->getNodeParams().register_update_param_wildcard(
         [this](const std::string& name, bool isWildcard) {
             updateParamData(QString::fromStdString(name), isWildcard, QtRole::ROLE_PARAM_IS_WILDCARD);
         });
 
-    spNode->register_update_param_type(
+    spNode->getNodeParams().register_update_param_type(
         [this](const std::string& name, zeno::ParamType type, bool bInput) {
         updateParamData(QString::fromStdString(name), (quint64)type, QtRole::ROLE_PARAM_TYPE, bInput);
         });
 
-    spNode->register_update_param_control(
+    spNode->getNodeParams().register_update_param_control(
         [this](const std::string& name, zeno::ParamControl control) {
             updateParamData(QString::fromStdString(name), control, QtRole::ROLE_PARAM_CONTROL);
         });
 
-    spNode->register_update_param_control_prop(
+    spNode->getNodeParams().register_update_param_control_prop(
         [this](const std::string& name, zeno::reflect::Any controlProps) {
             updateParamData(QString::fromStdString(name), QVariant::fromValue(controlProps), QtRole::ROLE_PARAM_CTRL_PROPERTIES);
         });
 
-    spNode->register_update_param_socket_visible(
+    spNode->getNodeParams().register_update_param_socket_visible(
         [this](const std::string& name, bool bSocketVisible, bool bInput) {
             updateParamData(QString::fromStdString(name), bSocketVisible, QtRole::ROLE_PARAM_SOCKET_VISIBLE, bInput);
         });
 
-    spNode->register_update_visable_enable([this](zeno::NodeImpl* pNode, std::set<std::string> adjInputs, std::set<std::string> adjOutputs) {
+    spNode->getNodeParams().register_update_visable_enable([this](zeno::ZNode* pNode, std::set<std::string> adjInputs, std::set<std::string> adjOutputs) {
         //扫一遍，更新一下缓存值
         for (ParamItem& item : m_items) {
             std::string name = item.name.toStdString();
             if (adjInputs.find(name) != adjInputs.end() && item.bInput) {
                 bool bExist = false;
-                zeno::CommonParam param = pNode->get_input_param(name, &bExist);
+                zeno::CommonParam param = pNode->getNodeParams().get_input_param(name, &bExist);
                 ZASSERT_EXIT(bExist);
                 if (param.bEnable != item.bEnable) {
                     updateParamData(item.name, param.bEnable, QtRole::ROLE_PARAM_ENABLE, true);
@@ -216,7 +215,7 @@ ParamsModel::ParamsModel(zeno::NodeImpl* spNode, QObject* parent)
             }
             if (adjOutputs.find(name) != adjOutputs.end() && !item.bInput) {
                 bool bExist = false;
-                zeno::CommonParam param = pNode->get_output_param(name, &bExist);
+                zeno::CommonParam param = pNode->getNodeParams().get_output_param(name, &bExist);
                 ZASSERT_EXIT(bExist);
                 if (param.bEnable != item.bEnable) {
                     updateParamData(item.name, param.bEnable, QtRole::ROLE_PARAM_ENABLE, false);
@@ -229,12 +228,12 @@ ParamsModel::ParamsModel(zeno::NodeImpl* spNode, QObject* parent)
         emit enabledVisibleChanged();
     });
 
-    spNode->register_update_param_color(
+    spNode->getNodeParams().register_update_param_color(
         [this](const std::string& name, std::string& clr) {
             updateParamData(QString::fromStdString(name), QString::fromStdString(clr), QtRole::ROLE_PARAM_SOCKET_CLR);
         });
 
-    spNode->register_update_layout(
+    spNode->getNodeParams().register_update_layout(
         [this](zeno::params_change_info& changes) {
             updateUiLinksSockets(changes);
         });
@@ -329,7 +328,7 @@ zeno::CustomUI ParamsModel::customUI() const {
     if (m_bTempModel && !m_wpNode)
         return m_tempUI;
     else
-        return m_wpNode->export_customui();
+        return m_wpNode->getNodeParams().get_customui();
 }
 
 void ParamsModel::initCustomUI(const zeno::CustomUI& customui)
@@ -535,7 +534,7 @@ bool ParamsModel::setData(const QModelIndex& index, const QVariant& value, int r
         param.value = anyVal;
         auto spNode = m_wpNode/*.lock()*/;
         if (spNode) {
-            spNode->update_param(param.name.toStdString(), anyVal);
+            spNode->getNodeParams().update_param(param.name.toStdString(), anyVal);
             emit dataChanged(index, index, {QtRole::ROLE_PARAM_QML_VALUE});	//同时要发送信号，让QML端可以捕捉到信号变化从而更新
             break;
             //zenoApp->graphsManager()->currentModel()->markDirty(true);
@@ -555,7 +554,7 @@ bool ParamsModel::setData(const QModelIndex& index, const QVariant& value, int r
         auto spNode = m_wpNode/*.lock()*/;
         if (spNode) {
             param.connectProp = (zeno::SocketType)value.toInt();
-            spNode->update_param_socket_type(param.name.toStdString(), param.connectProp);
+            spNode->getNodeParams().update_param_socket_type(param.name.toStdString(), param.connectProp);
             return true;
         }
         return false;
@@ -565,7 +564,7 @@ bool ParamsModel::setData(const QModelIndex& index, const QVariant& value, int r
         auto spNode = m_wpNode/*.lock()*/;
         if (spNode) {
             param.bWildcard = value.toBool();
-            return spNode->update_param_wildcard(param.name.toStdString(), param.bWildcard);
+            return spNode->getNodeParams().update_param_wildcard(param.name.toStdString(), param.bWildcard);
         }
         return false;
     }
@@ -577,7 +576,7 @@ bool ParamsModel::setData(const QModelIndex& index, const QVariant& value, int r
         }
         auto spNode = m_wpNode/*.lock()*/;
         if (spNode) {
-            spNode->update_param_socket_visible(param.name.toStdString(), value.toBool(), param.bInput);
+            spNode->getNodeParams().update_param_socket_visible(param.name.toStdString(), value.toBool(), param.bInput);
             emit showPrimSocks_changed();
             return true;
         }
@@ -590,7 +589,7 @@ bool ParamsModel::setData(const QModelIndex& index, const QVariant& value, int r
     case QtRole::ROLE_NODE_DIRTY:
     {
         if (auto spNode = m_wpNode/*.lock()*/) {
-            spNode->mark_dirty(value.toBool());
+            spNode->getNodeExecutor().mark_dirty(value.toBool());
             return true;
         }
     }
@@ -968,9 +967,9 @@ void ParamsModel::addParam(const ParamItem& param)
             info.bEnable = param.bEnable;
             info.bWildcard = param.bWildcard;
             if (param.bInput) {
-                m_wpNode->add_input_prim_param(info);
+                m_wpNode->getNodeParams().add_input_prim_param(info);
             } else {
-                m_wpNode->add_output_prim_param(info);
+                m_wpNode->getNodeParams().add_output_prim_param(info);
             }
         } else {
             zeno::ParamObject info;
@@ -979,10 +978,10 @@ void ParamsModel::addParam(const ParamItem& param)
             info.name = param.name.toStdString();
             info.socketType = param.connectProp;
             if (param.bInput) {
-                m_wpNode->add_input_obj_param(info);
+                m_wpNode->getNodeParams().add_input_obj_param(info);
             }
             else {
-                m_wpNode->add_output_obj_param(info);
+                m_wpNode->getNodeParams().add_output_obj_param(info);
             }
         }
     }
@@ -1054,7 +1053,7 @@ void ParamsModel::batchModifyParams(const zeno::ParamsUpdateInfo& params, bool b
     auto spNode = m_wpNode/*.lock()*/;
     ZASSERT_EXIT(spNode);
     this->blockSignals(this);   //updateParamData不发出的datachange信号否则触发m_customParamsM的datachange
-    zeno::params_change_info changes = spNode->update_editparams(params, bSubnetInit);
+    zeno::params_change_info changes = spNode->getNodeParams().update_editparams(params, bSubnetInit);
     this->blockSignals(false);
     updateUiLinksSockets(changes);
 }
@@ -1114,14 +1113,8 @@ void ParamsModel::updateUiLinksSockets(zeno::params_change_info& changes)
 
     m_items.clear();
     //reconstruct params.
-    initParamItems(m_wpNode->export_customui());
-    //TODO: 尽量废弃dynamic_cast这种写法
-    if (auto sbn = dynamic_cast<zeno::SubnetNode*>(spNode)) {
-        updateCustomUiModelIncremental(changes, sbn->get_customui());
-    }
-    else {
-        updateCustomUiModelIncremental(changes, spNode->export_customui());
-    }
+    initParamItems(m_wpNode->getNodeParams().exportCuiWithValue());
+    updateCustomUiModelIncremental(changes, spNode->getNodeParams().exportCuiWithValue());
 
     //reconstruct links.
     for (int r = 0; r < m_items.size(); r++) {
@@ -1130,7 +1123,7 @@ void ParamsModel::updateUiLinksSockets(zeno::params_change_info& changes)
         if (group == zeno::Role_InputPrimitive)
         {
             bool bExist = false;
-            auto paramPrim = spNode->get_input_prim_param(m_items[r].name.toStdString(), &bExist);
+            auto paramPrim = spNode->getNodeParams().get_input_prim_param(m_items[r].name.toStdString(), &bExist);
             if (!bExist)
                 continue;
             links = paramPrim.links;
@@ -1139,7 +1132,7 @@ void ParamsModel::updateUiLinksSockets(zeno::params_change_info& changes)
         else if (group == zeno::Role_InputObject)
         {
             bool bExist = false;
-            auto paramObj = spNode->get_input_obj_param(m_items[r].name.toStdString(), &bExist);
+            auto paramObj = spNode->getNodeParams().get_input_obj_param(m_items[r].name.toStdString(), &bExist);
             if (!bExist)
                 continue;
             links = paramObj.links;
@@ -1147,7 +1140,7 @@ void ParamsModel::updateUiLinksSockets(zeno::params_change_info& changes)
         else if (group == zeno::Role_OutputPrimitive)
         {
             bool bExist = false;
-            auto paramPrim = spNode->get_output_prim_param(m_items[r].name.toStdString(), &bExist);
+            auto paramPrim = spNode->getNodeParams().get_output_prim_param(m_items[r].name.toStdString(), &bExist);
             if (!bExist)
                 continue;
             links = paramPrim.links;
@@ -1155,7 +1148,7 @@ void ParamsModel::updateUiLinksSockets(zeno::params_change_info& changes)
         else if (group == zeno::Role_OutputObject)
         {
             bool bExist = false;
-            auto paramPrim = spNode->get_output_obj_param(m_items[r].name.toStdString(), &bExist);
+            auto paramPrim = spNode->getNodeParams().get_output_obj_param(m_items[r].name.toStdString(), &bExist);
             if (!bExist)
                 continue;
             links = paramPrim.links;
@@ -1194,7 +1187,7 @@ void ParamsModel::updateUiLinksSockets(zeno::params_change_info& changes)
     //resetCustomParamModel();
 
     //重建referlink
-    for (const auto& [edgeinfo, outParamIsOutput] : spNode->getReflinkInfo(false)) {
+    for (const auto& [edgeinfo, outParamIsOutput] : spNode->getNodeParams().getReflinkInfo(false)) {
         GraphModel* pGraphM = parentGraph();
         QModelIndex fromNodeIdx = pGraphM->indexFromName(QString::fromStdString(edgeinfo.outNode));
         QModelIndex toNodeIdx = pGraphM->indexFromName(QString::fromStdString(edgeinfo.inNode));
@@ -1258,8 +1251,9 @@ void ParamsModel::updateParamData(const QString& name, const QVariant& val, int 
 void ParamsModel::resetCustomUi(const zeno::CustomUI& customui)
 {
     auto spNode = m_wpNode/*.lock()*/;
-    if (auto sbn = dynamic_cast<zeno::SubnetNode*>(spNode))
-        sbn->setCustomUi(customui);
+    if (spNode->is_subnet()) {
+        spNode->getNodeParams().setCustomUi(customui, true);
+    }
 }
 
 bool ParamsModel::removeRows(int row, int count, const QModelIndex& parent)

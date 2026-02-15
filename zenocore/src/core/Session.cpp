@@ -9,8 +9,7 @@
 #include <zeno/extra/PyExecuteProxy.h>
 #include <zeno/types/UserData.h>
 #include <zeno/core/Graph.h>
-#include <zeno/core/NodeImpl.h>
-#include <zeno/core/SolverImpl.h>
+#include <zeno/core/ZNode.h>
 #include <zeno/core/CoreParam.h>
 #include <zeno/utils/safe_at.h>
 #include <zeno/utils/logger.h>
@@ -20,9 +19,7 @@
 #include "rapidjson/document.h"
 #include "rapidjson/writer.h"
 #include "rapidjson/stringbuffer.h"
-#include <zeno/extra/SubnetNode.h>
 #include <zeno/extra/GraphException.h>
-#include <zeno/core/GlobalVariable.h>
 #include <zeno/core/FunctionManager.h>
 #include <regex>
 #include <Windows.h>
@@ -60,7 +57,6 @@ ZENO_API Session::Session()
     //, m_spMainGraph(std::make_shared<Graph>("main"))
     , assets(std::make_unique<AssetsMgr>())
     , m_pyexecutor(std::make_unique<PyExecuteProxy>())
-    , globalVariableManager(std::make_unique<GlobalVariableManager>())
     , funcManager(std::make_unique<FunctionManager>())
     , m_recorder(std::make_unique<ObjectRecorder>())
     , m_mainThreadId(0)
@@ -265,11 +261,11 @@ ZENO_API std::shared_ptr<Graph> Session::mainGraph() const {
     return m_spMainGraph;
 }
 
-ZENO_API NodeImpl* Session::getNodeByUuidPath(std::string const& uuid_path) {
+ZENO_API ZNode* Session::getNodeByUuidPath(std::string const& uuid_path) {
     return m_spMainGraph->getNodeByUuidPath(uuid_path);
 }
 
-ZENO_API NodeImpl* Session::getNodeByPath(std::string const& uuid_path)
+ZENO_API ZNode* Session::getNodeByPath(std::string const& uuid_path)
 {
     return m_spMainGraph->getNodeByPath(uuid_path);
 }
@@ -277,8 +273,6 @@ ZENO_API NodeImpl* Session::getNodeByPath(std::string const& uuid_path)
 ZENO_API void Session::resetMainGraph() {
     m_spMainGraph.reset();
     m_spMainGraph = std::make_shared<Graph>("main");
-    globalVariableManager.reset();
-    globalVariableManager = std::make_unique<GlobalVariableManager>();
 }
 
 void Session::clearMainGraph() {
@@ -422,10 +416,13 @@ void Session::init_project_path(const std::wstring& path) {
 }
 
 void Session::terminate_solve() {
+    //TODO: DEPRECATED
+#if 0
     SolverImpl* pSolverNode = static_cast<SolverImpl*>(getNodeByUuidPath(m_solver));
     if (pSolverNode) {
         pSolverNode->terminate_solve();
     }
+#endif
 }
 
 ZENO_API bool Session::run(const std::string& currgraph, render_reload_info& infos) {

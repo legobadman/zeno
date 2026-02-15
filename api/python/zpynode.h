@@ -12,12 +12,12 @@
 
 namespace py = pybind11;
 
-#include <zeno/core/NodeImpl.h>
+#include <zeno/core/ZNode.h>
 
 class Zpy_Node {
 public:
     Zpy_Node();
-    Zpy_Node(zeno::NodeImpl* ptrNode);
+    Zpy_Node(zeno::ZNode* ptrNode);
     Zpy_Node(const Zpy_Node& rhs);
     ~Zpy_Node();
 
@@ -35,7 +35,7 @@ public:
 
 private:
     std::string m_name;
-    zeno::NodeImpl* m_ptrNode;
+    zeno::ZNode* m_ptrNode;
 };
 
 #endif

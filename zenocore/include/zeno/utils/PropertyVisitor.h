@@ -146,19 +146,19 @@ namespace zeno {
         };
 
         struct TypeAutoCallbackList {
-            std::vector<std::function<void(NodeImpl *)>> InputHook;
-            std::vector<std::function<void(NodeImpl *)>> OutputHook;
+            std::vector<std::function<void(ZNode *)>> InputHook;
+            std::vector<std::function<void(ZNode *)>> OutputHook;
 
             std::vector<std::function<void()>> BindingHook;
         };
 
         struct NodeParameterBase {
             TypeAutoCallbackList HookList;
-            NodeImpl *Target = nullptr;
+            ZNode *Target = nullptr;
 
             using Super = NodeParameterBase;
 
-            explicit NodeParameterBase(NodeImpl *Node);
+            explicit NodeParameterBase(ZNode *Node);
             NodeParameterBase(NodeParameterBase &&RhsToMove) noexcept;
             NodeParameterBase(const NodeParameterBase &) = delete;
 
@@ -179,7 +179,7 @@ namespace zeno {
                 return SNDescriptor;
             }
 
-            explicit INodeParameterObject(NodeImpl *Node);
+            explicit INodeParameterObject(ZNode *Node);
 
             static T &GetDefaultObject() {
                 static bool bHasInitializedDefaultObject = false;
@@ -221,7 +221,7 @@ namespace zeno {
              * Note: don't call lambda returned without ownership
              * @return
              */
-            virtual std::function<void(NodeImpl *)> ToCaptured() = 0;
+            virtual std::function<void(ZNode *)> ToCaptured() = 0;
         };
 
         template<typename ParentType, typename InputType, size_t Hash>
@@ -244,21 +244,21 @@ namespace zeno {
                 }
             }
 
-            inline void ReadObject(NodeImpl *Node) {
+            inline void ReadObject(ZNode *Node) {
                 zeno::log_debug("[AutoNode] Reading zany2 '{}'", KeyName);
                 if (!IsOptional || Node->has_input(KeyName)) {
                     ValueRef = Node->get_input<RawType_t<InputType>>(KeyName);
                 }
             }
 
-            inline void ReadPrimitiveValue(NodeImpl *Node) {
+            inline void ReadPrimitiveValue(ZNode *Node) {
                 zeno::log_debug("[AutoNode] Reading primitive value '{}'", KeyName);
                 if (!IsOptional || Node->has_input(KeyName)) {
                     ValueRef = Node->get_input2<RawType_t<InputType>>(KeyName);
                 }
             }
 
-            void Read(NodeImpl *Node) {
+            void Read(ZNode *Node) {
                 if (nullptr == Node) {
                     zeno::log_error("Trying to read value from a nullptr Node.");
                     return;
@@ -272,8 +272,8 @@ namespace zeno {
                 }
             }
 
-            std::function<void(NodeImpl *)> ToCaptured() override {
-                return [this](NodeImpl *Node) {
+            std::function<void(ZNode *)> ToCaptured() override {
+                return [this](ZNode *Node) {
                     if (nullptr != Node) {
                         Read(Node);
                     }
@@ -302,7 +302,7 @@ namespace zeno {
                 }
             }
 
-            inline void WriteObject(NodeImpl *Node) {
+            inline void WriteObject(ZNode *Node) {
                 if (ValueRef) {
                     Node->set_output(KeyName, ValueRef);
                 } else if (!IsOptional) {
@@ -310,11 +310,11 @@ namespace zeno {
                 }
             }
 
-            inline void WritePrimitiveValue(NodeImpl *Node) {
+            inline void WritePrimitiveValue(ZNode *Node) {
                 Node->set_output2(KeyName, ValueRef);
             }
 
-            void Write(NodeImpl *Node) {
+            void Write(ZNode *Node) {
                 if (nullptr == Node) {
                     zeno::log_error("Trying to read value from a nullptr Node.");
                     return;
@@ -326,8 +326,8 @@ namespace zeno {
                 }
             }
 
-            std::function<void(NodeImpl *)> ToCaptured() override {
-                return [this](NodeImpl *Node) {
+            std::function<void(ZNode *)> ToCaptured() override {
+                return [this](ZNode *Node) {
                     if (nullptr != Node) {
                         Write(Node);
                     }
@@ -336,7 +336,7 @@ namespace zeno {
         };
 
         template<typename NodeParameterType>
-        struct IAutoNode : public NodeImpl {
+        struct IAutoNode : public ZNode {
             // Can't check incomplete type
             //static_assert(std::is_base_of_v<NodeParameterBase, NodeParameterType>);
 
@@ -368,7 +368,7 @@ namespace zeno {
 
         template<typename NodeType>
         struct IParameterAutoNode : public IAutoNode<NodeType>, public INodeParameterObject<NodeType> {
-            IParameterAutoNode(NodeImpl *Node = nullptr) : IAutoNode<NodeType>(), INodeParameterObject<NodeType>(Node) {}
+            IParameterAutoNode(ZNode *Node = nullptr) : IAutoNode<NodeType>(), INodeParameterObject<NodeType>(Node) {}
         };
 
         struct IPrimitiveBindingField {
@@ -488,7 +488,7 @@ namespace zeno {
     };// namespace reflect
 
     template<typename T>
-    reflect::INodeParameterObject<T>::INodeParameterObject(NodeImpl *Node) : NodeParameterBase(Node) {
+    reflect::INodeParameterObject<T>::INodeParameterObject(ZNode *Node) : NodeParameterBase(Node) {
     }
 }// namespace zeno
 

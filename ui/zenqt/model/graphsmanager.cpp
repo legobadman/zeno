@@ -14,6 +14,7 @@
 #include <zeno/io/zenreader.h>
 #include <zeno/core/Session.h>
 #include <zeno/core/NodeRegister.h>
+#include <zeno/extra/GlobalState.h>
 #include "nodeeditor/gv/zenosubgraphscene.h"
 #include "zassert.h"
 #include "variantptr.h"

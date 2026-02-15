@@ -9,6 +9,7 @@
 #include <zeno/utils/log.h>
 #include <zeno/types/CameraObject.h>
 #include <zeno/core/Graph.h>
+#include <zeno/core/ZNode.h>
 #include "util/uihelper.h"
 #include "zenomainwindow.h"
 #include "camerakeyframe.h"
@@ -486,7 +487,7 @@ void DisplayWidget::onRenderRequest(QString nodeuuidpath) {
     auto spNode = zeno::getSession().getNodeByUuidPath(nodeuuidpath.toStdString());
     assert(spNode);
     if (spNode) {
-        auto pObject = spNode->get_default_output_object();
+        auto pObject = spNode->getNodeParams().get_default_output_object();
         if (pObject) {
             info.spObject.reset(pObject->clone());
         }

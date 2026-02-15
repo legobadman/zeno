@@ -21,7 +21,6 @@
 #include <zeno/core/CoreParam.h>
 #include <zeno/ListObject.h>
 #include <zeno/utils/helper.h>
-#include <zeno/extra/SubnetNode.h>
 #include <zeno/extra/GraphException.h>
 #include <zeno/formula/formula.h>
 #include <zeno/core/FunctionManager.h>
@@ -118,12 +117,29 @@ namespace zeno {
 
     zany2 ZNodeExecutor::execute_get_object(const ExecuteContext& exec_context)
     {
-        auto& params = m_pNodeRepo->getNodeParams();
-        auto any = m_pNodeRepo->getNodeParams().get_param_result(exec_context.out_param);
-        if (!any.has_value()) return {};
-        if (any.type().hash_code() == typeid(std::unique_ptr<IObject2>).hash_code())
-            return reflect::any_cast<std::unique_ptr<IObject2>>(any);
-        return {};
+        //锁的粒度可以更精细化，比如没有apply和takeover，在只读的情况下，可以释放锁
+        //另一方面，如果多个节点想获取同一个节点的输出，就得排队了
+        std::lock_guard scope(m_mutex);
+
+        doApply(exec_context.pContext);
+
+        zany2 res;
+        //TODO: take over要设计成只限制一对一连接，否则遇到没法clone的对象，就没法move给两个下游了
+        if (m_pNodeRepo->getNodeStatus().is_nocache()) {
+            //TODO: 是否要在这里清理outputNode?
+            //其实可以，因为这里并不是存粹的数学函数，必然有修改当前节点状态的可能。
+            res = m_pNodeRepo->getNodeParams().move_output(exec_context.out_param);
+            mark_takeover();
+        }
+        else {
+            auto result = m_pNodeRepo->getNodeParams().get_output_obj(exec_context.out_param);
+            if (!result) {
+                throw makeNodeError<UnimplError>(get_path(m_pNodeRepo), "no result");
+            }
+            res = zany2(result->clone());
+        }
+        return res;
+
     }
 
     zeno::reflect::Any ZNodeExecutor::execute_get_numeric(const ExecuteContext& exec_context)
@@ -317,6 +333,38 @@ namespace zeno {
 
     bool ZNodeExecutor::is_dirty() const {
         return m_dirty;
+    }
+
+    bool ZNodeExecutor::is_upstream_dirty(const std::string& in_param) const {
+        auto& _inputObjs = m_pNodeRepo->getNodeParams().get_input_object_params2();
+        auto& _inputPrims = m_pNodeRepo->getNodeParams().get_input_prim_params2();
+
+        if (auto iter = _inputObjs.find(in_param); iter != _inputObjs.end()) {
+            const auto& param = iter->second;
+            for (auto spLink : param.links) {
+                auto outNode = spLink->fromparam->m_wpNode;
+                NodeRunStatus status = outNode->getNodeExecutor().get_run_status();
+                if (status != Node_Clean) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        else if (auto iter = _inputPrims.find(in_param); iter != _inputPrims.end()) {
+            const auto& param = iter->second;
+            for (auto spLink : param.links) {
+                auto outNode = spLink->fromparam->m_wpNode;
+                NodeRunStatus status = outNode->getNodeExecutor().get_run_status();
+                if (status != Node_Clean) {
+                    return true;
+                }
+            }
+            return false;
+        }
+        else {
+            throw makeNodeError<UnimplError>(m_pNodeRepo->getNodeStatus().get_path(),
+                "the param is not exist");
+        }
     }
 
     void ZNodeExecutor::check_break_and_return()
@@ -829,7 +877,7 @@ namespace zeno {
 
     bool ZNodeExecutor::receiveOutputObj(
         ObjectParam* in_param,
-        NodeImpl* outNode,
+        ZNode* outNode,
         ObjectParam* out_param)
     {
         //在此版本里，只有克隆，每个对象只有一个节点关联，虽然激进，但可以充分测试属性数据共享在面对
@@ -847,13 +895,13 @@ namespace zeno {
         }
 
         bool bAllTaken = false;
-        auto outputObj = outNode->takeOutputObject(out_param, in_param, bAllTaken);
+        auto outputObj = outNode->getNodeParams().takeOutputObject(out_param, in_param, bAllTaken);
         in_param->spObject = zany2(outputObj->clone());
         in_param->spObject->update_key(stdString2zs(get_uuid_path(m_pNodeRepo)));
 
-        if (outNode->is_nocache() && bAllTaken) {
+        if (outNode->getNodeStatus().is_nocache() && bAllTaken) {
             //似乎要把输入也干掉，但如果一锅清掉，可能会漏了数值输出，或者多对象输出的情况（虽然很少见）
-            outNode->mark_takeover();
+            outNode->getNodeExecutor().mark_takeover();
         }
 
         if (auto splist = dynamic_cast<ListObject*>(in_param->spObject.get())) {
@@ -1055,7 +1103,8 @@ namespace zeno {
                         ctx.innode_uuid_path = get_uuid_path(m_pNodeRepo);
 
                         //发起异步任务：
-                        spLink->upstream_task = std::async(launch_method, &ZNodeExecutor::execute_get_object, outNode->getNodeExecutor(), ctx);
+                        ZNodeExecutor* pExecutor = &(outNode->getNodeExecutor());
+                        spLink->upstream_task = std::async(launch_method, &ZNodeExecutor::execute_get_object, pExecutor, ctx);
                     }
                 }
             }
@@ -1111,7 +1160,7 @@ namespace zeno {
                             ctx.out_param = spLink->fromparam->name;
                             ctx.pContext = pContext;
                             ctx.innode_uuid_path = get_uuid_path(m_pNodeRepo);
-                            spLink->upstream_task = std::async(launch_method, &execute_get_numeric, outNode->getNodeExecutor(), ctx);
+                            spLink->upstream_task = std::async(launch_method, &ZNodeExecutor::execute_get_numeric, &(outNode->getNodeExecutor()), ctx);
                         }
                         else {
                             //直接从上游拷过来即可

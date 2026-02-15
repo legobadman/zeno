@@ -3,6 +3,7 @@
 #include <zeno/extra/GlobalState.h>
 #include <zeno/utils/Error.h>
 #include <zeno/core/Graph.h>
+#include <zeno/core/ZNode.h>
 #include <zeno/utils/log.h>
 #include <zeno/utils/helper.h>
 #include <variant>
@@ -1468,12 +1469,16 @@ namespace zeno {
                             using E = typename T::value_type;
                             if constexpr (std::is_same_v<E, int> || std::is_same_v<E, float>) {
                                 bool bVal = get_zfxvar<int>(vec[0]);
+                                bool bParamVisEnableUpdated = false;
                                 if (targetvar == "visible") {
-                                    pContext->param_constrain.update_nodeparam_prop = spNode->update_param_visible(nodeparam, bVal, bInputParam);
+                                    bParamVisEnableUpdated = spNode->getNodeParams().update_param_visible(nodeparam, bVal, bInputParam);
+                                    pContext->param_constrain.update_nodeparam_prop = bParamVisEnableUpdated;
                                 }
                                 else if (targetvar == "enabled") {
-                                    pContext->param_constrain.update_nodeparam_prop = spNode->update_param_enable(nodeparam, bVal, bInputParam);
+                                    bParamVisEnableUpdated = spNode->getNodeParams().update_param_enable(nodeparam, bVal, bInputParam);
+                                    pContext->param_constrain.update_nodeparam_prop = bParamVisEnableUpdated;
                                 }
+
                             }
                             else {
                                 throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "not support type when switch `ASSIGNMENT`");
@@ -2222,7 +2227,7 @@ namespace zeno {
                 std::string paramname, _;
                 auto spNode = zfx::getNodeAndParamFromRefString(ref, pContext, paramname, _);
                 if (spNode)
-                    paths.insert({spNode->get_uuid_path(), paramname, funcname});
+                    paths.insert({spNode->getNodeStatus().get_uuid_path(), paramname, funcname});
             }
             else {
                 //函数参数也可能调用引用：
@@ -2236,7 +2241,7 @@ namespace zeno {
                             std::string paramname, _;
                             auto spNode = zfx::getNodeAndParamFromRefString(ref, pContext, paramname, _);
                             if (spNode)
-                                paths.insert({spNode->get_uuid_path(), paramname, funcname});
+                                paths.insert({spNode->getNodeStatus().get_uuid_path(), paramname, funcname});
                         }
                     } else {
                         _paths = getReferSources(paramNode, pContext);

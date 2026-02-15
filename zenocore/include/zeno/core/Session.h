@@ -20,7 +20,7 @@ namespace zeno {
 
 struct Graph;
 struct Session;
-struct NodeImpl;
+struct ZNode;
 struct GlobalVariableManager;
 struct ObjectRecorder;
 struct IObject2;
@@ -43,7 +43,6 @@ struct Session {
     std::unique_ptr<EventCallbacks> const eventCallbacks;
     std::unique_ptr<UserData> const m_userData;
     std::unique_ptr<AssetsMgr> assets;
-    std::unique_ptr<GlobalVariableManager> globalVariableManager;
     std::unique_ptr<FunctionManager> funcManager;
     std::unique_ptr<ObjectRecorder> m_recorder;
 
@@ -59,8 +58,8 @@ struct Session {
     ZENO_API UserData &userData() const;
     ZENO_API std::shared_ptr<Graph> createGraph(const std::string& name);
     ZENO_API std::shared_ptr<Graph> mainGraph() const;
-    ZENO_API NodeImpl* getNodeByUuidPath(std::string const& uuid_path);
-    ZENO_API NodeImpl* getNodeByPath(std::string const& uuid_path);
+    ZENO_API ZNode* getNodeByUuidPath(std::string const& uuid_path);
+    ZENO_API ZNode* getNodeByPath(std::string const& uuid_path);
     ZENO_API void resetMainGraph();
     ZENO_API void clearMainGraph();
     ZENO_API void clearAssets();

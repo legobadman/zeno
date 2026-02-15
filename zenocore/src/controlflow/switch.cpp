@@ -1,6 +1,7 @@
 #include <zeno/zeno.h>
 #include <zeno/types/ListObject_impl.h>
 #include <zeno/utils/interfaceutil.h>
+#include <zeno/core/ZNodeParams.h>
 
 
 namespace zeno
@@ -39,7 +40,7 @@ namespace zeno
     struct NumericIf : INode2
     {
         ZErrorCode apply(INodeData* pNodeData) override {
-            NodeImpl* m_pAdapter = static_cast<NodeImpl*>(pNodeData);
+            auto m_pAdapter = static_cast<ZNodeParams*>(pNodeData);
             int cond = m_pAdapter->get_input2_int("Condition");
             if (cond != 0) {
                 m_pAdapter->set_primitive_output("Output", m_pAdapter->get_param_result("If True"));
@@ -83,7 +84,7 @@ namespace zeno
     struct SwitchIf : INode2
     {
         ZErrorCode apply(INodeData* _pNodeData) override {
-            NodeImpl* pNodeData = static_cast<NodeImpl*>(_pNodeData);
+            auto pNodeData = static_cast<ZNodeParams*>(_pNodeData);
             int cond = pNodeData->get_input2_int("Condition");
             if (cond != 0) {
                 pNodeData->set_output("Output", pNodeData->clone_input("If True"));
@@ -126,7 +127,7 @@ namespace zeno
     struct SwitchBetween : INode2
     {
         ZErrorCode apply(INodeData* _pNodeData) override {
-            NodeImpl* pNodeData = static_cast<NodeImpl*>(_pNodeData);
+            auto pNodeData = static_cast<ZNodeParams*>(_pNodeData);
             int cond = pNodeData->get_input2_int("cond1");
             if (cond != 0) {
                 pNodeData->set_output("Output", pNodeData->clone_input("b1"));

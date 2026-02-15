@@ -2,6 +2,7 @@
 #include <zeno/funcs/PrimitiveTools.h>
 #include <zeno/types/UserData.h>
 #include <zeno/core/Session.h>
+#include <zeno/core/ZNode.h>
 #include <zeno/geo/geometryutil.h>
 #include <zeno/utils/helper.h>
 #include "util/uihelper.h"
@@ -776,7 +777,7 @@ namespace zeno {
         auto transNode = m_objnodeinfo.spViewNode;
         if (!transNode) {
             auto spOriNode = m_objnodeinfo.spViewNode;
-            auto spGraph = spOriNode->getThisGraph();
+            auto spGraph = spOriNode->getNodeStatus().getGraph();
             ZASSERT_EXIT(spGraph);
             transNode = spGraph->createNode("PrimitiveTransform");
             ZASSERT_EXIT(transNode);
@@ -786,13 +787,13 @@ namespace zeno {
             //把连线关系,view等设置更改。
             EdgeInfo edge;
             edge.outNode = spOriNode->get_name();
-            edge.outParam = spOriNode->get_viewobject_output_param();
+            edge.outParam = spOriNode->getNodeParams().get_viewobject_output_param();
             edge.inNode = transNode->get_name();
             edge.inParam = "prim";
             spGraph->addLink(edge);
 
-            spOriNode->set_view(false);
-            transNode->set_view(true);
+            spOriNode->getNodeStatus().set_view(false);
+            transNode->getNodeStatus().set_view(true);
 
             auto originalObj = m_objnodeinfo.transformingObj;
             //原始的对象要隐藏
@@ -801,8 +802,8 @@ namespace zeno {
             //objectsMan->remove_rendering_obj(originalObj);
 
             //把obj设置到新的transform节点的output端。
-            std::string outputparam = transNode->get_viewobject_output_param();
-            transNode->set_output(outputparam, zany2(spObj->clone()));
+            std::string outputparam = transNode->getNodeParams().get_viewobject_output_param();
+            transNode->getNodeParams().set_output(outputparam, zany2(spObj->clone()));
         }
 
         {
@@ -823,9 +824,9 @@ namespace zeno {
             rotate = vec4f(res_q.x, res_q.y, res_q.z, res_q.w);
 
             //TODO: 通过model代理!!!
-            transNode->update_param("translation", trans);
-            transNode->update_param("scaling", scale);
-            transNode->update_param("quatRotation", rotate);
+            transNode->getNodeParams().update_param("translation", trans);
+            transNode->getNodeParams().update_param("scaling", scale);
+            transNode->getNodeParams().update_param("quatRotation", rotate);
 
             //2.登记新的obj到
             //auto& objectsMan = zeno::getSession().objsMan;

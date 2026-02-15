@@ -5,6 +5,8 @@
 
 namespace zeno {
 
+class ZNode;
+
 struct Asset {
     AssetInfo m_info;
     std::shared_ptr<Graph> sharedGraph;
@@ -45,15 +47,15 @@ struct AssetsMgr {
     ZENO_API std::shared_ptr<Graph> getAssetGraph(const std::string& name, bool bLoadIfNotExist);
     ZENO_API std::vector<Asset> getAssets() const;
     ZENO_API void updateAssets(const std::string& name, const ParamsUpdateInfo& info, const zeno::CustomUI& customui);
-    ZENO_API std::unique_ptr<NodeImpl> newInstance(Graph* pGraph, const std::string& assetsName, const std::string& nodeName, bool createInAsset, bool bAssetLock);
-    ZENO_API void updateAssetInstance(const std::string& assetsName, SubnetNode* spNode);
+    ZENO_API std::unique_ptr<ZNode> newInstance(Graph* pGraph, const std::string& assetsName, const std::string& nodeName, bool createInAsset, bool bAssetLock);
+    ZENO_API void updateAssetInstance(const std::string& assetsName, ZNode* spNode);
     ZENO_API void updateAssetInfo(const std::string& assetsName, std::shared_ptr<Graph> new_shared_gra, CustomUI customui);
 
     ZENO_API bool isAssetGraph(Graph* spGraph) const;
     ZENO_API bool generateAssetName(std::string& name);
 
-    ZENO_API std::shared_ptr<Graph> forkAssetGraph(std::shared_ptr<Graph> assetGraph, NodeImpl* subNode);
-    ZENO_API std::shared_ptr<Graph> syncInstToAssets(NodeImpl* assetInstNode);
+    ZENO_API std::unique_ptr<Graph> forkAssetGraph(std::shared_ptr<Graph> assetGraph, ZNode* subNode);
+    ZENO_API std::shared_ptr<Graph> syncInstToAssets(ZNode* assetInstNode);
 
 private:
     void initAssetsInfo();

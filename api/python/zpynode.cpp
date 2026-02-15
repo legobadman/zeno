@@ -25,7 +25,7 @@ Zpy_Node::Zpy_Node(const Zpy_Node& rhs) {
     });
 }
 
-Zpy_Node::Zpy_Node(zeno::NodeImpl* ptrNode)
+Zpy_Node::Zpy_Node(zeno::ZNode* ptrNode)
     : m_ptrNode(ptrNode)
 {
     if (m_ptrNode) {

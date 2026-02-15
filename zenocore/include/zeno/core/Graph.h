@@ -3,7 +3,9 @@
 #include <zeno/utils/api.h>
 #include <iobject2.h>
 #include <zeno/core/data.h>
-#include <zeno/core/ZNode.h>
+#include <zeno/extra/CalcContext.h>
+#include <zeno/core/CoreParam.h>
+//#include <zeno/core/ZNode.h>
 #include <zeno/utils/safe_dynamic_cast.h>
 #include <functional>
 #include <variant>
