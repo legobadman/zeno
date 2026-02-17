@@ -56,12 +56,6 @@ namespace zeno {
 
     struct Cube : INode2 {
         zeno::NodeType type() const override { return zeno::Node_Normal; }
-        void getIconResource(char* recv, size_t cap) override {
-            const char* icon = ":/icons/node/cube.svg";
-            strcpy(recv, icon);
-            recv[strlen(icon)] = '\0';
-        }
-        void getBackgroundClr(char* recv, size_t cap) override {}
         float time() const override { return 1.0; }
         void clearCalcResults() override {}
 
@@ -416,7 +410,9 @@ namespace zeno {
             { "Output", _gParamType_Geometry }
         ),
         "geometry",
-        "create a cube"
+        "create a cube",
+        ":/icons/node/cube.svg",
+        ""
     );
 
 
@@ -567,7 +563,9 @@ namespace zeno {
             { "Output", _gParamType_Geometry }
         ),
         "geometry",
-        "create a cube"
+        "create a cube",
+        "",
+        ""
     );
 
 
@@ -582,16 +580,6 @@ namespace zeno {
         zeno::NodeType type() const override { return zeno::Node_Normal; }
         float time() const override { return 1.0f; }
         void clearCalcResults() override {}
-
-        void getIconResource(char* recv, size_t cap) override {
-            const char* icon = ":/icons/node/sphere.svg";
-            if (recv && cap > 0) {
-                strncpy(recv, icon, cap - 1);
-                recv[cap - 1] = '\0';
-            }
-        }
-
-        void getBackgroundClr(char* recv, size_t cap) override {}
 
         ZErrorCode apply(INodeData* ptrNodeData) override
         {
@@ -773,6 +761,8 @@ namespace zeno {
         ),
 
         "create",
+        "",
+        ":/icons/node/sphere.svg",
         ""
     );
 
@@ -788,17 +778,6 @@ namespace zeno {
         zeno::NodeType type() const override { return zeno::Node_Normal; }
         float time() const override { return 1.0f; }
         void clearCalcResults() override {}
-
-        void getIconResource(char* recv, size_t cap) override {
-            const char* icon = ":/icons/node/circle.svg";
-            if (recv && cap > 0) {
-                strncpy(recv, icon, cap - 1);
-                recv[cap - 1] = '\0';
-            }
-        }
-
-        void getBackgroundClr(char* recv, size_t cap) override {}
-
         ZErrorCode apply(INodeData* ptrNodeData) override
         {
             zeno::vec3f Center = toVec3f(ptrNodeData->get_input2_vec3f("Center"));
@@ -1021,26 +1000,16 @@ namespace zeno {
         ),
 
         "create",
+        "",
+        ":/icons/node/circle.svg",
         ""
     );
 
 
     struct Point : INode2 {
-
         zeno::NodeType type() const override { return zeno::Node_Normal; }
         float time() const override { return 1.0f; }
         void clearCalcResults() override {}
-
-        void getIconResource(char* recv, size_t cap) override {
-            const char* icon = ":/icons/node/point.svg";
-            if (recv && cap > 0) {
-                strncpy(recv, icon, cap - 1);
-                recv[cap - 1] = '\0';
-            }
-        }
-
-        void getBackgroundClr(char* recv, size_t cap) override {}
-
         ZErrorCode apply(INodeData* ptrNodeData) override
         {
             zeno::vec3f Position = toVec3f(ptrNodeData->get_input2_vec3f("Position"));
@@ -1061,6 +1030,8 @@ namespace zeno {
         ),
 
         "create",
+        "",
+        ":/icons/node/point.svg",
         ""
     );
 
@@ -1069,17 +1040,6 @@ namespace zeno {
         zeno::NodeType type() const override { return zeno::Node_Normal; }
         float time() const override { return 1.0f; }
         void clearCalcResults() override {}
-
-        void getIconResource(char* recv, size_t cap) override {
-            const char* icon = ":/icons/node/line.svg";
-            if (recv && cap > 0) {
-                strncpy(recv, icon, cap - 1);
-                recv[cap - 1] = '\0';
-            }
-        }
-
-        void getBackgroundClr(char* recv, size_t cap) override {}
-
         ZErrorCode apply(INodeData* ptrNodeData) override
         {
             int npoints = ptrNodeData->get_input2_int("npoints");
@@ -1145,6 +1105,8 @@ namespace zeno {
         ),
 
         "create",
+        "",
+        ":/icons/node/line.svg",
         ""
     );
 

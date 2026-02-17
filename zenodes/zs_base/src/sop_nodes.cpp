@@ -147,14 +147,6 @@ namespace zeno {
 
         zeno::NodeType type() const override { return zeno::Node_Normal; }
 
-        void getIconResource(char* recv, size_t cap) override {
-            recv[0] = 0;
-        }
-
-        void getBackgroundClr(char* recv, size_t cap) override {
-            recv[0] = 0;
-        }
-
         float time() const override { return 1.f; }
 
         void clearCalcResults() override {}
@@ -181,6 +173,8 @@ namespace zeno {
             { "Output", _gParamType_Geometry }
         ),
         "prim",
+        "",
+        "",
         ""
     );
 }

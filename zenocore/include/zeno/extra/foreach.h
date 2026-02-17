@@ -21,8 +21,6 @@ namespace zeno
         ZErrorCode apply(INodeData* ptrNodeData) override;
         NodeType type() const override { return Node_Normal; }
         void clearCalcResults() override {}
-        void getIconResource(char* recv, size_t cap) override;
-        void getBackgroundClr(char* recv, size_t cap) override;
         float time() const override { return 1.0; }
         int get_current_iteration(ZNode* m_pAdapter);
         void update_iteration(ZNode* m_pAdapter, int new_iteration);
@@ -31,8 +29,6 @@ namespace zeno
     struct ForEachEnd : INode2
     {
         NodeType type() const override { return Node_Normal; }
-        void getIconResource(char* recv, size_t cap) override {}
-        void getBackgroundClr(char* recv, size_t cap) override {}
         float time() const override { return 1.0; }
 
         ForEachEnd();

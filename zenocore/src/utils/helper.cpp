@@ -2127,6 +2127,20 @@ namespace zeno {
             type == gParamType_GLMVec3;
     }
 
+    ZMat4 toZMat4(const glm::mat4& m)
+    {
+        ZMat4 z;
+        std::memcpy(&z, glm::value_ptr(m), sizeof(ZMat4));
+        return z;
+    }
+
+    glm::mat4 toGlmMat4(const ZMat4& z)
+    {
+        glm::mat4 m;
+        std::memcpy(glm::value_ptr(m), &z, sizeof(ZMat4));
+        return m;
+    }
+
     bool isEqual(const zvariant& lhs, const zvariant& rhs, ParamType const type) {
         if (lhs.index() != rhs.index())
             return false;

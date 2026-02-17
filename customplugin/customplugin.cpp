@@ -15,8 +15,6 @@ namespace zeno {
         ZErrorCode apply(INodeData* ptrNodeData) override {
             return ZErr_UnimplError;
         }
-        void getIconResource(char* recv, size_t cap) override {}
-        void getBackgroundClr(char* recv, size_t cap) override {}
         float time() const override { return 1.0; }
     };
 
@@ -29,6 +27,8 @@ namespace zeno {
             { "Output", _gParamType_Geometry }
         ),
         "debug",
-        "custom node"
+        "custom node",
+        "",
+        ""
     );
 }

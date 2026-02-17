@@ -54,20 +54,24 @@ ParamDescriptor::ParamDescriptor(std::string const& comboitemsDesc, std::string 
 
 ZENO_API Descriptor::Descriptor() = default;
 ZENO_API Descriptor::Descriptor(
-  std::vector<SocketDescriptor> const &inputs,
-  std::vector<SocketDescriptor> const &outputs,
-  std::vector<ParamDescriptor> const &params,
-  std::vector<std::string> const &categories,
-  std::string const &displayName,
-  std::string const &iconResPath,
-  std::string const& doc)
-  : inputs(inputs)
-  , outputs(outputs)
-  , params(params)
-  , categories(categories)
-  , doc(doc)
-  , displayName(displayName)
-  , iconResPath(iconResPath) {
+    std::vector<SocketDescriptor> const &inputs,
+    std::vector<SocketDescriptor> const &outputs,
+    std::vector<ParamDescriptor> const &params,
+    std::vector<std::string> const &categories,
+    std::string const& doc,
+    std::string const &displayName,
+    std::string const &iconResPath,
+    std::string const& bgclr
+)
+    : inputs(inputs)
+    , outputs(outputs)
+    , params(params)
+    , categories(categories)
+    , doc(doc)
+    , displayName(displayName)
+    , iconResPath(iconResPath)
+    , bgclr(bgclr)
+{
     //this->inputs.push_back("SRC");
     //this->inputs.push_back("COND");  // deprecated
     //this->outputs.push_back("DST");

@@ -19,8 +19,6 @@ struct Subnet : INode2 {
         return Node_SubgraphNode;
     }
     void clearCalcResults() {}
-    void getIconResource(char* recv, size_t cap) {}
-    void getBackgroundClr(char* recv, size_t cap) {}
     float time() const { return 1.0f; }
 };
 
@@ -29,6 +27,10 @@ ZENDEFNODE(Subnet, {
     {},
     {},
     {"subgraph"},
+    "",
+    "",
+    ":/icons/node/subnet.svg",
+    "#1D5F51"
 });
 
 struct SubInput : zeno::INode2 {
@@ -40,16 +42,9 @@ struct SubInput : zeno::INode2 {
     }
 
     NodeType type() const {
-        return Node_SubgraphNode;
+        return zeno::SubInput;
     }
     void clearCalcResults() {}
-    void getIconResource(char* recv, size_t cap) {
-    }
-    void getBackgroundClr(char* recv, size_t cap) {
-        const char* bg = "#5F5F5F";
-        strcpy(recv, bg);
-        recv[strlen(bg)] = '\0';
-    }
     float time() const { return 1.0f; }
 };
 
@@ -58,6 +53,10 @@ ZENDEFNODE(SubInput, {
     {{gParamType_Bool, "hasValue"}},
     {},
     {"subgraph"},
+    "",
+    "",
+    "",
+    "#5F5F5F"
 });
 
 struct SubOutput : zeno::INode2 {
@@ -66,17 +65,10 @@ struct SubOutput : zeno::INode2 {
     }
 
     NodeType type() const {
-        return Node_SubgraphNode;
+        return zeno::SubOutput;
     }
 
     void clearCalcResults() {}
-    void getIconResource(char* recv, size_t cap) {
-    }
-    void getBackgroundClr(char* recv, size_t cap) {
-        const char* bg = "#5F5F5F";
-        strcpy(recv, bg);
-        recv[strlen(bg)] = '\0';
-    }
     float time() const { return 1.0f; }
 };
 
@@ -85,6 +77,10 @@ ZENDEFNODE(SubOutput, {
     {},
     {},
     {"subgraph"},
+    "",
+    "",
+    "",
+    "#5F5F5F"
 });
 
 }

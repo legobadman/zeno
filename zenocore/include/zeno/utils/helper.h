@@ -42,6 +42,8 @@ namespace zeno {
     ZENO_API std::wstring s2ws();
     ZENO_API void merge_json(nlohmann::json& target, const nlohmann::json& source);
     bool isEqual(const zvariant& lhs, const zvariant& rhs, ParamType const type);
+    ZMat4 toZMat4(const glm::mat4& m);
+    glm::mat4 toGlmMat4(const ZMat4& z);
     EdgeInfo getEdgeInfo(std::shared_ptr<ObjectLink> spLink);
     EdgeInfo getEdgeInfo(std::shared_ptr<PrimitiveLink> spLink);
     std::string generateObjKey(std::shared_ptr<IObject2> spObject);

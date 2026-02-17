@@ -42,7 +42,10 @@ namespace zeno {
     }
 
     void ZNode::initSubnetInfo() {
+        //这里的初始化针对的是创建，如果是读写，可能另有流程
         m_opt_subnet_info = ZSubnetInfo(this);
+        auto subnetui = m_opt_subnet_info->init_subnet_ui();
+        m_upParams.setCustomUi(subnetui, true);
     }
 
     bool ZNode::is_subnet() const {

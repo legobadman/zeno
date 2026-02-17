@@ -2474,6 +2474,10 @@ namespace zeno {
         return toAbiVec4f(any_cast<vec4f>(get_param_result(zsString2Std(param))));
     }
 
+    ZMat4 ZNodeParams::get_input2_mat4(const char* param) {
+        return toZMat4(any_cast<glm::mat4>(get_param_result(zsString2Std(param))));
+    }
+
     bool ZNodeParams::set_output_object(const char* param, IObject2* detached_obj)
     {
         return set_output(std::string(param), zany2(detached_obj));

@@ -15,6 +15,7 @@ namespace zeno
         ZSubnetInfo(ZNode*);
         Graph* get_subgraph() const;
         void init_graph(std::unique_ptr<Graph>&& subg);
+        CustomUI init_subnet_ui() const;
         bool isAssetsNode() const;
         NodeType nodeType() const;
 

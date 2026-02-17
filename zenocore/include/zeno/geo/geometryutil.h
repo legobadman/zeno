@@ -52,7 +52,7 @@ namespace zeno
         Vec3f center_pos,
         Vec3f direction
     );
-    ZENO_API void transformGeom(
+    void transformGeom(
         IGeometryObject* geom
         , ZMat4 matrix
         , const char* pivotType
@@ -60,7 +60,7 @@ namespace zeno
         , Vec3f localX
         , Vec3f localY
         , Vec3f translate
-        , Vec3f rotation
+        , Vec4f _rotation
         , Vec3f scaling);
 }
 

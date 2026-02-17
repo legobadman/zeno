@@ -6,6 +6,13 @@
 
 namespace zeno {
 
+    static ZMat4 toZMat4(const glm::mat4& m)
+    {
+        ZMat4 z;
+        std::memcpy(&z, glm::value_ptr(m), sizeof(ZMat4));
+        return z;
+    }
+
 	IGeometryObject* createGeometry(GeomTopoType type, bool bTriangle, int nPoints, int nFaces, bool bInitFaces) {
 #ifdef _WIN32
 		HMODULE hDll = ::LoadLibrary("zenocore.dll");
@@ -112,4 +119,39 @@ namespace zeno {
 		return nullptr;
 	}
 
+	void transformGeom(
+		IGeometryObject* geom,
+		glm::mat4 matrix,
+		std::string pivotType,
+		vec3f pivotPos,
+		vec3f localX,
+		vec3f localY,
+		vec3f translate,
+		vec4f rotation,
+		vec3f scaling)
+	{
+#ifdef _WIN32
+        HMODULE hDll = ::LoadLibrary("zenocore.dll");
+        if (hDll == INVALID_HANDLE_VALUE || hDll == 0) {
+            return;
+        }
+        using fnMergeGeo = void(__cdecl*)(IGeometryObject*, ZMat4, const char*, Vec3f, Vec3f, Vec3f, Vec3f, Vec4f, Vec3f);
+        auto fCall = (fnMergeGeo)GetProcAddress(hDll, "transformGeom");
+        if (fCall) {
+            return fCall(
+				geom,
+				toZMat4(matrix),
+				pivotType.c_str(),
+				toAbiVec3f(pivotPos),
+				toAbiVec3f(localX),
+				toAbiVec3f(localY),
+				toAbiVec3f(translate),
+				toAbiVec4f(rotation),
+				toAbiVec3f(scaling)
+			);
+        }
+#else
+        //TODO:
+#endif
+	}
 }

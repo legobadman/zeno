@@ -3,20 +3,6 @@
 
 namespace zeno {
 
-    void ForEachBegin::getIconResource(char* recv, size_t cap) {
-        recv[0] = '\0';
-        //const char* icon = ":/icons/node/switchif.svg";
-        //strcpy(recv, icon);
-        //recv[strlen(icon)] = '\0';
-    }
-
-    void ForEachBegin::getBackgroundClr(char* recv, size_t cap) {
-        recv[0] = '\0';
-        //const char* icon = ":/icons/node/switchif.svg";
-        //strcpy(recv, icon);
-        //recv[strlen(icon)] = '\0';
-    }
-
     ZNode* ForEachBegin::get_foreachend(ZNode* m_pAdapter) {
         auto graph = m_pAdapter->getNodeStatus().getGraph();
         std::string m_foreach_end_path = m_pAdapter->getNodeParams().get_input2_string("ForEachEnd Path");

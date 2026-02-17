@@ -30,16 +30,16 @@ public:
     NodeType type() const override;
     ZErrorCode apply(INodeData* pNodeData) override;
     void clearCalcResults() {}
-    void getIconResource(char* recv, size_t cap) {
-        const char* icon = ":/icons/node/fluid.svg";
-        strcpy(recv, icon);
-        recv[strlen(icon)] = '\0';
-    }
-    void getBackgroundClr(char* recv, size_t cap) {
-        const char* bg = "#246283";
-        strcpy(recv, bg);
-        recv[strlen(bg)] = '\0';
-    }
+    //void getIconResource(char* recv, size_t cap) {
+    //    const char* icon = ":/icons/node/fluid.svg";
+    //    strcpy(recv, icon);
+    //    recv[strlen(icon)] = '\0';
+    //}
+    //void getBackgroundClr(char* recv, size_t cap) {
+    //    const char* bg = "#246283";
+    //    strcpy(recv, bg);
+    //    recv[strlen(bg)] = '\0';
+    //}
     float time() const { return 1.0f; }
 
     void terminate_solve();

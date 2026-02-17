@@ -17,6 +17,7 @@ namespace zeno {
 
         ui.nickname = desc.displayName;
         ui.uistyle.iconResPath = desc.iconResPath;
+        ui.uistyle.background = desc.bgclr;
         ui.doc = desc.doc;
         if (!desc.categories.empty())
             ui.category = desc.categories[0];   //很多cate都只有一个

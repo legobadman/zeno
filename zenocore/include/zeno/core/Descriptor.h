@@ -70,6 +70,7 @@ struct Descriptor {
   std::string doc;
   std::string displayName;
   std::string iconResPath;
+  std::string bgclr;
 
   ZENO_API Descriptor();
   ZENO_API Descriptor(
@@ -77,9 +78,10 @@ struct Descriptor {
       std::vector<SocketDescriptor> const &outputs,
       std::vector<ParamDescriptor> const &params,
       std::vector<std::string> const &categories,
+      std::string const &doc = "",
       std::string const &displayName = "",
       std::string const &iconResPath = "",
-      std::string const& doc = "");
+      std::string const &bgclr = "");
 };
 
 }

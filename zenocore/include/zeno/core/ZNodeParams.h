@@ -190,6 +190,7 @@ namespace zeno {
         Vec3f get_input2_vec3f(const char* param) override;
         Vec4i get_input2_vec4i(const char* param) override;
         Vec4f get_input2_vec4f(const char* param) override;
+        ZMat4 get_input2_mat4(const char* param) override;
         bool set_output_object(const char* param, IObject2* detached_obj) override;
         bool set_output_int(const char* param, int val) override;
         bool set_output_float(const char* param, float val) override;

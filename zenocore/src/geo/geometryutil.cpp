@@ -41,20 +41,6 @@ namespace zeno
         int to;     //分割点所在线段的终点，并有from < to，如果分割点恰好是顶点，则from=to
     };
 
-    static glm::mat4 toGlmMat4(const ZMat4& z)
-    {
-        glm::mat4 m;
-        std::memcpy(glm::value_ptr(m), &z, sizeof(ZMat4));
-        return m;
-    }
-
-    inline ZMat4 toZMat4(const glm::mat4& m)
-    {
-        ZMat4 z;
-        std::memcpy(&z, glm::value_ptr(m), sizeof(ZMat4));
-        return z;
-    }
-
     static std::vector<std::vector<zeno::vec3f>>
         convertFaces(const ZFacesPoints* faces)
     {
@@ -327,7 +313,6 @@ namespace zeno
         }
     }
 
-
     ZENO_EXPORT zeno::IGeometryObject* __cdecl mergeObjects(
         IListObject* _spList,
         const char* _tagAttr,
@@ -473,7 +458,7 @@ namespace zeno
         return glm::normalize(vector3);
     }
 
-    void transformGeom(
+    /*ZENO_EXPORT*/ void  /*__cdecl*/ transformGeom(
         zeno::IGeometryObject* _geom
         , ZMat4 _matrix
         , const char* _pivotType
@@ -481,7 +466,7 @@ namespace zeno
         , Vec3f _localX
         , Vec3f _localY
         , Vec3f _translate
-        , Vec3f _rotation
+        , Vec4f _rotation
         , Vec3f _scaling)
     {
         GeometryObject* geom = static_cast<GeometryObject*>(_geom);
@@ -491,7 +476,7 @@ namespace zeno
         vec3f localX = toVec3f(_localX);
         vec3f localY = toVec3f(_localY);
         vec3f translate = toVec3f(_translate);
-        vec3f rotation = toVec3f(_rotation);
+        vec4f rotation = toVec4f(_rotation);
         vec3f scaling = toVec3f(_scaling);
 
         zeno::vec3f _pivot = {};

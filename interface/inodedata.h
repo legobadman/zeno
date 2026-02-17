@@ -23,6 +23,7 @@ namespace zeno {
 		virtual Vec3f get_input2_vec3f(const char* param) = 0;
 		virtual Vec4i get_input2_vec4i(const char* param) = 0;
 		virtual Vec4f get_input2_vec4f(const char* param) = 0;
+		virtual ZMat4 get_input2_mat4(const char* param) = 0;
 		virtual bool set_output_object(const char* param, IObject2* detached_obj) = 0;
 		virtual bool set_output_int(const char* param, int val) = 0;
 		virtual bool set_output_float(const char* param, float val) = 0;

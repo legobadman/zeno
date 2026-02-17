@@ -51,11 +51,12 @@ struct ZNodeDescriptor {
     const char* cate;
     const char* doc;
     const char* icon;
+    const char* bgclr;
 };
 using fnRegister = bool(__cdecl*)(zeno::INode2* (*ctor)(), void (*dtor)(zeno::INode2*), const char* name, const ZNodeDescriptor&);
 using fnUnRegister = bool(__cdecl*)(const char* name);
 
-#define ZENDEFNODE_ABI(Node, Inputs, Outputs, Cate, Doc, Icon)      \
+#define ZENDEFNODE_ABI(Node, Inputs, Outputs, Cate, Doc, Icon, BackgroundClr)      \
     static const ZParamDescriptor _inputs_of_##Node[] = { Inputs }; \
     static const ZParamDescriptor _outputs_of_##Node[] = { Outputs }; \
     static const ZNodeDescriptor Node##_desc = {                    \
@@ -64,7 +65,8 @@ using fnUnRegister = bool(__cdecl*)(const char* name);
         #Node,  \
         Cate,  \
         Doc,   \
-        Icon   \
+        Icon,   \
+        BackgroundClr  \
     };\
     static struct _Def##Node { \
         _Def##Node() { \

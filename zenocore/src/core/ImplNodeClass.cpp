@@ -46,7 +46,11 @@ namespace zeno {
         }
         spNode->getNodeStatus().initUuid(pGraph, classname);
         spNode->getNodeStatus().set_name(name);
-        initCoreParams(spNode.get(), m_customui);
+        if (type != Node_SubgraphNode) {
+            //如果提前初始化，那么update_editparams那边就会误判新增的节点和移除的节点。
+            auto cui = spNode->getNodeParams().get_customui();
+            initCoreParams(spNode.get(), cui);
+        }
         return spNode;
     }
 
