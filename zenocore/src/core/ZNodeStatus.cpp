@@ -183,19 +183,6 @@ namespace zeno {
         }
     }
 
-    bool ZNodeStatus::is_locked() const
-    {
-        //子图派生类才用到，故原代码mark为virtual
-
-        return false;
-    }
-
-    void ZNodeStatus::set_locked(bool b)
-    {
-        //子图派生类才用到，故原代码mark为virtual
-        (void)b;
-    }
-
     void ZNodeStatus::convert_to_assetinst(const std::string& asset_name)
     {
         //原代码也是virtual
@@ -204,7 +191,20 @@ namespace zeno {
 
     void ZNodeStatus::set_view(bool bOn)
     {
-        m_bView = bOn;
+        //这一类方法要和ui model端位于同一线程
+        if (m_bView == bOn) {
+            return;
+        }
+        {
+            CORE_API_BATCH
+
+            m_bView = bOn;
+            CALLBACK_NOTIFY(set_view, m_bView)
+
+            Graph* spGraph = m_pGraph;
+            assert(spGraph);
+            spGraph->viewNodeUpdated(m_name, bOn);
+        }
     }
 
     bool ZNodeStatus::is_view() const
@@ -214,7 +214,11 @@ namespace zeno {
 
     void ZNodeStatus::set_bypass(bool bOn)
     {
+        CORE_API_BATCH
+
         m_bypass = bOn;
+        CALLBACK_NOTIFY(set_bypass, m_bypass)
+        m_pNodeRepo->getNodeExecutor().mark_dirty(true);
     }
 
     bool ZNodeStatus::is_bypass() const
@@ -224,7 +228,11 @@ namespace zeno {
 
     void ZNodeStatus::set_nocache(bool bOn)
     {
+        CORE_API_BATCH
+
         m_nocache = bOn;
+        CALLBACK_NOTIFY(set_nocache, m_nocache)
+        m_pNodeRepo->getNodeExecutor().mark_dirty(true);
     }
 
     bool ZNodeStatus::is_nocache() const
@@ -339,6 +347,7 @@ namespace zeno {
     void ZNodeStatus::set_pos(std::pair<float, float> pos)
     {
         m_pos = pos;
+        CALLBACK_NOTIFY(set_pos, m_pos)
     }
 
     std::pair<float, float> ZNodeStatus::get_pos() const

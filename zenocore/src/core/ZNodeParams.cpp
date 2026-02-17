@@ -1018,7 +1018,7 @@ namespace zeno {
         if (optSbnInfo.has_value()) {
             auto subg = optSbnInfo->get_subgraph();
             //没有锁定的节点（包括资产实例和普通子图，都可以在这里更新Subnet的SubInput/SubOutput等）
-            if (!m_pNode->getNodeStatus().is_locked()) {
+            if (!optSbnInfo->is_locked()) {
                 for (auto name : changes.new_inputs) {
                     auto newNode = subg->createNode("SubInput", name);
 

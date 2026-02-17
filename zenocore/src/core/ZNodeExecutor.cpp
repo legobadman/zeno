@@ -111,8 +111,8 @@ namespace zeno {
 
     void ZNodeExecutor::execute(CalcContext* pContext)
     {
-        preApply(pContext);
-        apply();
+        std::lock_guard scope(m_mutex);
+        doApply(pContext);
     }
 
     zany2 ZNodeExecutor::execute_get_object(const ExecuteContext& exec_context)

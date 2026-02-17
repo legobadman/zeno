@@ -720,7 +720,10 @@ QVariant GraphModel::data(const QModelIndex& index, int role) const
         }
         case QtRole::ROLE_NODE_LOCKED:
         {
-            return item->m_wpNode->getNodeStatus().is_locked();
+            if (item->m_wpNode->is_subnet()) {
+                return item->m_wpNode->getSubnetInfo()->is_locked();
+            }
+            return false;
         }
         case QtRole::ROLE_NODE_IS_LOADED:
         {
@@ -908,7 +911,9 @@ bool GraphModel::setData(const QModelIndex& index, const QVariant& value, int ro
         }
         case QtRole::ROLE_NODE_LOCKED:
         {
-            item->m_wpNode->getNodeStatus().set_locked(value.toBool());
+            if (item->m_wpNode->is_subnet()) {
+                item->m_wpNode->getSubnetInfo()->set_locked(value.toBool());
+            }
             return true;
         }
         case QtRole::ROLE_COLLASPED:
