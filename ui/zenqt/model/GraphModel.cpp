@@ -348,16 +348,16 @@ GraphModel::GraphModel(std::string const& asset_or_graphpath, bool bAsset, Graph
     : QAbstractListModel(parent)
     , m_pTree(pTree)
 {
-    std::shared_ptr<zeno::Graph> spGraph;
+    zeno::Graph* spGraph = nullptr;
     if (bAsset) {
         auto& assets = zeno::getSession().assets;
-        spGraph = assets->getAssetGraph(asset_or_graphpath, true);
+        spGraph = assets->getAssetGraph(asset_or_graphpath, true).get();
     }
     else {
         spGraph = zeno::getSession().getGraphByPath(asset_or_graphpath);
     }
 
-    m_impl.reset(new GraphMImpl(spGraph.get(), parentGraph));
+    m_impl.reset(new GraphMImpl(spGraph, parentGraph));
 
     m_graphName = QString::fromStdString(spGraph->getName());
     //m_undoRedoStack = m_graphName == "main" || zeno::getSession().assets->isAssetGraph(spGraph.get()) ? new QUndoStack(this) : nullptr;

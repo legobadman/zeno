@@ -88,7 +88,7 @@ struct ZENO_API Graph : public std::enable_shared_from_this<Graph> {
     ZNode* getParentSubnetNode() const;
     void initParentSubnetNode(ZNode* pSubnetNode);
     std::vector<ZNode*> getNodesByClass(const std::string& cls);
-    std::shared_ptr<Graph> getGraphByPath(const std::string& path);
+    Graph* getGraphByPath(const std::string& path);
     std::map<std::string, ZNode*> getNodes() const;
     std::set<std::string> get_viewnodes() const;
     float statistic_cpu_used() const;
@@ -148,7 +148,7 @@ private:
     //增/删边之后更新wildCard端口的类型
     void removeLinkWhenUpdateWildCardParam(const std::string& outNode, const std::string& inNode, EdgeInfo& edge);
     void resetWildCardParamsType(bool bWildcard, ZNode* node, const std::string& paramName, const bool& bPrimType, const bool& bInput);
-    std::shared_ptr<Graph> _getGraphByPath(std::vector<std::string> items);
+    Graph* _getGraphByPath(std::vector<std::string> items);
     bool isLinkValid(const EdgeInfo& edge);
     render_update_info applyNode(std::string const& node_name, CalcContext* pContext);
 

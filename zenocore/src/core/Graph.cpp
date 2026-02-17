@@ -967,10 +967,10 @@ ZNode* Graph::getNodeByUuidPath(ObjPath path) {
     return it->second.get();
 }
 
-std::shared_ptr<Graph> Graph::_getGraphByPath(std::vector<std::string> items)
+Graph* Graph::_getGraphByPath(std::vector<std::string> items)
 {
     if (items.empty())
-        return shared_from_this();
+        return this;
 
     std::string currname = items[0];
     items.erase(items.begin());
@@ -1010,7 +1010,7 @@ std::shared_ptr<Graph> Graph::_getGraphByPath(std::vector<std::string> items)
     return nullptr;
 }
 
-std::shared_ptr<Graph> Graph::getGraphByPath(const std::string& pa)
+Graph* Graph::getGraphByPath(const std::string& pa)
 {
     std::string path = pa;
     if (path.empty())

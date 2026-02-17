@@ -331,7 +331,7 @@ void Session::registerIOCallback(F_IOProgress func) {
     m_funcIOCallback = func;
 }
 
-ZENO_API std::shared_ptr<Graph> Session::getGraphByPath(const std::string& path) {
+ZENO_API Graph* Session::getGraphByPath(const std::string& path) {
     //对于assets
     //可能的形式包括： /ABC/subnet1/subnet2   ABC   /ABC
     std::vector<std::string> items = split_str(path, '/', false);

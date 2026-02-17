@@ -147,8 +147,8 @@ ParamsModel::ParamsModel(zeno::ZNode* spNode, QObject* parent)
     , m_outObjProxy(nullptr)
 {
     initProxyModels();
-    initParamItems(m_wpNode->getNodeParams().get_customui());
-    initCustomUI(m_wpNode->getNodeParams().get_customui());
+    initParamItems(m_wpNode->getNodeParams().exportCuiWithValue());
+    initCustomUI(m_wpNode->getNodeParams().exportCuiWithValue());
 
     cbUpdateParam = spNode->getNodeParams().register_update_param(
         [this](const std::string& name, zeno::reflect::Any old_value, zeno::reflect::Any new_value) {

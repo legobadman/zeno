@@ -90,7 +90,7 @@ struct Session {
     ZENO_API void registerRunTrigger(std::function<void()> func);
     ZENO_API void registerNodeCallback(F_NodeStatus func);
     ZENO_API void registerIOCallback(F_IOProgress func);
-    ZENO_API std::shared_ptr<Graph> getGraphByPath(const std::string& path);
+    ZENO_API Graph* getGraphByPath(const std::string& path);
     ZENO_API void initEnv(const zenoio::ZSG_PARSE_RESULT ioresult);
     ZENO_API void initPyzen(std::function<void()> pyzenFunc);
     ZENO_API bool asyncRunPython(const std::string& code);

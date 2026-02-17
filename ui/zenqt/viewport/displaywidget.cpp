@@ -458,7 +458,7 @@ void DisplayWidget::submit(std::vector<zeno::render_update_info> infos) {
 
     //这里要对不在current_ui_graph的节点进行过滤
     //TODO: 应该在graphmodel上做
-    std::shared_ptr<zeno::Graph> curr_graph = zeno::getSession().mainGraph()->getGraphByPath(reload.current_ui_graph);
+    auto curr_graph = zeno::getSession().mainGraph()->getGraphByPath(reload.current_ui_graph);
     for (auto iter = infos.begin(); iter != infos.end(); ) {
         if (!curr_graph->hasNode(iter->uuidpath_node_objkey)) {
             iter = infos.erase(iter);
