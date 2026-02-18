@@ -75,6 +75,7 @@ namespace zeno {
         std::string get_viewobject_output_param() const;
         bool set_output(std::string const& param, zany2&& obj);
         zany2 move_output(std::string const& id);
+        zany2 move_input(std::string const& id);
         zany2 takeOutputObject(ObjectParam* out_param, ObjectParam* in_param, bool& bAllOutputTaken);
         zany2 takeOutputObject(const std::string& out_param, const std::string& in_param, bool& bAllOutputTaken);
         zany2 clone_input(std::string const& id) const;
@@ -149,6 +150,8 @@ namespace zeno {
         CALLBACK_REGIST(addRefLink, void, EdgeInfo, bool outParamIsOutput)
         CALLBACK_REGIST(removeRefLink, void, EdgeInfo, bool outParamIsOutput)
 
+        bool has_link_input(std::string const& id) const;
+
         template <class T>
         bool has_input(std::string const& id) const {
             if (!has_input(id)) return false;
@@ -212,7 +215,6 @@ namespace zeno {
         std::set<RefSourceInfo> resolveReferSource(const zeno::reflect::Any& param_defl);
         GlobalState* getGlobalState() const;
         bool has_input(std::string const& id) const;
-        bool has_link_input(std::string const& id) const;
         bool checkAllOutputLinkTraced();
 
         CustomUI m_customUI;

@@ -2215,7 +2215,7 @@ namespace zeno {
     zany2 ZNodeParams::clone_input(std::string const& id) const {
         auto iter = m_inputPrims.find(id);
         if (iter != m_inputPrims.end()) {
-            throw makeNodeError<UnimplError>(m_pNode->get_path(), id + "is not a input object");
+            throw makeNodeError<UnimplError>(m_pNode->get_path(), id + " is not a input object");
         }
         else {
             auto iter2 = m_inputObjs.find(id);
@@ -2295,6 +2295,14 @@ namespace zeno {
     zany2 ZNodeParams::move_output(std::string const& id) {
         auto iter = m_outputObjs.find(id);
         if (iter == m_outputObjs.end()) {
+            throw makeNodeError<KeyError>(m_pNode->get_path(), id, "move_input");
+        }
+        return std::move(iter->second.spObject);
+    }
+
+    zany2 ZNodeParams::move_input(std::string const& id) {
+        auto iter = m_inputObjs.find(id);
+        if (iter == m_inputObjs.end()) {
             throw makeNodeError<KeyError>(m_pNode->get_path(), id, "move_input");
         }
         return std::move(iter->second.spObject);

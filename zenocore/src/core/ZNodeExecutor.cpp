@@ -388,7 +388,10 @@ namespace zeno {
     {
         if (m_upNode2) {
             try {
-                if (m_upNode2) {
+                if (m_pNodeRepo->is_subnet()) {
+                    subnet_apply();
+                }
+                else if (m_upNode2) {
                     //这里属于core层面，可以抛异常，但节点不能抛，否则破坏二进制兼容
                     ZErrorCode err = m_upNode2->apply(&m_pNodeRepo->getNodeParams());
                     if (err != ZErr_OK) {
@@ -1484,6 +1487,99 @@ namespace zeno {
         //propaget dirty
         propagateDirty(m_pNodeRepo, "$F");
         preApply(pContext);
+    }
+
+    void ZNodeExecutor::subnet_apply() {
+        auto& optSbnInfo = m_pNodeRepo->getSubnetInfo();
+        assert(optSbnInfo.has_value());
+
+        auto subg = optSbnInfo->get_subgraph();
+        const auto& _inputObjs = m_pNodeRepo->getNodeParams().get_input_object_params2();
+        const auto& _inputPrims = m_pNodeRepo->getNodeParams().get_input_prim_params2();
+
+        for (const std::string& subinput_node : subg->getSubInputs()) {
+            std::string param = subinput_node;
+            auto subinput = subg->getNode(subinput_node);
+            auto iter = _inputObjs.find(subinput_node);
+            if (iter != _inputObjs.end()) {
+                //object type.
+                if (iter->second.spObject) {
+                    //要拷贝一下才能赋值到SubInput的port参数
+                    auto spObject = iter->second.spObject->clone();
+                    spObject->update_key(stdString2zs(subinput->getNodeStatus().get_uuid_path()));
+                    bool ret = subinput->getNodeParams().set_output("port", zany2(spObject));
+                    assert(ret);
+
+                    //要查看外部子图节点param是否已经连线，从而决定hasValue
+                    bool has_link = m_pNodeRepo->getNodeParams().has_link_input(param);
+                    ret = subinput->getNodeParams().set_primitive_output("hasValue", has_link);
+                    assert(ret);
+                }
+            }
+            else {
+                //primitive type
+                auto iter2 = _inputPrims.find(subinput_node);
+                if (iter2 != _inputPrims.end()) {
+                    bool ret = subinput->getNodeParams().set_primitive_output("port", iter2->second.result);
+                    assert(ret);
+                    bool has_link = m_pNodeRepo->getNodeParams().has_link_input(param);
+                    ret = subinput->getNodeParams().set_primitive_output("hasValue", has_link);
+                    assert(ret);
+                }
+                else {
+                    subinput->getNodeParams().set_output("port", std::make_unique<DummyObject>());
+                    subinput->getNodeParams().set_output_bool("hasValue", false);
+                }
+            }
+        }
+
+        std::set<std::string> nodesToExec;
+        for (auto const& suboutput_node : subg->getSubOutputs()) {
+            nodesToExec.insert(suboutput_node);
+        }
+
+        //子图的list/dict更新如何处理？
+        zeno::render_reload_info _;
+        subg->applyNodes(nodesToExec, _);
+
+        //TODO: 多输出其实是一个问题，不知道view哪一个，所以目前先规定子图只能有一个输出
+        auto suboutputs = subg->getSubOutputs();
+        bool bSetOutput = false;
+        for (auto const& suboutput_node : suboutputs) {
+            auto suboutput = subg->getNode(suboutput_node);
+            //suboutput的结果是放在Input的port上面（因为Suboutput放一个输出参数感觉怪怪的）
+            bool bPrimoutput = suboutput->getNodeParams().get_input_object_params().empty();
+            if (!bPrimoutput && suboutput->getNodeStatus().is_nocache()) {
+                auto result = suboutput->getNodeParams().move_input("port");
+                suboutput->getNodeExecutor().mark_takeover();
+                result->update_key(stdString2zs(m_pNodeRepo->getNodeStatus().get_uuid_path()));
+                m_pNodeRepo->getNodeParams().set_output(suboutput_node, std::move(result));
+            }
+            else {
+                if (bPrimoutput) {
+                    ParamPrimitive prim = suboutput->getNodeParams().get_input_prim_param("port");
+                    bool ret = m_pNodeRepo->getNodeParams().set_primitive_output(suboutput_node, prim.result);
+                    assert(ret);
+                }
+                else {
+                    auto result = suboutput->getNodeParams().clone_input("port");
+                    if (result) {
+                        bSetOutput = true;
+                        auto spObject = result->clone();
+                        if (!bPrimoutput) {
+                            spObject->update_key(stdString2zs(m_pNodeRepo->getNodeStatus().get_uuid_path()));
+                        }
+                        bool ret = m_pNodeRepo->getNodeParams().set_output(suboutput_node, zany2(spObject));
+                        assert(ret);
+                    }
+                }
+            }
+        }
+
+        if (optSbnInfo->is_clearsubnet()) {
+            //所有子图的节点都移除对象并标脏
+            subg->markDirtyAndCleanup();
+        }
     }
 
     void ZNodeExecutor::foreachend_apply(CalcContext* pContext)

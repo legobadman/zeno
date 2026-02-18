@@ -22,7 +22,6 @@
 #include <zcommon.h>
 #include <inodedata.h>
 #include <inodeimpl.h>
-//#include <zeno/core/ZNode.h>
 #include <zeno/extra/CalcContext.h>
 #include <zeno/core/FunctionManager.h>
 
@@ -58,16 +57,16 @@ namespace zeno {
             bool bWholeSubnet = true,
             bool bRecursively = true
         );
-        virtual void mark_clean();
-        virtual void dirty_changed(bool bOn, DirtyReason reason, bool bWholeSubnet, bool bRecursively);
-        virtual void clearCalcResults();
-        virtual float time() const;
+        /*virtual */void mark_clean();
+        /*virtual */void dirty_changed(bool bOn, DirtyReason reason, bool bWholeSubnet, bool bRecursively);
+        /*virtual */void clearCalcResults();
+        /*virtual */float time() const;
 
         //foreach特供
-        virtual bool is_continue_to_run();
-        virtual void increment();
-        virtual void reset_forloop_settings();
-        virtual std::shared_ptr<IObject2> get_iterate_object();
+        /*virtual */bool is_continue_to_run();
+        /*virtual */void increment();
+        /*virtual*/ void reset_forloop_settings();
+        /*virtual */std::shared_ptr<IObject2> get_iterate_object();
 
         void onInterrupted();
         void mark_previous_ref_dirty();
@@ -108,6 +107,7 @@ namespace zeno {
         void preApplyTimeshift(CalcContext* pContext);
         //foreach特供
         void foreachend_apply(CalcContext* pContext);
+        void subnet_apply();
         bool requireInput(const std::string& ds, CalcContext* pContext);
 
     private:

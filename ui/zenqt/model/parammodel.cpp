@@ -328,7 +328,7 @@ zeno::CustomUI ParamsModel::customUI() const {
     if (m_bTempModel && !m_wpNode)
         return m_tempUI;
     else
-        return m_wpNode->getNodeParams().get_customui();
+        return m_wpNode->getNodeParams().exportCuiWithValue();
 }
 
 void ParamsModel::initCustomUI(const zeno::CustomUI& customui)
