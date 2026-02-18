@@ -463,9 +463,9 @@ namespace zeno {
             }
             return vec;
         }
-        case ZVAL_VEC3: {
-            return toVec3f(val.vec3f);
-        }
+        case ZVAL_VEC2: return toVec2f(val.vec2f);
+        case ZVAL_VEC3: return toVec3f(val.vec3f);
+        case ZVAL_VEC4: return toVec4f(val.vec4f);
         }
         return Any();
     }

@@ -22,6 +22,15 @@ namespace zeno {
         m_subgraph = std::move(subg);
     }
 
+    void ZSubnetInfo::init_data(const NodeData& dat) {
+        m_bClearSubnet = dat.bclearsbn;
+        if (dat.subgraph)
+            m_subgraph->init(*dat.subgraph);
+        if (zeno::Node_AssetInstance == nodeType()) {
+            m_bLocked = dat.bLocked;
+        }
+    }
+
     CustomUI ZSubnetInfo::init_subnet_ui() const {
         //init some params
         CustomUI subnetui;  //也可以从subnet节点定义获得初始化？
@@ -85,6 +94,13 @@ namespace zeno {
                 return zeno::Node_AssetInstance;
         }
         return zeno::Node_SubgraphNode;
+    }
+
+    void ZSubnetInfo::mark_subnetdirty(bool bOn)
+    {
+        if (bOn) {
+            m_subgraph->markDirtyAndCleanup();
+        }
     }
 
     bool ZSubnetInfo::is_locked() const {

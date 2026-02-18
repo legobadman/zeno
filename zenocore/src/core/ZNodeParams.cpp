@@ -379,6 +379,22 @@ namespace zeno {
         return param.result;
     }
 
+    zeno::reflect::Any ZNodeParams::takeOutputPrim(const std::string& out_param, const std::string& in_param, bool& bAllOutputTaken) {
+        auto iter = m_outputPrims.find(out_param);
+        if (iter == m_outputPrims.end())
+            throw makeNodeError<KeyError>(m_pNode->getNodeStatus(). get_path(), out_param, "no such output prim param");
+
+        auto& outparam = iter->second;
+        for (auto link : outparam.links) {
+            if (link->toparam->name == in_param) {
+                link->bTraceAndTaken = true;
+                break;
+            }
+        }
+        bAllOutputTaken = checkAllOutputLinkTraced();
+        return outparam.result;
+    }
+
     ShaderData ZNodeParams::get_input_shader(const std::string& param, zeno::reflect::Any defl)
     {
         auto iter = m_inputPrims.find(param);
@@ -454,15 +470,27 @@ namespace zeno {
 
     bool ZNodeParams::update_param_impl(const std::string& param, const zeno::reflect::Any& new_value)
     {
-        auto it = m_inputPrims.find(param);
-        if (it == m_inputPrims.end()) return false;
+        auto& spParam = safe_at(m_inputPrims, param, "miss input param `" + param + "` on node `" + m_pNode->getNodeStatus().get_name() + "`");
+        auto edit_new_value = new_value;
+        bool isvalid = convertToEditVar(edit_new_value, spParam.type);
+        if (!isvalid) {
+            zeno::log_error("cannot convert to edit variable");
+            return false;
+        }
+        if (spParam.defl != edit_new_value)
+        {
+            zeno::reflect::Any old_value = spParam.defl;
+            spParam.defl = edit_new_value;
 
-        it->second.defl = new_value;
-        convertToEditVar(it->second.defl, it->second.type);
+            Graph* spGraph = m_pNode->getNodeStatus().getGraph();
+            assert(spGraph);
 
-        constructReference(param);
-        checkParamsConstrain();
-        return true;
+            spGraph->onNodeParamUpdated(&spParam, old_value, new_value);
+            initReferLinks(&spParam);
+            checkParamsConstrain();
+            return true;
+        }
+        return false;
     }
 
     bool ZNodeParams::set_primitive_output(std::string const& id, const zeno::reflect::Any& val)
@@ -481,12 +509,24 @@ namespace zeno {
         return true;
     }
 
-    // ------------------------- update APIs -------------------------
+    void ZNodeParams::clear_input_cacheobj(const std::string& param) {
+        auto iter = m_inputObjs.find(param);
+        if (iter != m_inputObjs.end()) {
+            iter->second.spObject.reset();
+        }
+    }
 
-    bool ZNodeParams::update_param(const std::string& name, const zeno::reflect::Any& new_value)
+    bool ZNodeParams::update_param(const std::string& param, const zeno::reflect::Any& new_value)
     {
-        bool ok = update_param_impl(name, new_value);
-        return ok;
+        CORE_API_BATCH
+        auto& spParam = safe_at(m_inputPrims, param, "miss input param `" + param + "` on node `" + m_pNode->getNodeStatus().get_name() + "`");
+        zeno::reflect::Any old_value = spParam.defl;
+        bool ret = update_param_impl(param, new_value);
+        if (ret) {
+            CALLBACK_NOTIFY(update_param, param, old_value, m_inputPrims[param].defl)
+            m_pNode->getNodeExecutor().mark_dirty(true);
+        }
+        return ret;
     }
 
     bool ZNodeParams::update_param_socket_type(const std::string& param, SocketType type)

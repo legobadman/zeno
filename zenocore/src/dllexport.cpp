@@ -14,6 +14,11 @@ extern "C" __declspec(dllexport)
 bool __cdecl registerNode(zeno::INode2* (*ctor)(), void (*dtor)(zeno::INode2*), const char* name, const ZNodeDescriptor& desc) {
 	//INode2* pNode = ctor();
 	std::string nodecls(name);
+	if (nodecls == "Grid") {
+		int j;
+		j = 0;
+	}
+
 	auto& nodeReg = zeno::getNodeRegister();
 	nodeReg.registerNodeClass2(ctor, dtor, nodecls, desc);
 	return true;

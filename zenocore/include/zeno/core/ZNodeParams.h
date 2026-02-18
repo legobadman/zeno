@@ -69,6 +69,8 @@ namespace zeno {
         ParamObject get_output_obj_param(std::string const& name, bool* pExist = nullptr) const;
         zeno::reflect::Any get_defl_value(std::string const& name);
         zeno::reflect::Any get_param_result(std::string const& name);
+        zeno::reflect::Any takeOutputPrim(const std::string& out_param, const std::string& in_param, bool& bAllOutputTaken);
+        void clear_input_cacheobj(const std::string& param);
         ShaderData get_input_shader(const std::string& param, zeno::reflect::Any defl = zeno::reflect::Any());
         ParamType get_anyparam_type(bool bInput, const std::string& name);
         IObject2* get_default_output_object();

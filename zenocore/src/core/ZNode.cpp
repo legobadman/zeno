@@ -22,6 +22,9 @@ namespace zeno {
     void ZNode::init(const NodeData& dat) {
         m_upNodeStatus.initDat(dat);
         m_upParams.initParams(dat);
+        if (is_subnet()) {
+            m_opt_subnet_info->init_data(dat);
+        }
         m_upNodeExec.initAfterIO();
     }
 
@@ -88,6 +91,29 @@ namespace zeno {
             node.type = Node_Normal;
         node.bLocked = false;
         node.customUi = m_upParams.exportCuiWithValue();
+
+        if (is_subnet()) {
+            node.bclearsbn = m_opt_subnet_info->is_clearsubnet();
+            const Asset& asset = zeno::getSession().assets->getAsset(node.cls);
+            if (!asset.m_info.name.empty()) {
+                node.asset = asset.m_info;
+                if (in_asset_file()) {
+                    node.type = Node_AssetReference;
+                    node.bLocked = true;    //资产图里的资产只是引用，故不能展开，自然不能解锁
+                }
+                else {
+                    node.type = Node_AssetInstance;
+                    node.bLocked = m_opt_subnet_info->is_locked();
+                    if (!node.bLocked) {
+                        node.subgraph = m_opt_subnet_info->get_subgraph()->exportGraph();
+                    }
+                }
+            }
+            else {
+                node.subgraph = m_opt_subnet_info->get_subgraph()->exportGraph();
+                node.type = Node_SubgraphNode;
+            }
+        }
         return node;
     }
 

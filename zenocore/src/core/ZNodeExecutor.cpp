@@ -144,7 +144,16 @@ namespace zeno {
 
     zeno::reflect::Any ZNodeExecutor::execute_get_numeric(const ExecuteContext& exec_context)
     {
-        return m_pNodeRepo->getNodeParams().get_param_result(exec_context.out_param);
+        std::lock_guard scope(m_mutex);
+
+        doApply(exec_context.pContext);
+
+        bool bAllOutputTaken = false;
+        auto result = m_pNodeRepo->getNodeParams().takeOutputPrim(exec_context.out_param, exec_context.in_param, bAllOutputTaken);
+        if (bAllOutputTaken && m_pNodeRepo->getNodeStatus().is_nocache()) {
+            mark_takeover();
+        }
+        return result;
     }
 
     void ZNodeExecutor::doOnlyApply()
@@ -162,10 +171,78 @@ namespace zeno {
         bool bWholeSubnet,
         bool bRecursively)
     {
-        if (bOn == (m_status != Node_Clean))
+        scope_exit sp([&] {
+            m_status = Node_DirtyReadyToRun;  //修改了数据，标脏，并置为此状态。（后续在计算过程中不允许修改数据，所以markDirty理论上是前端驱动）
+            reportStatus(m_dirty, m_status);
+            });
+
+        //有部分下游节点因为某些原因没有标脏，而上游节点已经脏了的情况下不会继续传播，所以不检查缓存
+        //还是要检查，否则子图比较大的时候传播脏位会比较慢
+        if (m_dirty == bOn)
             return;
 
+        m_dirty = bOn;
         m_dirtyReason = reason;
+        if (!m_dirty) {
+            m_dirtyReason = NoDirty;
+        }
+
+        if (!bRecursively)
+            return;
+
+        if (m_dirty) {
+            m_takenover = false;
+            for (auto& [name, param] : m_pNodeRepo->getNodeParams().get_input_prim_params2()) {
+                for (auto link : param.reflinks) {
+                    if (link->dest_inparam != &param) {
+                        assert(link->dest_inparam);
+                        auto destNode = link->dest_inparam->m_wpNode;
+                        destNode->getNodeExecutor().mark_dirty(true, reason);
+                    }
+                }
+            }
+            for (auto& [name, param] : m_pNodeRepo->getNodeParams().get_output_object_params2()) {
+                for (auto link : param.reflinks) {
+                    assert(link->dest_inparam);
+                    auto destNode = link->dest_inparam->m_wpNode;
+                    destNode->getNodeExecutor().mark_dirty(true, reason);
+                    destNode->getNodeParams().clear_input_cacheobj(link->dest_inparam->name);
+                }
+                for (auto link : param.links) {
+                    auto inParam = link->toparam;
+                    assert(inParam);
+                    if (inParam) {
+                        auto inNode = inParam->m_wpNode;
+                        assert(inNode);
+                        inNode->getNodeExecutor().mark_dirty(true, reason);
+                        inNode->getNodeParams().clear_input_cacheobj(inParam->name);
+                    }
+                }
+            }
+            for (auto& [name, param] : m_pNodeRepo->getNodeParams().get_output_prim_params2()) {
+                for (auto link : param.links) {
+                    auto inParam = link->toparam;
+                    assert(inParam);
+                    if (inParam) {
+                        auto inNode = inParam->m_wpNode;
+                        assert(inNode);
+                        inNode->getNodeExecutor().mark_dirty(true, reason);
+                    }
+                }
+            }
+        }
+
+        if (m_pNodeRepo->is_subnet()) {
+            m_pNodeRepo->getSubnetInfo()->mark_subnetdirty(bOn);
+        }
+
+        Graph* spGraph = m_pNodeRepo->getNodeStatus().getGraph();
+        assert(spGraph);
+        if (auto pSubnetImpl = spGraph->getParentSubnetNode())
+        {
+            pSubnetImpl->getNodeExecutor().mark_dirty(true, Dirty_All, false);
+        }
+
         dirty_changed(bOn, reason, bWholeSubnet, bRecursively);
     }
 
