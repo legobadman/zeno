@@ -383,7 +383,7 @@ namespace zeno {
                 }
             }
 
-            auto geo = create_GeometryObject(Topo_HalfEdge, !bQuad, points, faces);
+            auto geo = create_GeometryObject(Topo_IndiceMesh2, !bQuad, points, faces);
             if (bCalcPointNormals) {
                 size_t outCount = 0;
                 auto nrmData = convert_points_to_abi(normals, outCount);

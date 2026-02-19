@@ -71,6 +71,7 @@ namespace zeno {
     enum GeomTopoType
     {
         Topo_IndiceMesh,
+        Topo_IndiceMesh2,
         Topo_HalfEdge,
     };
 

@@ -1,6 +1,7 @@
 #include "geotopology.h"
 #include "halfedgetopo.h"
 #include "indicemeshtopo.h"
+#include "indicemeshtopo2.h"
 
 
 namespace zeno
@@ -33,6 +34,14 @@ namespace zeno
         return topo;
     }
 
+    std::shared_ptr<IGeomTopology> create_indicemesh2_topo(PrimitiveObject* prim) {
+        return std::make_shared<IndiceMeshTopology2>(prim);
+    }
+
+    std::shared_ptr<IGeomTopology> create_indicemesh2_topo(int nPoints, const std::vector<std::vector<int>>& faces) {
+        return std::make_shared<IndiceMeshTopology2>(nPoints, faces);
+    }
+
     std::shared_ptr<IGeomTopology> create_indicemesh_by_halfedge(std::shared_ptr<IGeomTopology> halfedge) {
         if (halfedge->type() != Topo_HalfEdge) return nullptr;
 
@@ -43,11 +52,14 @@ namespace zeno
     }
 
     std::shared_ptr<IGeomTopology> create_halfedge_by_indicemesh(int n_points, std::shared_ptr<IGeomTopology> indicemesh) {
-        if (indicemesh->type() != Topo_IndiceMesh) return nullptr;
+        GeomTopoType t = indicemesh->type();
+        if (t != Topo_IndiceMesh && t != Topo_IndiceMesh2) return nullptr;
 
-        std::shared_ptr<IndiceMeshTopology> indice_topo = std::static_pointer_cast<IndiceMeshTopology>(indicemesh);
+        std::unique_ptr<PrimitiveObject> spPrim = get_primitive_topo(indicemesh);
+        if (!spPrim) return nullptr;
+
         std::shared_ptr<HalfEdgeTopology> halfedge_topo = std::make_shared<HalfEdgeTopology>();
-        halfedge_topo->initFromPrim(n_points, indice_topo->toPrimitiveObject().get());
+        halfedge_topo->initFromPrim(n_points, spPrim.get());
         return halfedge_topo;
     }
 
@@ -60,6 +72,10 @@ namespace zeno
         GeomTopoType type = topology->type();
         if (Topo_IndiceMesh == type) {
             std::shared_ptr<IndiceMeshTopology> indice_topo = std::static_pointer_cast<IndiceMeshTopology>(topology);
+            return indice_topo->toPrimitiveObject();
+        }
+        else if (Topo_IndiceMesh2 == type) {
+            std::shared_ptr<IndiceMeshTopology2> indice_topo = std::static_pointer_cast<IndiceMeshTopology2>(topology);
             return indice_topo->toPrimitiveObject();
         }
         else if (Topo_HalfEdge == type) {

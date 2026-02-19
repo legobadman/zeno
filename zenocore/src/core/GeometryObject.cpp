@@ -50,6 +50,9 @@ namespace zeno
         if (Topo_IndiceMesh == type) {
             m_spTopology = create_indicemesh_topo(bTriangle, nPoints, nFaces, bInitFaces);
         }
+        else if (Topo_IndiceMesh2 == type) {
+            m_spTopology = create_indicemesh2_topo(nPoints, std::vector<std::vector<int>>{});
+        }
         else if (Topo_HalfEdge == type) {
             m_spTopology = create_halfedge_topo(bTriangle, nPoints, nFaces, bInitFaces);
         }
@@ -66,6 +69,9 @@ namespace zeno
 #endif
         if (Topo_IndiceMesh == type) {
             m_spTopology = create_indicemesh_topo(bTriangle, nPoints, faces);
+        }
+        else if (Topo_IndiceMesh2 == type) {
+            m_spTopology = create_indicemesh2_topo(nPoints, faces);
         }
         else if (Topo_HalfEdge == type) {
             m_spTopology = create_halfedge_topo(bTriangle, nPoints, faces);
@@ -290,7 +296,7 @@ namespace zeno
         if (!m_spTopology) return nullptr;
 
         zeno::GeomTopoType type = m_spTopology->type();
-        if (zeno::Topo_IndiceMesh == type) {
+        if (zeno::Topo_IndiceMesh == type || zeno::Topo_IndiceMesh2 == type) {
             return std::make_unique<GeometryObject>(*this);
         }
         else {
@@ -308,7 +314,7 @@ namespace zeno
         if (!m_spTopology) return nullptr;
 
         zeno::GeomTopoType type = m_spTopology->type();
-        if (zeno::Topo_IndiceMesh == type) {
+        if (zeno::Topo_IndiceMesh == type || zeno::Topo_IndiceMesh2 == type) {
             auto pGeom = std::make_unique<GeometryObject>(Topo_HalfEdge);
             pGeom->m_spTopology = create_halfedge_by_indicemesh(npoints(), m_spTopology);
             pGeom->m_point_attrs = m_point_attrs;
