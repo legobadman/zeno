@@ -10,15 +10,11 @@
 #include <vector>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
-#include <glm/gtx/euler_angles.hpp>
+#include "geom_transform.h"
 #include <cmath>
 #include <limits>
 
 namespace zeno {
-
-    static glm::mat4 eulerRotateYXZ(float x, float y, float z) {
-        return glm::eulerAngleYXZ(y, x, z);
-    }
 
     static void bboxFromPositions(IGeometryObject* geom, glm::vec3& outMin, glm::vec3& outMax) {
         int n = geom->npoints();
@@ -181,55 +177,39 @@ namespace zeno {
                 glm::vec3 dx = targetPos - originCenter;
                 glm::mat4 translate = glm::translate(glm::mat4(1.0f), dx);
 
-                glm::mat4 matTrans(1.0f);
+                glm::vec3 trans(0.f);
                 if (hasTrans) {
-                    glm::vec3 trans(0.f);
                     if (transIsFloat) {
                         float v = transFloatBuf[i];
                         trans = glm::vec3(v, v, v);
                     } else {
                         trans = glm::vec3(transVec3Buf[i].x, transVec3Buf[i].y, transVec3Buf[i].z);
                     }
-                    matTrans = glm::translate(glm::mat4(1.0f), trans);
                 }
-
-                glm::mat4 matScale(1.0f);
+                glm::vec3 scaling(1.f);
                 if (hasScale) {
-                    glm::vec3 scaling(1.f);
                     if (scaleIsFloat) {
                         scaling = glm::vec3(scaleFloatBuf[i], scaleFloatBuf[i], scaleFloatBuf[i]);
                     } else {
                         scaling = glm::vec3(scaleVec3Buf[i].x, scaleVec3Buf[i].y, scaleVec3Buf[i].z);
                     }
-                    matScale = glm::scale(glm::mat4(1.0f), scaling);
                 }
-
-                glm::mat4 matRotate(1.0f);
+                glm::vec3 eulerXYZ(0.f);
                 if (hasRotate) {
-                    glm::vec3 eulerXYZ(0.f);
                     if (rotateIsFloat) {
-                        float v = rotateFloatBuf[i];
-                        eulerXYZ = glm::vec3(v, v, v);
+                        eulerXYZ = glm::vec3(rotateFloatBuf[i], rotateFloatBuf[i], rotateFloatBuf[i]);
                     } else {
                         eulerXYZ = glm::vec3(rotateVec3Buf[i].x, rotateVec3Buf[i].y, rotateVec3Buf[i].z);
                     }
-                    matRotate = eulerRotateYXZ(eulerXYZ.x, eulerXYZ.y, eulerXYZ.z);
                 }
-
-                glm::mat4 matByAttrs = matTrans * matRotate * matScale;
-                glm::mat3 matNormal = glm::transpose(glm::inverse(glm::mat3(matByAttrs)));
+                glm::mat4 matByAttrs = buildTransformMatrix(trans, eulerXYZ, scaling);
+                glm::mat4 fullMat = translate * matByAttrs;
                 size_t pt_offset = (size_t)i * inputObjPointsCount;
-
-                for (int j = 0; j < inputObjPointsCount; j++) {
-                    glm::vec4 gp = translate * matByAttrs * glm::vec4(inputPos[j], 1.f);
-                    newObjPos[pt_offset + j] = glm::vec3(gp);
-                    if (hasNrm) {
-                        glm::vec3 n = matNormal * inputNrm[j];
-                        float len = glm::length(n);
-                        if (len > 1e-6f) n /= len;
-                        newObjNrm[pt_offset + j] = n;
-                    }
-                }
+                applyTransform(fullMat,
+                    inputPos.data(), inputObjPointsCount,
+                    newObjPos.data() + pt_offset,
+                    hasNrm ? inputNrm.data() : nullptr,
+                    hasNrm ? newObjNrm.data() + pt_offset : nullptr);
 
                 for (int j = 0; j < inputObjFacesCount; j++) {
                     std::vector<int> facePoints = inputFacesPoints[j];
@@ -240,12 +220,7 @@ namespace zeno {
                 }
             }
 
-            std::vector<zeno::vec3f> posForCreate(newObjPointsCount);
-            for (size_t i = 0; i < newObjPointsCount; i++) {
-                posForCreate[i] = zeno::vec3f(newObjPos[i].x, newObjPos[i].y, newObjPos[i].z);
-            }
-
-            auto spOutput = zeno::create_GeometryObject(Topo_IndiceMesh2, false, posForCreate, faces);
+            auto spOutput = zeno::create_GeometryObject(Topo_IndiceMesh2, false, newObjPos, faces);
             if (!spOutput) {
                 ptrNodeData->report_error("failed to create output geometry");
                 return ZErr_UnimplError;

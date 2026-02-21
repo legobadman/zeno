@@ -1,4 +1,5 @@
 #include <vec.h>
+#include <glm/glm.hpp>
 #include <inodedata.h>
 #include <inodeimpl.h>
 #include "api.h"
@@ -40,10 +41,10 @@ namespace zeno {
                 ptrNodeData->report_error("failed to get point positions");
                 return ZErr_ParamError;
             }
-            std::vector<zeno::vec3f> pos(npts);
-            for (int i = 0; i < npts; i++) pos[i] = toVec3f(posAbi[i]);
+            std::vector<glm::vec3> pos(npts);
+            for (int i = 0; i < npts; i++) pos[i] = glm::vec3(posAbi[i].x, posAbi[i].y, posAbi[i].z);
 
-            std::vector<zeno::vec3f> newpos;
+            std::vector<glm::vec3> newpos;
             std::vector<std::vector<int>> newfaces;
             for (int iFace = 0; iFace < nface; iFace++) {
                 int nv = input_geom->face_vertex_count(iFace);
@@ -55,15 +56,15 @@ namespace zeno {
                 for (int i = 0; i < nv; i++) {
                     int startPt = (i == 0) ? face_pts[nv - 1] : face_pts[i - 1];
                     int endPt = face_pts[i];
-                    zeno::vec3f startPos = pos[startPt];
-                    zeno::vec3f endPos = pos[endPt];
-                    zeno::vec3f dir = endPos - startPos;
-                    float L = std::sqrt(dir[0] * dir[0] + dir[1] * dir[1] + dir[2] * dir[2]);
+                    glm::vec3 startPos = pos[startPt];
+                    glm::vec3 endPos = pos[endPt];
+                    glm::vec3 dir = endPos - startPos;
+                    float L = glm::length(dir);
                     if (L < 1e-8f) continue;
-                    dir[0] /= L; dir[1] /= L; dir[2] /= L;
+                    dir /= L;
                     int k = (int)(L / Length);
                     for (int j = 0; j < k; j++) {
-                        zeno::vec3f mid = startPos + (float)j * Length * dir;
+                        glm::vec3 mid = startPos + (float)j * Length * dir;
                         newface.push_back((int)newpos.size());
                         newpos.push_back(mid);
                     }

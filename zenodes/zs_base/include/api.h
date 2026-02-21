@@ -15,7 +15,7 @@ namespace zeno {
     IGeometryObject* create_GeometryObject(
         GeomTopoType type,
         bool bTriangle,
-        const std::vector<vec3f>& points,
+        const std::vector<glm::vec3>& points,
         const std::vector<std::vector<int>>& faces);
     IGeometryObject* mergeObjects(
         IListObject* spList,

@@ -1,4 +1,5 @@
 #include <vec.h>
+#include <glm/glm.hpp>
 #include "glm/gtc/matrix_transform.hpp"
 #include <inodedata.h>
 #include <inodeimpl.h>
@@ -13,6 +14,13 @@
 
 namespace zeno {
 
+    static std::vector<glm::vec3> to_glm_points(const std::vector<zeno::vec3f>& v) {
+        std::vector<glm::vec3> r(v.size());
+        for (size_t i = 0; i < v.size(); i++)
+            r[i] = glm::vec3(v[i][0], v[i][1], v[i][2]);
+        return r;
+    }
+
     static glm::mat4 calc_rotate_matrix(
         float xangle,
         float yangle,
@@ -25,17 +33,17 @@ namespace zeno {
 #if 0
         switch (orientaion)
         {
-        case Orientaion_XY: //ÈÆxÖáĞı×ª90
+        case Orientaion_XY: //ç»•xè½´æ—‹è½¬90
             rad_x = (xangle + 90) * (M_PI / 180.0);
             break;
-        case Orientaion_YZ: //ÈÆzÖáĞı×ª-90
+        case Orientaion_YZ: //ç»•zè½´æ—‹è½¬-90
             rad_z = (zangle - 90) * (M_PI / 180.0);
             break;
         case Orientaion_ZX:
-            break;//Ä¬ÈÏ¶¼ÊÇ»ùÓÚZXÆ½Ãæ
+            break;//é»˜è®¤éƒ½æ˜¯åŸºäºZXå¹³é¢
         }
 #endif
-        //ÕâÀï¹¹ÔìµÄ·½Ê½ÊÇ»ùÓÚÁĞ£¬ºÍ¹«Ê½ÉÏµÄÒ»Ñù£¬ËùÒÔ¿´ÆğÀ´·´¹ıÀ´ÁË
+        //è¿™é‡Œæ„é€ çš„æ–¹å¼æ˜¯åŸºäºåˆ—ï¼Œå’Œå…¬å¼ä¸Šçš„ä¸€æ ·ï¼Œæ‰€ä»¥çœ‹èµ·æ¥åè¿‡æ¥äº†
         glm::mat4 mx = glm::mat4(
             1, 0, 0, 0,
             0, cos(rad_x), sin(rad_x), 0,
@@ -86,7 +94,7 @@ namespace zeno {
             float x, y, z = 0;
             float z_prev = zback;
 
-            //TODO: nFacesĞèÒª¿¼ÂÇÈı½ÇÃæµÄÇé¿ö
+            //TODO: nFaceséœ€è¦è€ƒè™‘ä¸‰è§’é¢çš„æƒ…å†µ
             int nPoints = 2 * (x_division * y_division) + (z_division - 2) * (2 * y_division + 2 * x_division - 4);
             int nFaces = 2 * (x_division - 1) * (y_division - 1) + 2 * (x_division - 1) * (z_division - 1) + 2 * (y_division - 1) * (z_division - 1);
 
@@ -108,7 +116,7 @@ namespace zeno {
 
                             int nPrevPoints = 0;
                             if (!bFirstFace) {
-                                //Ã¶¾ÙÒÔÇ°ËùÓĞz_divÆ½ÃæÊ±ÒÑ´¦ÀíµÄ¶¥µãÊı£¬ÏÂÍ¬
+                                //æšä¸¾ä»¥å‰æ‰€æœ‰z_divå¹³é¢æ—¶å·²å¤„ç†çš„é¡¶ç‚¹æ•°ï¼Œä¸‹åŒ
                                 nPrevPoints = x_division * y_division + (z_div - 1) * (2 * y_division + 2 * x_division - 4);
                             }
 
@@ -160,7 +168,7 @@ namespace zeno {
 
                 if (z_div > 0)
                 {
-                    //x·½Ïò£¬´¦Àíx-zÖáµÄ¶¥ÃæºÍµ×Ãæ¡£
+                    //xæ–¹å‘ï¼Œå¤„ç†x-zè½´çš„é¡¶é¢å’Œåº•é¢ã€‚
                     for (int y_div = 0; y_div < y_division; y_div += (y_division - 1)) {
                         for (int x_div = 0; x_div < x_division; x_div++) {
                             zeno::vec3f pt(xleft + xstep * x_div, ybottom + ystep * y_div, zfront - zstep * z_div);
@@ -169,7 +177,7 @@ namespace zeno {
                             bool bTop = y_div == y_division - 1;
                             bool bLastFace = z_div == z_division - 1;
 
-                            //¼ÆËãµ±Ç°½ÚµãµÄË÷ÒıÎ»ÖÃ£º
+                            //è®¡ç®—å½“å‰èŠ‚ç‚¹çš„ç´¢å¼•ä½ç½®ï¼š
                             int idx = 0;
                             if (bLastFace) {
                                 idx = nPrevPoints + x_div % x_division + y_div * x_division;
@@ -187,17 +195,17 @@ namespace zeno {
                                 normals[idx] = normalize(zeno::vec3f(xcomp, ycomp, zcomp));
                             }
 
-                            //Ìí¼Óµ×²¿£¨ÍùzÕı·½Ïò£©µÄÃæ
+                            //æ·»åŠ åº•éƒ¨ï¼ˆå¾€zæ­£æ–¹å‘ï¼‰çš„é¢
                             if (x_div > 0) {
                                 int leftdown = 0;
                                 int rightup = idx;
                                 if (z_div > 1) {
                                     int nPrevPrevPoints = x_division * y_division + (z_div - 2) * (2 * y_division + 2 * x_division - 4);
                                     if (bTop) {
-                                        leftdown = nPrevPrevPoints + x_division + y_division * 2 - 4/*Á½¸öÖØºÏµã£¬ÒÔ¼°×óÓÒÉÏ½Ç*/ + x_div - 1;
+                                        leftdown = nPrevPrevPoints + x_division + y_division * 2 - 4/*ä¸¤ä¸ªé‡åˆç‚¹ï¼Œä»¥åŠå·¦å³ä¸Šè§’*/ + x_div - 1;
                                     }
                                     else {
-                                        leftdown = nPrevPrevPoints + x_div - 1/*ÒòÎªÊÇLeftdown£¬»¹ĞèÒªÍù×óÆ«ÒÆÒ»¸öµ¥Î»*/;
+                                        leftdown = nPrevPrevPoints + x_div - 1/*å› ä¸ºæ˜¯Leftdownï¼Œè¿˜éœ€è¦å¾€å·¦åç§»ä¸€ä¸ªå•ä½*/;
                                     }
                                 }
                                 else {
@@ -239,18 +247,18 @@ namespace zeno {
                             }
                         }
                     }
-                    //y·½Ïò£¬´¦Àíy-zÖáµÄ²àÃæ¡£
+                    //yæ–¹å‘ï¼Œå¤„ç†y-zè½´çš„ä¾§é¢ã€‚
                     for (int x_div = 0; x_div < x_division; x_div += (x_division - 1))
                     {
                         for (int y_div = 0; y_div < y_division; y_div++) {
                             zeno::vec3f pt(xleft + xstep * x_div, ybottom + ystep * y_div, zfront - zstep * z_div);
 
-                            //xÕı·½ÏòµÄÄÇ¸ö²àÃæ
+                            //xæ­£æ–¹å‘çš„é‚£ä¸ªä¾§é¢
                             bool bTop = y_div == y_division - 1;
                             bool bRight = x_div == x_division - 1;
                             bool bLastFace = z_div == z_division - 1;
                             int nPrevPoints = x_division * y_division + (z_div - 1) * (2 * y_division + 2 * x_division - 4);
-                            //¼ÆËãµ±Ç°½ÚµãµÄË÷ÒıÎ»ÖÃ£º
+                            //è®¡ç®—å½“å‰èŠ‚ç‚¹çš„ç´¢å¼•ä½ç½®ï¼š
                             int idx = 0;
                             if (bLastFace) {
                                 idx = nPrevPoints + x_div % x_division + y_div * x_division;
@@ -293,7 +301,7 @@ namespace zeno {
                                         rightdown = rightup - x_division;
                                     }
                                     else {
-                                        rightdown = rightup - 2;    //¾ÍÔÚÕıÏÂ·½
+                                        rightdown = rightup - 2;    //å°±åœ¨æ­£ä¸‹æ–¹
                                     }
                                 }
 
@@ -301,7 +309,7 @@ namespace zeno {
                                 if (z_div > 1) {
                                     if (bRight) {
                                         if (bTop) {
-                                            leftup = nPrevPrevPoints + x_division + y_division * 2 - 2/*ÏÂ·½xyÁ½¸öÖØºÏµã*/ - 2/*×îÉÏÃæÁ½¸öµã*/ + x_div;
+                                            leftup = nPrevPrevPoints + x_division + y_division * 2 - 2/*ä¸‹æ–¹xyä¸¤ä¸ªé‡åˆç‚¹*/ - 2/*æœ€ä¸Šé¢ä¸¤ä¸ªç‚¹*/ + x_div;
                                         }
                                         else {
                                             leftup = nPrevPrevPoints + y_div * 2 + x_division - 2 + 1;
@@ -309,7 +317,7 @@ namespace zeno {
                                     }
                                     else {
                                         if (bTop) {
-                                            leftup = nPrevPrevPoints + x_division + y_division * 2 - 2/*ÏÂ·½xyÁ½¸öÖØºÏµã*/ - 2/*×îÉÏÃæÁ½¸öµã*/ + x_div;
+                                            leftup = nPrevPrevPoints + x_division + y_division * 2 - 2/*ä¸‹æ–¹xyä¸¤ä¸ªé‡åˆç‚¹*/ - 2/*æœ€ä¸Šé¢ä¸¤ä¸ªç‚¹*/ + x_div;
                                         }
                                         else {
                                             leftup = nPrevPrevPoints + y_div * 2 + x_division - 2;
@@ -320,9 +328,9 @@ namespace zeno {
                                     leftup = x_div % x_division + y_div * x_division;
                                 }
 
-                                //x¸º·½ÏòµÄÄÇ¸ö²àÃæ
+                                //xè´Ÿæ–¹å‘çš„é‚£ä¸ªä¾§é¢
                                 if (z_div > 1) {
-                                    //¸ù¾İleftupËãleftdown
+                                    //æ ¹æ®leftupç®—leftdown
                                     if (y_div == 1) {
                                         leftdown = bRight ? leftup - 2 : leftup - x_division;
                                     }
@@ -330,7 +338,7 @@ namespace zeno {
                                         leftdown = leftup - x_division;
                                     }
                                     else {
-                                        leftdown = leftup - 2;    //¾ÍÔÚÕıÏÂ·½
+                                        leftdown = leftup - 2;    //å°±åœ¨æ­£ä¸‹æ–¹
                                     }
                                 }
                                 else {
@@ -383,7 +391,7 @@ namespace zeno {
                 }
             }
 
-            auto geo = create_GeometryObject(Topo_IndiceMesh2, !bQuad, points, faces);
+            auto geo = create_GeometryObject(Topo_IndiceMesh2, !bQuad, to_glm_points(points), faces);
             if (bCalcPointNormals) {
                 size_t outCount = 0;
                 auto nrmData = convert_points_to_abi(normals, outCount);
@@ -536,7 +544,7 @@ namespace zeno {
                 }
             }
 
-            auto geo = create_GeometryObject(Topo_HalfEdge, !bQuad, points, faces);
+            auto geo = create_GeometryObject(Topo_HalfEdge, !bQuad, to_glm_points(points), faces);
             if (bCalcPointNormals) {
                 size_t outCount = 0;
                 auto nrmData = convert_points_to_abi(normals, outCount);
@@ -722,7 +730,7 @@ namespace zeno {
                 p = zeno::vec3f(gp.x, gp.y, gp.z);
             }
 
-            auto geo = create_GeometryObject(Topo_HalfEdge, !bQuad, points, faces);
+            auto geo = create_GeometryObject(Topo_HalfEdge, !bQuad, to_glm_points(points), faces);
             ptrNodeData->set_output_object("Output", geo);
             return ZErr_OK;
         }
@@ -844,7 +852,7 @@ namespace zeno {
                 if (segments == 1) {
                     points.push_back(Center);
 
-                    auto geo = create_GeometryObject(Topo_HalfEdge, true, points, faces);
+                    auto geo = create_GeometryObject(Topo_HalfEdge, true, to_glm_points(points), faces);
                     ptrNodeData->set_output_object("Output", geo);
                     return ZErr_OK;
                 }
@@ -950,7 +958,7 @@ namespace zeno {
                 }
             }
 
-            auto geo = create_GeometryObject(Topo_HalfEdge, true, points, faces);
+            auto geo = create_GeometryObject(Topo_HalfEdge, true, to_glm_points(points), faces);
 
             // pos
             {
@@ -1012,8 +1020,8 @@ namespace zeno {
         void clearCalcResults() override {}
         ZErrorCode apply(INodeData* ptrNodeData) override
         {
-            zeno::vec3f Position = toVec3f(ptrNodeData->get_input2_vec3f("Position"));
-            std::vector<zeno::vec3f> pos = { Position };
+            zeno::Vec3f posAbi = ptrNodeData->get_input2_vec3f("Position");
+            std::vector<glm::vec3> pos = { glm::vec3(posAbi.x, posAbi.y, posAbi.z) };
             auto geo = create_GeometryObject(Topo_HalfEdge, false, pos, {});
             ptrNodeData->set_output_object("Output", geo);
             return ZErr_OK;
@@ -1085,7 +1093,7 @@ namespace zeno {
                 }
             }
 
-            auto geo = create_GeometryObject(Topo_HalfEdge, false, points, faces);
+            auto geo = create_GeometryObject(Topo_HalfEdge, false, to_glm_points(points), faces);
             ptrNodeData->set_output_object("Output", geo);
             return ZErr_OK;
         }

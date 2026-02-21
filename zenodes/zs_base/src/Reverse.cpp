@@ -1,4 +1,5 @@
 #include <vec.h>
+#include <glm/glm.hpp>
 #include <inodedata.h>
 #include <inodeimpl.h>
 #include "api.h"
@@ -39,9 +40,9 @@ namespace zeno {
                 ptrNodeData->report_error("failed to get point positions");
                 return ZErr_ParamError;
             }
-            std::vector<zeno::vec3f> pos(npts);
+            std::vector<glm::vec3> pos(npts);
             for (size_t i = 0; i < n; i++) {
-                pos[i] = toVec3f(posAbi[i]);
+                pos[i] = glm::vec3(posAbi[i].x, posAbi[i].y, posAbi[i].z);
             }
 
             std::vector<std::vector<int>> faces;

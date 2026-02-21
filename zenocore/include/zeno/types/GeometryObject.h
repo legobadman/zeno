@@ -243,6 +243,7 @@ namespace zeno
         int nvertices() const override;
         int nvertices(int face_id) const override;
         int nattributes(GeoAttrGroup grp) const override;
+        size_t get_attr_name(GeoAttrGroup grp, int index, char* buf, size_t buf_cap) const override;
 
         /* 点相关 */
         size_t point_faces(int point_id, int* faces, size_t cap) override;

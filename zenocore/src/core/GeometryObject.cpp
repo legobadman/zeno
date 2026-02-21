@@ -1419,7 +1419,29 @@ namespace zeno
         }
     }
 
-
+    size_t GeometryObject::get_attr_name(GeoAttrGroup grp, int index, char* buf, size_t buf_cap) const {
+        const std::map<std::string, AttributeVector>* pContainer = nullptr;
+        switch (grp) {
+        case ATTR_GEO:   pContainer = &m_geo_attrs;   break;
+        case ATTR_FACE:  pContainer = &m_face_attrs;  break;
+        case ATTR_POINT: pContainer = &m_point_attrs; break;
+        case ATTR_VERTEX: pContainer = &m_vert_attrs; break;
+        default:
+            return 0;
+        }
+        if (!pContainer || index < 0 || (size_t)index >= pContainer->size())
+            return 0;
+        auto it = pContainer->begin();
+        std::advance(it, index);
+        const char* name = it->first.c_str();
+        size_t len = it->first.size();
+        if (buf && buf_cap > 0) {
+            size_t copy = (len < buf_cap - 1) ? len : (buf_cap - 1);
+            memcpy(buf, name, copy);
+            buf[copy] = '\0';
+        }
+        return len;
+    }
 
     std::unique_ptr<GeometryObject> create_GeometryObject(GeomTopoType type) {
         return std::make_unique<GeometryObject>(type);

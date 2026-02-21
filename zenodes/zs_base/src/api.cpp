@@ -33,7 +33,7 @@ namespace zeno {
 	IGeometryObject* create_GeometryObject(
 		GeomTopoType type,
 		bool bTriangle,
-		const std::vector<vec3f>& points,
+		const std::vector<glm::vec3>& points,
 		const std::vector<std::vector<int>>& faces)
 	{
 		const Vec3f* abiPoints = nullptr;
@@ -42,7 +42,7 @@ namespace zeno {
 		if (!points.empty()) {
 			Vec3f* p = new Vec3f[pointCount];
 			for (size_t i = 0; i < pointCount; ++i) {
-				p[i] = toAbiVec3f(points[i]);
+				p[i] = Vec3f{ points[i].x, points[i].y, points[i].z };
 			}
 			abiPoints = p;
 		}

@@ -135,6 +135,11 @@ struct IGeometryObject : IObject2 {
     virtual int nvertices(int face_id) const = 0;
     virtual int nattributes(GeoAttrGroup grp) const = 0;
 
+    /** Get attribute name at index. Use nattributes(grp) for valid index range.
+     *  Returns number of chars written (excluding null), 0 if index out of range.
+     *  buf receives null-terminated string; buf_cap is buffer capacity. */
+    virtual size_t get_attr_name(GeoAttrGroup grp, int index, char* buf, size_t buf_cap) const = 0;
+
     virtual size_t point_faces(int point_id, int* faces, size_t cap) = 0;
     virtual int point_vertex(int point_id) = 0;
     virtual size_t point_vertices(int point_id, int* vertices, size_t cap) = 0;
