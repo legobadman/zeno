@@ -20,6 +20,10 @@ project(Zeno
     HOMEPAGE_URL https://github.com/zenustech/zeno
     )
 
+if (MSVC)
+    add_compile_options(/utf-8)
+endif()
+
 if (PROJECT_BINARY_DIR STREQUAL PROJECT_SOURCE_DIR)
     message(FATAL_ERROR "The binary directory of CMake cannot be the same as source directory!"
         "Please consider use 'cmake -B build' to specify a different binary directory."
