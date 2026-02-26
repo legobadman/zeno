@@ -6,6 +6,12 @@ OUTPUT_DIR = "extrude_dataset"
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 
 
+def clear_output_json():
+    for name in os.listdir(OUTPUT_DIR):
+        if name.endswith(".json"):
+            os.remove(os.path.join(OUTPUT_DIR, name))
+
+
 # ---------------------------------------------------------
 # Parameter lookup by UI label (recursive, folder-aware)
 # ---------------------------------------------------------
@@ -215,13 +221,15 @@ def main():
     Includes Output Front / Output Back / Output Side to match Houdini PolyExtrude.
     """
 
+    clear_output_json()
+
     # Base extrusion tests (all outputs on)
     tests = [
-        {"distance": 1.0, "inset": 0.0},
-        {"distance": 0.5, "inset": 0.0},
-        {"distance": -0.5, "inset": 0.0},
-        {"distance": 1.0, "inset": 0.2},
-        {"distance": 0.0, "inset": 0.2},
+        {"distance": 1.0, "inset": 0.0, "output_front": True, "output_back": True, "output_side": True},
+        {"distance": 0.5, "inset": 0.0, "output_front": True, "output_back": True, "output_side": True},
+        {"distance": -0.5, "inset": 0.0, "output_front": True, "output_back": True, "output_side": True},
+        {"distance": 1.0, "inset": 0.2, "output_front": True, "output_back": True, "output_side": True},
+        {"distance": 0.0, "inset": 0.2, "output_front": True, "output_back": True, "output_side": True},
     ]
 
     # Output geometry flags (Output Front, Output Back, Output Side)
@@ -235,12 +243,30 @@ def main():
         {"output_front": False, "output_back": False, "output_side": True},
     ]
 
-    # input_types: str = type only (defaults), or dict = type + param overrides by UI label
+    # input_types: each input is forced to polygon primitive.
+    # Only geometry-shape related parameters are varied (no Group / Primitive Type sweep).
     input_types = [
-        "grid",
-        "box",
-        "tube",
+        # Grid variants
+        {"type": "grid", "Primitive Type": "poly"},
+        {"type": "grid", "Primitive Type": "poly", "Rows": 2, "Columns": 2, "Size": (2.0, 2.0)},
+        {"type": "grid", "Primitive Type": "poly", "Rows": 4, "Columns": 12, "Size": (8.0, 1.5)},
+        {"type": "grid", "Primitive Type": "poly", "Rows": 16, "Columns": 5, "Size": (3.0, 9.0)},
+        {"type": "grid", "Primitive Type": "poly", "Rows": 6, "Columns": 6, "Center": (1.0, 0.5, -2.0), "Rotate": (15.0, 35.0, 10.0)},
+
+        # Box variants
+        {"type": "box", "Primitive Type": "poly"},
+        {"type": "box", "Primitive Type": "poly", "Size": (2.0, 1.0, 0.5)},
+        {"type": "box", "Primitive Type": "poly", "Size": (1.0, 3.0, 2.0), "Rotate": (20.0, 45.0, -10.0)},
+        {"type": "box", "Primitive Type": "poly", "Use Divisions": 1, "Divisions": (2, 3, 4)},
+        {"type": "box", "Primitive Type": "poly", "Use Divisions": 1, "Divisions": (4, 2, 1), "Size": (2.0, 2.0, 0.8)},
+
+        # Tube variants
+        {"type": "tube", "Primitive Type": "poly"},
         {"type": "tube", "Primitive Type": "poly", "End Caps": 0, "Rows": 2, "Columns": 12},
+        {"type": "tube", "Primitive Type": "poly", "End Caps": 1, "Rows": 3, "Columns": 16, "Height": 2.5},
+        {"type": "tube", "Primitive Type": "poly", "End Caps": 0, "Rows": 6, "Columns": 24, "Radius": (1.0, 0.5)},
+        {"type": "tube", "Primitive Type": "poly", "End Caps": 1, "Rows": 4, "Columns": 10, "Radius": (0.6, 1.4), "Radius Scale": 0.85},
+        {"type": "tube", "Primitive Type": "poly", "End Caps": 0, "Rows": 5, "Columns": 18, "Center": (0.0, 1.0, 0.0), "Rotate": (0.0, 30.0, 25.0)},
     ]
 
     # Explicit regression cases for reported mismatches.

@@ -24,7 +24,7 @@
                     "Distance": {
                         "links": null,
                         "type": "float",
-                        "default-value": 0.14399999380111695,
+                        "default-value": 0.30000001192092898,
                         "control": {
                             "name": "Float"
                         },
@@ -35,7 +35,7 @@
                     "Inset": {
                         "links": null,
                         "type": "float",
-                        "default-value": 0.36500000953674319,
+                        "default-value": 0.0,
                         "control": {
                             "name": "Float"
                         },
@@ -85,12 +85,248 @@
                     }
                 },
                 "uipos": [
-                    275.0,
-                    235.0
+                    354.0,
+                    233.0
                 ],
-                "status": [
-                    "View"
+                "status": [],
+                "collasped": false
+            },
+            "Extrude2": {
+                "name": "Extrude2",
+                "class": "Extrude",
+                "object_inputs": {
+                    "Input": {
+                        "links": [
+                            {
+                                "out-node": "Grid1",
+                                "out-socket": "Output",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": "Input"
+                            }
+                        ],
+                        "type": "geometry",
+                        "socket-type": "clone"
+                    }
+                },
+                "primitive_inputs": {
+                    "Distance": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.527999997138977,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "Inset": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": -0.35499998927116396,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "Output Front": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": false,
+                        "control": {
+                            "name": "Boolean"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "Output Back": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": true,
+                        "control": {
+                            "name": "Boolean"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "Output Side": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": true,
+                        "control": {
+                            "name": "Boolean"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "Output": {
+                        "type": "geometry",
+                        "socket-type": "clone"
+                    }
+                },
+                "uipos": [
+                    54.0,
+                    192.0
                 ],
+                "status": [],
+                "collasped": false
+            },
+            "Grid1": {
+                "name": "Grid1",
+                "class": "Grid",
+                "object_inputs": {},
+                "primitive_inputs": {
+                    "Center": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "Size": {
+                        "links": null,
+                        "type": "vec2f",
+                        "default-value": [
+                            1.0,
+                            1.0
+                        ],
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "Rotate": {
+                        "links": null,
+                        "type": "vec3f",
+                        "default-value": [
+                            0.0,
+                            0.0,
+                            0.0
+                        ],
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "Rows": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 4,
+                        "control": {
+                            "name": "Slider"
+                        },
+                        "controlProps": {
+                            "min": 1.0,
+                            "max": 100.0,
+                            "step": 1.0
+                        },
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "Columns": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 4,
+                        "control": {
+                            "name": "Slider"
+                        },
+                        "controlProps": {
+                            "min": 1.0,
+                            "max": 100.0,
+                            "step": 1.0
+                        },
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "Direction": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "ZX",
+                        "control": {
+                            "name": "Enum"
+                        },
+                        "controlProps": {
+                            "items": [
+                                "XY",
+                                "YZ",
+                                "ZX"
+                            ]
+                        },
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "Uniform Scale": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 1.0,
+                        "control": {
+                            "name": "Float"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "Face Type": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "Quadrilaterals",
+                        "control": {
+                            "name": "Enum"
+                        },
+                        "controlProps": {
+                            "items": [
+                                "Triangles",
+                                "Quadrilaterals"
+                            ]
+                        },
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "Point Normal": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": false,
+                        "control": {
+                            "name": "Boolean"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "Output": {
+                        "type": "geometry",
+                        "socket-type": "clone"
+                    }
+                },
+                "uipos": [
+                    50.0,
+                    58.0
+                ],
+                "status": [],
                 "collasped": false
             },
             "Tube1": {
@@ -235,6 +471,70 @@
                     74.0
                 ],
                 "status": [],
+                "collasped": false
+            },
+            "aw1": {
+                "name": "aw1",
+                "class": "AttributeWrangle",
+                "object_inputs": {
+                    "Input": {
+                        "links": [
+                            {
+                                "out-node": "Extrude2",
+                                "out-socket": "Output",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": "Input"
+                            }
+                        ],
+                        "type": "geometry",
+                        "socket-type": "clone"
+                    }
+                },
+                "primitive_inputs": {
+                    "Run Over": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "Points",
+                        "control": {
+                            "name": "Enum"
+                        },
+                        "controlProps": {
+                            "items": [
+                                "Points",
+                                "Faces",
+                                "Geometry"
+                            ]
+                        },
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "Zfx Code": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "remove_face(4);",
+                        "control": {
+                            "name": "CodeEditor"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "Output": {
+                        "type": "geometry",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    4.107911109924316,
+                    344.0375671386719
+                ],
+                "status": [
+                    "View"
+                ],
                 "collasped": false
             }
         }
