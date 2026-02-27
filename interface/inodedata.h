@@ -29,6 +29,7 @@ namespace zeno {
 		virtual bool set_output_float(const char* param, float val) = 0;
 		virtual bool set_output_bool(const char* param, bool val) = 0;
 		virtual bool set_output_string(const char* param, const char* val) = 0;
+		virtual bool set_output_string_list(const char* param, const char** vals, size_t count) = 0;
 		virtual bool set_output_vec2f(const char* param, Vec2f val) = 0;
 		virtual bool set_output_vec2i(const char* param, Vec2i val) = 0;
 		virtual bool set_output_vec3f(const char* param, Vec3f val) = 0;

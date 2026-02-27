@@ -33,13 +33,13 @@
                 "primitive_outputs": {},
                 "object_outputs": {
                     "HF Image": {
-                        "type": "geometry",
+                        "type": "iobject",
                         "socket-type": "output"
                     }
                 },
                 "uipos": [
-                    44.0,
-                    247.0
+                    -78.0,
+                    190.0
                 ],
                 "status": [],
                 "collasped": false,
@@ -166,7 +166,7 @@
                                     "type": "string",
                                     "default-value": "mask",
                                     "control": {
-                                        "name": "String"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -177,7 +177,7 @@
                                     "type": "bool",
                                     "default-value": false,
                                     "control": {
-                                        "name": "Boolean"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -191,7 +191,7 @@
                                         1.0
                                     ],
                                     "control": {
-                                        "name": "Float Vector 2"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -210,15 +210,15 @@
                                             "vec3f"
                                         ]
                                     },
-                                    "socket-type": "primitive",
+                                    "socket-type": "clone",
                                     "visible": false
                                 }
                             },
                             "primitive_outputs": {},
                             "object_outputs": {
                                 "image": {
-                                    "type": "geometry",
-                                    "socket-type": "output"
+                                    "type": "",
+                                    "socket-type": "clone"
                                 }
                             },
                             "uipos": [
@@ -239,10 +239,10 @@
                                             "out-socket": "image",
                                             "out-key": "",
                                             "in-key": "",
-                                            "target-socket": ""
+                                            "target-socket": "port"
                                         }
                                     ],
-                                    "type": "geometry",
+                                    "type": "iobject",
                                     "socket-type": "clone"
                                 }
                             },
@@ -689,7 +689,7 @@
                                             "target-socket": ""
                                         }
                                     ],
-                                    "type": "geometry",
+                                    "type": "",
                                     "socket-type": "clone"
                                 }
                             },
@@ -699,7 +699,7 @@
                                     "type": "bool",
                                     "default-value": true,
                                     "control": {
-                                        "name": "Boolean"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -710,7 +710,7 @@
                                     "type": "bool",
                                     "default-value": false,
                                     "control": {
-                                        "name": "Boolean"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -720,8 +720,8 @@
                             "primitive_outputs": {},
                             "object_outputs": {
                                 "image": {
-                                    "type": "geometry",
-                                    "socket-type": "output"
+                                    "type": "",
+                                    "socket-type": "clone"
                                 }
                             },
                             "uipos": [
@@ -770,7 +770,7 @@
                                             "target-socket": ""
                                         }
                                     ],
-                                    "type": "geometry",
+                                    "type": "",
                                     "socket-type": "clone"
                                 },
                                 "prim": {
@@ -793,7 +793,7 @@
                                     "type": "string",
                                     "default-value": "uv",
                                     "control": {
-                                        "name": "String"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -813,7 +813,7 @@
                                             "loopsuv"
                                         ]
                                     },
-                                    "socket-type": "primitive",
+                                    "socket-type": "clone",
                                     "visible": false
                                 },
                                 "targetChannel": {
@@ -821,7 +821,7 @@
                                     "type": "string",
                                     "default-value": "clr",
                                     "control": {
-                                        "name": "String"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -832,7 +832,7 @@
                                     "type": "float",
                                     "default-value": 0.0,
                                     "control": {
-                                        "name": "Float"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -843,7 +843,7 @@
                                     "type": "float",
                                     "default-value": 1.0,
                                     "control": {
-                                        "name": "Float"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -863,7 +863,7 @@
                                             "CLAMP_TO_BORDER"
                                         ]
                                     },
-                                    "socket-type": "primitive",
+                                    "socket-type": "clone",
                                     "visible": false
                                 },
                                 "filter": {
@@ -879,7 +879,7 @@
                                             "linear"
                                         ]
                                     },
-                                    "socket-type": "primitive",
+                                    "socket-type": "clone",
                                     "visible": false
                                 },
                                 "borderColor": {
@@ -891,7 +891,7 @@
                                         0.0
                                     ],
                                     "control": {
-                                        "name": "Float Vector 3"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -902,7 +902,7 @@
                                     "type": "bool",
                                     "default-value": false,
                                     "control": {
-                                        "name": "Boolean"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -913,7 +913,7 @@
                                     "type": "bool",
                                     "default-value": false,
                                     "control": {
-                                        "name": "Boolean"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -924,7 +924,7 @@
                                     "type": "float",
                                     "default-value": 1.0,
                                     "control": {
-                                        "name": "Float"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -935,7 +935,7 @@
                                     "type": "float",
                                     "default-value": 0.0,
                                     "control": {
-                                        "name": "Float"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -949,7 +949,7 @@
                                         0.0
                                     ],
                                     "control": {
-                                        "name": "Float Vector 2"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -960,7 +960,7 @@
                             "object_outputs": {
                                 "outPrim": {
                                     "type": "geometry",
-                                    "socket-type": "output"
+                                    "socket-type": "clone"
                                 }
                             },
                             "uipos": [
@@ -999,7 +999,7 @@
                                     "type": "bool",
                                     "default-value": true,
                                     "control": {
-                                        "name": "Boolean"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -1009,8 +1009,8 @@
                             "primitive_outputs": {},
                             "object_outputs": {
                                 "image": {
-                                    "type": "geometry",
-                                    "socket-type": "output"
+                                    "type": "",
+                                    "socket-type": "clone"
                                 }
                             },
                             "uipos": [
@@ -1212,7 +1212,7 @@
                                     "type": "string",
                                     "default-value": "mask",
                                     "control": {
-                                        "name": "String"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -1223,7 +1223,7 @@
                                     "type": "bool",
                                     "default-value": false,
                                     "control": {
-                                        "name": "Boolean"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -1237,7 +1237,7 @@
                                         1.0
                                     ],
                                     "control": {
-                                        "name": "Float Vector 2"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -1256,15 +1256,15 @@
                                             "vec3f"
                                         ]
                                     },
-                                    "socket-type": "primitive",
+                                    "socket-type": "clone",
                                     "visible": false
                                 }
                             },
                             "primitive_outputs": {},
                             "object_outputs": {
                                 "image": {
-                                    "type": "geometry",
-                                    "socket-type": "output"
+                                    "type": "",
+                                    "socket-type": "clone"
                                 }
                             },
                             "uipos": [
@@ -1279,15 +1279,7 @@
                             "class": "SubOutput",
                             "object_inputs": {
                                 "port": {
-                                    "links": [
-                                        {
-                                            "out-node": "CompImport1",
-                                            "out-socket": "image",
-                                            "out-key": "",
-                                            "in-key": "",
-                                            "target-socket": ""
-                                        }
-                                    ],
+                                    "links": null,
                                     "type": "geometry",
                                     "socket-type": "clone"
                                 }
@@ -1735,7 +1727,7 @@
                                             "target-socket": ""
                                         }
                                     ],
-                                    "type": "geometry",
+                                    "type": "",
                                     "socket-type": "clone"
                                 }
                             },
@@ -1745,7 +1737,7 @@
                                     "type": "bool",
                                     "default-value": true,
                                     "control": {
-                                        "name": "Boolean"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -1756,7 +1748,7 @@
                                     "type": "bool",
                                     "default-value": false,
                                     "control": {
-                                        "name": "Boolean"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -1766,8 +1758,8 @@
                             "primitive_outputs": {},
                             "object_outputs": {
                                 "image": {
-                                    "type": "geometry",
-                                    "socket-type": "output"
+                                    "type": "",
+                                    "socket-type": "clone"
                                 }
                             },
                             "uipos": [
@@ -1816,7 +1808,7 @@
                                             "target-socket": ""
                                         }
                                     ],
-                                    "type": "geometry",
+                                    "type": "",
                                     "socket-type": "clone"
                                 },
                                 "prim": {
@@ -1839,7 +1831,7 @@
                                     "type": "string",
                                     "default-value": "uv",
                                     "control": {
-                                        "name": "String"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -1859,7 +1851,7 @@
                                             "loopsuv"
                                         ]
                                     },
-                                    "socket-type": "primitive",
+                                    "socket-type": "clone",
                                     "visible": false
                                 },
                                 "targetChannel": {
@@ -1867,7 +1859,7 @@
                                     "type": "string",
                                     "default-value": "clr",
                                     "control": {
-                                        "name": "String"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -1878,7 +1870,7 @@
                                     "type": "float",
                                     "default-value": 0.0,
                                     "control": {
-                                        "name": "Float"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -1889,7 +1881,7 @@
                                     "type": "float",
                                     "default-value": 1.0,
                                     "control": {
-                                        "name": "Float"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -1909,7 +1901,7 @@
                                             "CLAMP_TO_BORDER"
                                         ]
                                     },
-                                    "socket-type": "primitive",
+                                    "socket-type": "clone",
                                     "visible": false
                                 },
                                 "filter": {
@@ -1925,7 +1917,7 @@
                                             "linear"
                                         ]
                                     },
-                                    "socket-type": "primitive",
+                                    "socket-type": "clone",
                                     "visible": false
                                 },
                                 "borderColor": {
@@ -1937,7 +1929,7 @@
                                         0.0
                                     ],
                                     "control": {
-                                        "name": "Float Vector 3"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -1948,7 +1940,7 @@
                                     "type": "bool",
                                     "default-value": false,
                                     "control": {
-                                        "name": "Boolean"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -1959,7 +1951,7 @@
                                     "type": "bool",
                                     "default-value": false,
                                     "control": {
-                                        "name": "Boolean"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -1970,7 +1962,7 @@
                                     "type": "float",
                                     "default-value": 1.0,
                                     "control": {
-                                        "name": "Float"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -1981,7 +1973,7 @@
                                     "type": "float",
                                     "default-value": 0.0,
                                     "control": {
-                                        "name": "Float"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -1995,7 +1987,7 @@
                                         0.0
                                     ],
                                     "control": {
-                                        "name": "Float Vector 2"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -2006,7 +1998,7 @@
                             "object_outputs": {
                                 "outPrim": {
                                     "type": "geometry",
-                                    "socket-type": "output"
+                                    "socket-type": "clone"
                                 }
                             },
                             "uipos": [
@@ -2045,7 +2037,7 @@
                                     "type": "bool",
                                     "default-value": true,
                                     "control": {
-                                        "name": "Boolean"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -2055,8 +2047,8 @@
                             "primitive_outputs": {},
                             "object_outputs": {
                                 "image": {
-                                    "type": "geometry",
-                                    "socket-type": "output"
+                                    "type": "",
+                                    "socket-type": "clone"
                                 }
                             },
                             "uipos": [
@@ -2258,7 +2250,7 @@
                                     "type": "string",
                                     "default-value": "mask",
                                     "control": {
-                                        "name": "String"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -2269,7 +2261,7 @@
                                     "type": "bool",
                                     "default-value": false,
                                     "control": {
-                                        "name": "Boolean"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -2283,7 +2275,7 @@
                                         1.0
                                     ],
                                     "control": {
-                                        "name": "Float Vector 2"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -2302,15 +2294,15 @@
                                             "vec3f"
                                         ]
                                     },
-                                    "socket-type": "primitive",
+                                    "socket-type": "clone",
                                     "visible": false
                                 }
                             },
                             "primitive_outputs": {},
                             "object_outputs": {
                                 "image": {
-                                    "type": "geometry",
-                                    "socket-type": "output"
+                                    "type": "",
+                                    "socket-type": "clone"
                                 }
                             },
                             "uipos": [
@@ -2325,15 +2317,7 @@
                             "class": "SubOutput",
                             "object_inputs": {
                                 "port": {
-                                    "links": [
-                                        {
-                                            "out-node": "CompImport1",
-                                            "out-socket": "image",
-                                            "out-key": "",
-                                            "in-key": "",
-                                            "target-socket": ""
-                                        }
-                                    ],
+                                    "links": null,
                                     "type": "geometry",
                                     "socket-type": "clone"
                                 }
@@ -2781,7 +2765,7 @@
                                             "target-socket": ""
                                         }
                                     ],
-                                    "type": "geometry",
+                                    "type": "",
                                     "socket-type": "clone"
                                 }
                             },
@@ -2791,7 +2775,7 @@
                                     "type": "bool",
                                     "default-value": true,
                                     "control": {
-                                        "name": "Boolean"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -2802,7 +2786,7 @@
                                     "type": "bool",
                                     "default-value": false,
                                     "control": {
-                                        "name": "Boolean"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -2812,8 +2796,8 @@
                             "primitive_outputs": {},
                             "object_outputs": {
                                 "image": {
-                                    "type": "geometry",
-                                    "socket-type": "output"
+                                    "type": "",
+                                    "socket-type": "clone"
                                 }
                             },
                             "uipos": [
@@ -2862,7 +2846,7 @@
                                             "target-socket": ""
                                         }
                                     ],
-                                    "type": "geometry",
+                                    "type": "",
                                     "socket-type": "clone"
                                 },
                                 "prim": {
@@ -2885,7 +2869,7 @@
                                     "type": "string",
                                     "default-value": "uv",
                                     "control": {
-                                        "name": "String"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -2905,7 +2889,7 @@
                                             "loopsuv"
                                         ]
                                     },
-                                    "socket-type": "primitive",
+                                    "socket-type": "clone",
                                     "visible": false
                                 },
                                 "targetChannel": {
@@ -2913,7 +2897,7 @@
                                     "type": "string",
                                     "default-value": "clr",
                                     "control": {
-                                        "name": "String"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -2924,7 +2908,7 @@
                                     "type": "float",
                                     "default-value": 0.0,
                                     "control": {
-                                        "name": "Float"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -2935,7 +2919,7 @@
                                     "type": "float",
                                     "default-value": 1.0,
                                     "control": {
-                                        "name": "Float"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -2955,7 +2939,7 @@
                                             "CLAMP_TO_BORDER"
                                         ]
                                     },
-                                    "socket-type": "primitive",
+                                    "socket-type": "clone",
                                     "visible": false
                                 },
                                 "filter": {
@@ -2971,7 +2955,7 @@
                                             "linear"
                                         ]
                                     },
-                                    "socket-type": "primitive",
+                                    "socket-type": "clone",
                                     "visible": false
                                 },
                                 "borderColor": {
@@ -2983,7 +2967,7 @@
                                         0.0
                                     ],
                                     "control": {
-                                        "name": "Float Vector 3"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -2994,7 +2978,7 @@
                                     "type": "bool",
                                     "default-value": false,
                                     "control": {
-                                        "name": "Boolean"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -3005,7 +2989,7 @@
                                     "type": "bool",
                                     "default-value": false,
                                     "control": {
-                                        "name": "Boolean"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -3016,7 +3000,7 @@
                                     "type": "float",
                                     "default-value": 1.0,
                                     "control": {
-                                        "name": "Float"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -3027,7 +3011,7 @@
                                     "type": "float",
                                     "default-value": 0.0,
                                     "control": {
-                                        "name": "Float"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -3041,7 +3025,7 @@
                                         0.0
                                     ],
                                     "control": {
-                                        "name": "Float Vector 2"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -3052,7 +3036,7 @@
                             "object_outputs": {
                                 "outPrim": {
                                     "type": "geometry",
-                                    "socket-type": "output"
+                                    "socket-type": "clone"
                                 }
                             },
                             "uipos": [
@@ -3091,7 +3075,7 @@
                                     "type": "bool",
                                     "default-value": true,
                                     "control": {
-                                        "name": "Boolean"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -3101,8 +3085,8 @@
                             "primitive_outputs": {},
                             "object_outputs": {
                                 "image": {
-                                    "type": "geometry",
-                                    "socket-type": "output"
+                                    "type": "",
+                                    "socket-type": "clone"
                                 }
                             },
                             "uipos": [
@@ -3151,10 +3135,10 @@
                                 "out-socket": "HF Image",
                                 "out-key": "",
                                 "in-key": "",
-                                "target-socket": ""
+                                "target-socket": "HF Image"
                             }
                         ],
-                        "type": "geometry",
+                        "type": "iobject",
                         "socket-type": "clone"
                     }
                 },
@@ -3205,8 +3189,8 @@
                     }
                 },
                 "uipos": [
-                    253.0,
-                    441.0
+                    103.0,
+                    489.0
                 ],
                 "status": [
                     "View"
@@ -3481,47 +3465,7 @@
                                     "socket-type": "clone"
                                 }
                             },
-                            "primitive_inputs": {
-                                "Source Attribute": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "height",
-                                    "control": {
-                                        "name": ""
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "Target Attribute": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "h2",
-                                    "control": {
-                                        "name": ""
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "Attribute Group": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "Point",
-                                    "control": {
-                                        "name": "Enum"
-                                    },
-                                    "controlProps": {
-                                        "items": [
-                                            "Point",
-                                            "Face",
-                                            "Geometry"
-                                        ]
-                                    },
-                                    "socket-type": "clone",
-                                    "visible": false
-                                }
-                            },
+                            "primitive_inputs": {},
                             "primitive_outputs": {},
                             "object_outputs": {
                                 "Output": {
@@ -3567,47 +3511,7 @@
                                     "socket-type": "clone"
                                 }
                             },
-                            "primitive_inputs": {
-                                "Source Attribute": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "mask",
-                                    "control": {
-                                        "name": ""
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "Target Attribute": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "mask",
-                                    "control": {
-                                        "name": ""
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "Attribute Group": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "Point",
-                                    "control": {
-                                        "name": "Enum"
-                                    },
-                                    "controlProps": {
-                                        "items": [
-                                            "Point",
-                                            "Face",
-                                            "Geometry"
-                                        ]
-                                    },
-                                    "socket-type": "clone",
-                                    "visible": false
-                                }
-                            },
+                            "primitive_inputs": {},
                             "primitive_outputs": {},
                             "object_outputs": {
                                 "Output": {
@@ -3653,47 +3557,7 @@
                                     "socket-type": "clone"
                                 }
                             },
-                            "primitive_inputs": {
-                                "Source Attribute": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "height",
-                                    "control": {
-                                        "name": ""
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "Target Attribute": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "height2",
-                                    "control": {
-                                        "name": ""
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "Attribute Group": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "Point",
-                                    "control": {
-                                        "name": "Enum"
-                                    },
-                                    "controlProps": {
-                                        "items": [
-                                            "Point",
-                                            "Face",
-                                            "Geometry"
-                                        ]
-                                    },
-                                    "socket-type": "clone",
-                                    "visible": false
-                                }
-                            },
+                            "primitive_inputs": {},
                             "primitive_outputs": {},
                             "object_outputs": {
                                 "Output": {
@@ -3722,7 +3586,7 @@
                             },
                             "object_outputs": {
                                 "port": {
-                                    "type": "geometry",
+                                    "type": "iobject",
                                     "socket-type": "output"
                                 }
                             },
@@ -5801,15 +5665,7 @@
                                     "visible": false
                                 },
                                 "最大高度": {
-                                    "links": [
-                                        {
-                                            "out-node": "PrimReduction1",
-                                            "out-socket": "result",
-                                            "out-key": "",
-                                            "in-key": "",
-                                            "target-socket": ""
-                                        }
-                                    ],
+                                    "links": null,
                                     "type": "float",
                                     "default-value": 0.0,
                                     "control": {
@@ -6250,15 +6106,7 @@
                                     "visible": false
                                 },
                                 "最大高度": {
-                                    "links": [
-                                        {
-                                            "out-node": "PrimReduction2",
-                                            "out-socket": "result",
-                                            "out-key": "",
-                                            "in-key": "",
-                                            "target-socket": ""
-                                        }
-                                    ],
+                                    "links": null,
                                     "type": "float",
                                     "default-value": 0.0,
                                     "control": {
@@ -8269,40 +8117,10 @@
                                     "socket-type": "clone"
                                 }
                             },
-                            "primitive_inputs": {
-                                "attrName": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "height",
-                                    "control": {
-                                        "name": "String"
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "op": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "max",
-                                    "control": {
-                                        "name": "Enum"
-                                    },
-                                    "controlProps": {
-                                        "items": [
-                                            "avg",
-                                            "max",
-                                            "min",
-                                            "absmax"
-                                        ]
-                                    },
-                                    "socket-type": "primitive",
-                                    "visible": false
-                                }
-                            },
+                            "primitive_inputs": {},
                             "primitive_outputs": {
                                 "result": {
-                                    "type": "numeric",
+                                    "type": "iobject",
                                     "socket-type": "clone",
                                     "visible": true
                                 }
@@ -8333,40 +8151,10 @@
                                     "socket-type": "clone"
                                 }
                             },
-                            "primitive_inputs": {
-                                "attrName": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "height",
-                                    "control": {
-                                        "name": "String"
-                                    },
-                                    "controlProps": null,
-                                    "socket-type": "clone",
-                                    "visible": false
-                                },
-                                "op": {
-                                    "links": null,
-                                    "type": "string",
-                                    "default-value": "max",
-                                    "control": {
-                                        "name": "Enum"
-                                    },
-                                    "controlProps": {
-                                        "items": [
-                                            "avg",
-                                            "max",
-                                            "min",
-                                            "absmax"
-                                        ]
-                                    },
-                                    "socket-type": "primitive",
-                                    "visible": false
-                                }
-                            },
+                            "primitive_inputs": {},
                             "primitive_outputs": {
                                 "result": {
-                                    "type": "numeric",
+                                    "type": "iobject",
                                     "socket-type": "clone",
                                     "visible": true
                                 }
@@ -8390,10 +8178,10 @@
                                             "out-socket": "port",
                                             "out-key": "",
                                             "in-key": "",
-                                            "target-socket": ""
+                                            "target-socket": "image"
                                         }
                                     ],
-                                    "type": "geometry",
+                                    "type": "",
                                     "socket-type": "clone"
                                 },
                                 "prim": {
@@ -8416,7 +8204,7 @@
                                     "type": "string",
                                     "default-value": "uv",
                                     "control": {
-                                        "name": "String"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -8436,7 +8224,7 @@
                                             "loopsuv"
                                         ]
                                     },
-                                    "socket-type": "primitive",
+                                    "socket-type": "clone",
                                     "visible": false
                                 },
                                 "targetChannel": {
@@ -8444,7 +8232,7 @@
                                     "type": "string",
                                     "default-value": "clr",
                                     "control": {
-                                        "name": "String"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -8455,7 +8243,7 @@
                                     "type": "float",
                                     "default-value": 0.0,
                                     "control": {
-                                        "name": "Float"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -8466,7 +8254,7 @@
                                     "type": "float",
                                     "default-value": 1.0,
                                     "control": {
-                                        "name": "Float"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -8486,7 +8274,7 @@
                                             "CLAMP_TO_BORDER"
                                         ]
                                     },
-                                    "socket-type": "primitive",
+                                    "socket-type": "clone",
                                     "visible": false
                                 },
                                 "filter": {
@@ -8502,7 +8290,7 @@
                                             "linear"
                                         ]
                                     },
-                                    "socket-type": "primitive",
+                                    "socket-type": "clone",
                                     "visible": false
                                 },
                                 "borderColor": {
@@ -8514,7 +8302,7 @@
                                         0.0
                                     ],
                                     "control": {
-                                        "name": "Float Vector 3"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -8525,7 +8313,7 @@
                                     "type": "bool",
                                     "default-value": false,
                                     "control": {
-                                        "name": "Boolean"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -8536,7 +8324,7 @@
                                     "type": "bool",
                                     "default-value": false,
                                     "control": {
-                                        "name": "Boolean"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -8547,7 +8335,7 @@
                                     "type": "float",
                                     "default-value": 1.0,
                                     "control": {
-                                        "name": "Float"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -8558,7 +8346,7 @@
                                     "type": "float",
                                     "default-value": 0.0,
                                     "control": {
-                                        "name": "Float"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -8572,7 +8360,7 @@
                                         0.0
                                     ],
                                     "control": {
-                                        "name": "Float Vector 2"
+                                        "name": ""
                                     },
                                     "controlProps": null,
                                     "socket-type": "clone",
@@ -8583,7 +8371,7 @@
                             "object_outputs": {
                                 "outPrim": {
                                     "type": "geometry",
-                                    "socket-type": "output"
+                                    "socket-type": "clone"
                                 }
                             },
                             "uipos": [

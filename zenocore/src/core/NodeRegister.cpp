@@ -254,20 +254,28 @@ namespace zeno {
             const std::string& name = std::string(param_desc.name);
             ParamType type = param_desc.type;
             //TODO: constrain
-            if (type == _gParamType_IObject ||
-                type == _gParamType_Geometry ||
-                type == _gParamType_List ||
-                type == _gParamType_Dict ||
-                type == _gParamType_VDBGrid)
+            if (type == _gParamType_Bool ||
+                type == _gParamType_Int ||
+                type == _gParamType_Float ||
+                type == _gParamType_Double ||
+                type == _gParamType_String ||
+                type == _gParamType_Vec2i ||
+                type == _gParamType_Vec2f ||
+                type == _gParamType_Vec3i ||
+                type == _gParamType_Vec3f ||
+                type == _gParamType_Vec4i ||
+                type == _gParamType_Vec4f ||
+                type == _gParamType_Shader) //TODO: CurveData
             {
-                stddesc.inputs.emplace_back(std::move(ParamObject(name, type)));
-            }
-            else {
                 auto deflVal = zvalue2any(param_desc.defl);
                 deflVal = convertType(deflVal, type);
                 ParamControl ctrl = param_desc.control;
                 const auto& ctrlProp = zvalue2any(param_desc.ctrl_props);
                 stddesc.inputs.emplace_back(std::move(ParamPrimitive(name, type, deflVal, ctrl, ctrlProp, "", false)));
+            }
+            else {
+                //自定义插件的未知类型，必须视为Object而不是Primitive
+                stddesc.inputs.emplace_back(std::move(ParamObject(name, type)));
             }
         }
 
@@ -275,19 +283,27 @@ namespace zeno {
             const ZParamDescriptor& param_desc = *(desc.outputs + i);
             const std::string& name = std::string(param_desc.name);
             ParamType type = param_desc.type;
-            if (type == _gParamType_IObject ||
-                type == _gParamType_Geometry ||
-                type == _gParamType_List ||
-                type == _gParamType_Dict ||
-                type == _gParamType_VDBGrid)
+
+            if (type == _gParamType_Bool ||
+                type == _gParamType_Int ||
+                type == _gParamType_Float ||
+                type == _gParamType_Double ||
+                type == _gParamType_String ||
+                type == _gParamType_Vec2i ||
+                type == _gParamType_Vec2f ||
+                type == _gParamType_Vec3i ||
+                type == _gParamType_Vec3f ||
+                type == _gParamType_Vec4i ||
+                type == _gParamType_Vec4f ||
+                type == _gParamType_Shader) //TODO: CurveData
             {
-                stddesc.outputs.emplace_back(std::move(ParamObject(name, type)));
-            }
-            else {
                 const auto& deflVal = zvalue2any(param_desc.defl);
                 ParamControl ctrl = param_desc.control;
                 const auto& ctrlProp = zvalue2any(param_desc.ctrl_props);
                 stddesc.outputs.emplace_back(std::move(ParamPrimitive(name, type, deflVal, ctrl, ctrlProp, "", false)));
+            }
+            else {
+                stddesc.outputs.emplace_back(std::move(ParamObject(name, type)));
             }
         }
 

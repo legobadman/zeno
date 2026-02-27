@@ -201,6 +201,7 @@ namespace zeno {
         bool set_output_float(const char* param, float val) override;
         bool set_output_bool(const char* param, bool val) override;
         bool set_output_string(const char* param, const char* val) override;
+        bool set_output_string_list(const char* param, const char** vals, size_t count) override;
         bool set_output_vec2f(const char* param, Vec2f val) override;
         bool set_output_vec2i(const char* param, Vec2i val) override;
         bool set_output_vec3f(const char* param, Vec3f val) override;

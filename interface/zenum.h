@@ -139,6 +139,7 @@ struct node_ui_info {
 constexpr size_t _gParamType_IObject = 3738735455978425345;
 constexpr size_t _gParamType_Geometry = 15350417249981042258;
 constexpr size_t _gParamType_List = 13532050696470356290;
+constexpr size_t _gParamType_StringList = 8472269399861637118ULL;
 constexpr size_t _gParamType_Dict = 15211486920298196394;
 constexpr size_t _gParamType_VDBGrid = 234;
 constexpr size_t _gParamType_Bool = 15698046148323980066ULL;

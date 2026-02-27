@@ -179,6 +179,16 @@ namespace zeno {
             return pImplNode->type();
         }
         else {
+            //¿ÉÄÜÊÇasset
+            const auto& optSbnInfo = m_pNodeRepo->getSubnetInfo();
+            if (optSbnInfo.has_value() && optSbnInfo->isAssetsNode()) {
+                if (m_pNodeRepo->in_asset_file()) {
+                    return Node_AssetReference;
+                }
+                else {
+                    return Node_AssetInstance;
+                }
+            }
             return NoVersionNode;
         }
     }

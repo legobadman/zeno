@@ -851,7 +851,7 @@ ZNode* Graph::createNode(
                 this,
                 customUi);   //空壳
             pNode = upNode.get();
-            //pNode->initUuid(this, nodecls);
+            pNode->getNodeStatus().initUuid(this, nodecls);
             uuid = pNode->get_uuid();
         }
     }
@@ -894,6 +894,7 @@ ZNode* Graph::createNode(
     pNode->getNodeStatus().set_pos(pos);
     pNode->getNodeExecutor().mark_dirty(true);
     m_name2uuid[name] = uuid;
+    assert(!uuid.empty());
     m_nodes.insert(std::make_pair(uuid, std::move(upNode)));
 
     CALLBACK_NOTIFY(createNode, name, pNode)

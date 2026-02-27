@@ -1183,7 +1183,7 @@ struct ImageColor : INode2 {
 
     ZErrorCode apply(INodeData* ptrNodeData) override {
         const auto color = ptrNodeData->get_input2_vec4f("Color");
-        const auto size = ptrNodeData->get_input2_vec2i("Size");
+        const auto size = ptrNodeData->get_input2_vec2f("Size");
         const bool balpha = ptrNodeData->get_input2_bool("alpha");
         const int w = size.x;
         const int h = size.y;
@@ -1207,7 +1207,7 @@ struct ImageColor : INode2 {
 ZENDEFNODE_ABI(ImageColor,
     Z_INPUTS(
         {"Color", _gParamType_Vec4f, ZVec4f(1.0f, 1.0f, 1.0f, 1.0f)},
-        {"Size", _gParamType_Vec2i, ZVec2f(1024.0f, 1024.0f)},
+        {"Size", _gParamType_Vec2f, ZVec2f(1024.0f, 1024.0f)},
         {"alpha", _gParamType_Bool, ZInt(1)}
     ),
     Z_OUTPUTS(

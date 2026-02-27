@@ -2556,6 +2556,17 @@ namespace zeno {
         return set_primitive_output(param, zeno::reflect::Any(s));
     }
 
+    bool ZNodeParams::set_output_string_list(const char* param, const char** vals, size_t count)
+    {
+        if (!param) return false;
+        std::vector<std::string> out;
+        out.reserve(count);
+        for (size_t i = 0; i < count; ++i) {
+            out.emplace_back(vals && vals[i] ? vals[i] : "");
+        }
+        return set_primitive_output(param, zeno::reflect::Any(out));
+    }
+
     bool ZNodeParams::set_output_vec2f(const char* param, Vec2f val)
     {
         if (!param) return false;
