@@ -2404,7 +2404,7 @@ namespace zeno {
     IPrimitiveObject* ZNodeParams::get_input_PrimitiveObject(const char* param)
     {
         auto obj = get_input_object(param);
-        if (ZObj_Geometry == obj->type()) {
+        if (obj && ZObj_Geometry == obj->type()) {
             return static_cast<IPrimitiveObject*>(obj);
         }
         else {
@@ -2415,7 +2415,7 @@ namespace zeno {
     IGeometryObject* ZNodeParams::get_input_Geometry(const char* param)
     {
         auto obj = get_input_object(param);
-        if (ZObj_Geometry == obj->type()) {
+        if (obj && ZObj_Geometry == obj->type()) {
             return static_cast<IGeometryObject*>(obj);
         }
         else {
@@ -2426,7 +2426,7 @@ namespace zeno {
     IGeometryObject* ZNodeParams::clone_input_Geometry(const char* param)
     {
         auto obj = get_input_object(param);
-        if (ZObj_Geometry == obj->type()) {
+        if (obj && ZObj_Geometry == obj->type()) {
             return static_cast<IGeometryObject*>(obj->clone());
         }
         else {
@@ -2437,7 +2437,7 @@ namespace zeno {
     IListObject* ZNodeParams::get_input_ListObject(const char* param)
     {
         auto obj = get_input_object(param);
-        if (ZObj_List == obj->type()) {
+        if (obj && ZObj_List == obj->type()) {
             return static_cast<IListObject*>(obj);
         }
         else {

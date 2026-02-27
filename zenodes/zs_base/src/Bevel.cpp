@@ -43,11 +43,6 @@ struct Bevel : INode2 {
 //   Distance
 //     倒角的大小（从原始边/角到倒角面的位置距离）。
 //
-//   Offset Mode （Distance 或 Width）
-//     控制如何测量倒角尺寸：
-//       - Distance：从 cut-back 到原始角距离
-//       - Width：跨倒角平面测量
-//
 //   Divisions
 //     倒角面的细分行数（越大越圆滑）。
 //
@@ -77,12 +72,6 @@ ZENDEFNODE_ABI(Bevel,
         { "Input", _gParamType_Geometry },
 
         { "Distance", _gParamType_Float, ZFloat(0.1f) },
-
-        { "Offset Mode", _gParamType_String,
-            ZString("Distance"),
-            Combobox,
-            Z_STRING_ARRAY("Distance", "Width")
-        },
 
         { "Divisions", _gParamType_Int,
             ZInt(1),

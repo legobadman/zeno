@@ -266,7 +266,7 @@ namespace zenoui
                 ZComboBox *pComboBox = new ZComboBox;
                 pComboBox->setFixedHeight(ZenoStyle::dpiScaled(zenoui::g_ctrlHeight));
                 pComboBox->addItems(items);
-                pComboBox->setEditable(true);
+                pComboBox->setEditable(false);  //可编辑的情况操作很麻烦，还要找到下拉箭头
                 pComboBox->setCurrentText(text);
                 pComboBox->setItemDelegate(new ZComboBoxItemDelegate2(pComboBox));
 
