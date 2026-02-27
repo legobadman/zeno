@@ -254,7 +254,7 @@ if (WIN32)
     set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT zeno)
 endif ()
 
-add_subdirectory(projects)
+#add_subdirectory(projects)
 
 if (ZENO_BUILD_DESIGNER)
     message(STATUS "Building Zeno Designer")

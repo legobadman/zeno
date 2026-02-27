@@ -29,6 +29,8 @@ namespace zeno {
         ZObj_Light,
         ZObj_Camera,
         ZObj_Dummy,
+        ZObj_VDB,
+        ZObj_Image,
         ZObj_Define = 1000
     };
 
