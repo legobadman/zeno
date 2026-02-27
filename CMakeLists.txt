@@ -208,6 +208,10 @@ add_subdirectory(zenocore)
 add_subdirectory(customplugin)
 add_subdirectory(zenodes/zs_base)
 
+if (ZENO_WITH_ImgCV)
+    add_subdirectory(zenodes/zs_imgcv)
+endif()
+
 if (ZENO_WITH_BATCH)
     add_subdirectory(zenobatch)
 endif()
