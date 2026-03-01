@@ -314,15 +314,39 @@ namespace zeno
                     return varres;
                 }
                 else if (primtype == zeno::types::gParamType_Vec2f) {
-                    throw makeNodeError<UnimplError>(pContext->spNode->get_path());
+                    vec2f vec = zeno::reflect::any_cast<vec2f>(paramData.result);
+                    ZfxVariable varres;
+                    varres.value = std::vector<glm::vec2>{ glm::vec2(vec[0], vec[1]) };
+                    return varres;
+                }
+                else if (primtype == zeno::reflect::type_info<zeno::Vec2f>().hash_code()) {
+                    zeno::Vec2f vec = zeno::reflect::any_cast<zeno::Vec2f>(paramData.result);
+                    ZfxVariable varres;
+                    varres.value = std::vector<glm::vec2>{ glm::vec2(vec.x, vec.y) };
+                    return varres;
                 }
                 else if (primtype == zeno::types::gParamType_Vec2i) {
-                    throw makeNodeError<UnimplError>(pContext->spNode->get_path());
+                    vec2i vec = zeno::reflect::any_cast<vec2i>(paramData.result);
+                    ZfxVariable varres;
+                    varres.value = std::vector<glm::vec2>{ glm::vec2(vec[0], vec[1]) };
+                    return varres;
+                }
+                else if (primtype == zeno::reflect::type_info<zeno::Vec2i>().hash_code()) {
+                    zeno::Vec2i vec = zeno::reflect::any_cast<zeno::Vec2i>(paramData.result);
+                    ZfxVariable varres;
+                    varres.value = std::vector<glm::vec2>{ glm::vec2(static_cast<float>(vec.x), static_cast<float>(vec.y)) };
+                    return varres;
                 }
                 else if (primtype == zeno::types::gParamType_Vec3f) {
                     vec3f vec = zeno::reflect::any_cast<vec3f>(paramData.result);
                     ZfxVariable varres;
                     varres.value = std::vector<glm::vec3>{ glm::vec3(vec[0], vec[1], vec[2]) };
+                    return varres;
+                }
+                else if (primtype == zeno::reflect::type_info<zeno::Vec3f>().hash_code()) {
+                    zeno::Vec3f vec = zeno::reflect::any_cast<zeno::Vec3f>(paramData.result);
+                    ZfxVariable varres;
+                    varres.value = std::vector<glm::vec3>{ glm::vec3(vec.x, vec.y, vec.z) };
                     return varres;
                 }
                 else if (primtype == zeno::types::gParamType_Vec3i) {
@@ -331,11 +355,35 @@ namespace zeno
                     varres.value = std::vector<glm::vec3>{ glm::vec3(vec[0], vec[1], vec[2]) };
                     return varres;
                 }
+                else if (primtype == zeno::reflect::type_info<zeno::Vec3i>().hash_code()) {
+                    zeno::Vec3i vec = zeno::reflect::any_cast<zeno::Vec3i>(paramData.result);
+                    ZfxVariable varres;
+                    varres.value = std::vector<glm::vec3>{ glm::vec3(static_cast<float>(vec.x), static_cast<float>(vec.y), static_cast<float>(vec.z)) };
+                    return varres;
+                }
                 else if (primtype == zeno::types::gParamType_Vec4f) {
-                    throw makeNodeError<UnimplError>(pContext->spNode->get_path());
+                    vec4f vec = zeno::reflect::any_cast<vec4f>(paramData.result);
+                    ZfxVariable varres;
+                    varres.value = std::vector<glm::vec4>{ glm::vec4(vec[0], vec[1], vec[2], vec[3]) };
+                    return varres;
+                }
+                else if (primtype == zeno::reflect::type_info<zeno::Vec4f>().hash_code()) {
+                    zeno::Vec4f vec = zeno::reflect::any_cast<zeno::Vec4f>(paramData.result);
+                    ZfxVariable varres;
+                    varres.value = std::vector<glm::vec4>{ glm::vec4(vec.x, vec.y, vec.z, vec.w) };
+                    return varres;
                 }
                 else if (primtype == zeno::types::gParamType_Vec4i) {
-                    throw makeNodeError<UnimplError>(pContext->spNode->get_path());
+                    vec4i vec = zeno::reflect::any_cast<vec4i>(paramData.result);
+                    ZfxVariable varres;
+                    varres.value = std::vector<glm::vec4>{ glm::vec4(vec[0], vec[1], vec[2], vec[3]) };
+                    return varres;
+                }
+                else if (primtype == zeno::reflect::type_info<zeno::Vec4i>().hash_code()) {
+                    zeno::Vec4i vec = zeno::reflect::any_cast<zeno::Vec4i>(paramData.result);
+                    ZfxVariable varres;
+                    varres.value = std::vector<glm::vec4>{ glm::vec4(static_cast<float>(vec.x), static_cast<float>(vec.y), static_cast<float>(vec.z), static_cast<float>(vec.w)) };
+                    return varres;
                 }
                 else {
                     throw makeNodeError<UnimplError>(pContext->spNode->get_path());
@@ -380,8 +428,11 @@ namespace zeno
             }
             else if (items.size() == 2 &&
                 (paramData.type == zeno::types::gParamType_Vec2f || paramData.type == zeno::types::gParamType_Vec2i ||
+                    paramData.type == zeno::reflect::type_info<zeno::Vec2f>().hash_code() || paramData.type == zeno::reflect::type_info<zeno::Vec2i>().hash_code() ||
                     paramData.type == zeno::types::gParamType_Vec3f || paramData.type == zeno::types::gParamType_Vec3i ||
-                    paramData.type == zeno::types::gParamType_Vec4f || paramData.type == zeno::types::gParamType_Vec4i))
+                    paramData.type == zeno::reflect::type_info<zeno::Vec3f>().hash_code() || paramData.type == zeno::reflect::type_info<zeno::Vec3i>().hash_code() ||
+                    paramData.type == zeno::types::gParamType_Vec4f || paramData.type == zeno::types::gParamType_Vec4i ||
+                    paramData.type == zeno::reflect::type_info<zeno::Vec4f>().hash_code() || paramData.type == zeno::reflect::type_info<zeno::Vec4i>().hash_code()))
             {
                 if (items[1].size() != 1)
                     throw makeNodeError<UnimplError>(pContext->spNode->get_path());
@@ -406,28 +457,70 @@ namespace zeno
                 default:
                     throw makeNodeError<UnimplError>(pContext->spNode->get_path());
                 }
-                if (paramData.type == zeno::types::gParamType_Vec2f || paramData.type == zeno::types::gParamType_Vec2i) {
+                if (paramData.type == zeno::types::gParamType_Vec2f || paramData.type == zeno::types::gParamType_Vec2i ||
+                    paramData.type == zeno::reflect::type_info<zeno::Vec2f>().hash_code() || paramData.type == zeno::reflect::type_info<zeno::Vec2i>().hash_code()) {
                     if (idx < 2) {
-                        res_fval = paramData.type == zeno::types::gParamType_Vec2f ? any_cast<vec2f>(paramData.result)[idx] :
-                            any_cast<vec2i>(paramData.result)[idx];
+                        size_t resType = paramData.result.type().hash_code();
+                        if (resType == zeno::types::gParamType_Vec2f)
+                            res_fval = any_cast<vec2f>(paramData.result)[idx];
+                        else if (resType == zeno::reflect::type_info<zeno::Vec2f>().hash_code()) {
+                            auto v = any_cast<zeno::Vec2f>(paramData.result);
+                            res_fval = idx == 0 ? v.x : v.y;
+                        }
+                        else if (resType == zeno::types::gParamType_Vec2i)
+                            res_fval = static_cast<float>(any_cast<vec2i>(paramData.result)[idx]);
+                        else if (resType == zeno::reflect::type_info<zeno::Vec2i>().hash_code()) {
+                            auto v = any_cast<zeno::Vec2i>(paramData.result);
+                            res_fval = static_cast<float>(idx == 0 ? v.x : v.y);
+                        }
+                        else
+                            throw makeNodeError<UnimplError>(pContext->spNode->get_path());
                     }
                     else {
                         throw makeNodeError<UnimplError>(pContext->spNode->get_path());
                     }
                 }
-                if (paramData.type == zeno::types::gParamType_Vec3f || paramData.type == zeno::types::gParamType_Vec3i) {
+                else if (paramData.type == zeno::types::gParamType_Vec3f || paramData.type == zeno::types::gParamType_Vec3i ||
+                    paramData.type == zeno::reflect::type_info<zeno::Vec3f>().hash_code() || paramData.type == zeno::reflect::type_info<zeno::Vec3i>().hash_code()) {
                     if (idx < 3) {
-                        res_fval = paramData.type == zeno::types::gParamType_Vec3f ? any_cast<vec3f>(paramData.result)[idx] :
-                            any_cast<vec3i>(paramData.result)[idx];
+                        size_t resType = paramData.result.type().hash_code();
+                        if (resType == zeno::types::gParamType_Vec3f)
+                            res_fval = any_cast<vec3f>(paramData.result)[idx];
+                        else if (resType == zeno::reflect::type_info<zeno::Vec3f>().hash_code()) {
+                            auto v = any_cast<zeno::Vec3f>(paramData.result);
+                            res_fval = idx == 0 ? v.x : (idx == 1 ? v.y : v.z);
+                        }
+                        else if (resType == zeno::types::gParamType_Vec3i)
+                            res_fval = static_cast<float>(any_cast<vec3i>(paramData.result)[idx]);
+                        else if (resType == zeno::reflect::type_info<zeno::Vec3i>().hash_code()) {
+                            auto v = any_cast<zeno::Vec3i>(paramData.result);
+                            res_fval = static_cast<float>(idx == 0 ? v.x : (idx == 1 ? v.y : v.z));
+                        }
+                        else
+                            throw makeNodeError<UnimplError>(pContext->spNode->get_path());
                     }
                     else {
                         throw makeNodeError<UnimplError>(pContext->spNode->get_path());
                     }
                 }
-                if (paramData.type == zeno::types::gParamType_Vec4f || paramData.type == zeno::types::gParamType_Vec4i) {
+                else if (paramData.type == zeno::types::gParamType_Vec4f || paramData.type == zeno::types::gParamType_Vec4i ||
+                    paramData.type == zeno::reflect::type_info<zeno::Vec4f>().hash_code() || paramData.type == zeno::reflect::type_info<zeno::Vec4i>().hash_code()) {
                     if (idx < 4) {
-                        res_fval = paramData.type == zeno::types::gParamType_Vec4f ? any_cast<vec4f>(paramData.result)[idx] :
-                            any_cast<vec4i>(paramData.result)[idx];
+                        size_t resType = paramData.result.type().hash_code();
+                        if (resType == zeno::types::gParamType_Vec4f)
+                            res_fval = any_cast<vec4f>(paramData.result)[idx];
+                        else if (resType == zeno::reflect::type_info<zeno::Vec4f>().hash_code()) {
+                            auto v = any_cast<zeno::Vec4f>(paramData.result);
+                            res_fval = idx == 0 ? v.x : (idx == 1 ? v.y : (idx == 2 ? v.z : v.w));
+                        }
+                        else if (resType == zeno::types::gParamType_Vec4i)
+                            res_fval = static_cast<float>(any_cast<vec4i>(paramData.result)[idx]);
+                        else if (resType == zeno::reflect::type_info<zeno::Vec4i>().hash_code()) {
+                            auto v = any_cast<zeno::Vec4i>(paramData.result);
+                            res_fval = static_cast<float>(idx == 0 ? v.x : (idx == 1 ? v.y : (idx == 2 ? v.z : v.w)));
+                        }
+                        else
+                            throw makeNodeError<UnimplError>(pContext->spNode->get_path());
                     }
                     else {
                         throw makeNodeError<UnimplError>(pContext->spNode->get_path());
@@ -2361,48 +2454,74 @@ namespace zeno
                     throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"get nullptr obj from `" + objparam + "` when `getud` is called");
 
                 auto ud = targetObj->userData();
-                zeno::UserData* pUserData = static_cast<zeno::UserData*>(ud);
+                if (!ud)
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "getud: object has no userData");
+
+                auto* pUserData = dynamic_cast<zeno::UserData*>(ud);
+                if (!pUserData)
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "getud: userData is not zeno::UserData");
+
+                auto it = pUserData->m_data.find(key);
+                if (it == pUserData->m_data.end())
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "getud: key `" + key + "` not found");
+
+                const zeno::reflect::Any& obj = it->second;
+                if (!obj)
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "getud: value for key `" + key + "` is empty");
 
                 ZfxVariable ret;
-#if 0
-                auto spud = pUserData->m_data[key].get();
-                if (auto strobj = dynamic_cast<zeno::StringObject*>(spud)) {
-                    ret = initVarFromZvar(strobj->get());
+                try {
+                    const auto& t = obj.type();
+                    if (t == zeno::reflect::type_info<float>()) {
+                        ret = initVarFromZvar(zeno::reflect::any_cast<float>(obj));
+                    } else if (t == zeno::reflect::type_info<int>()) {
+                        ret = initVarFromZvar(zeno::reflect::any_cast<int>(obj));
+                    } else if (t == zeno::reflect::type_info<bool>()) {
+                        ret = initVarFromZvar(zeno::reflect::any_cast<bool>(obj));
+                    } else if (t == zeno::reflect::type_info<std::string>()) {
+                        ret = initVarFromZvar(zeno::reflect::any_cast<std::string>(obj));
+                    } else if (t == zeno::reflect::type_info<zeno::Vec2f>()) {
+                        const auto& v = zeno::reflect::any_cast<zeno::Vec2f>(obj);
+                        ret = initVarFromZvar(glm::vec2(v.x, v.y));
+                    } else if (t == zeno::reflect::type_info<zeno::Vec2i>()) {
+                        const auto& v = zeno::reflect::any_cast<zeno::Vec2i>(obj);
+                        ret = initVarFromZvar(glm::vec2(static_cast<float>(v.x), static_cast<float>(v.y)));
+                    } else if (t == zeno::reflect::type_info<zeno::Vec3f>()) {
+                        const auto& v = zeno::reflect::any_cast<zeno::Vec3f>(obj);
+                        ret = initVarFromZvar(glm::vec3(v.x, v.y, v.z));
+                    } else if (t == zeno::reflect::type_info<zeno::Vec3i>()) {
+                        const auto& v = zeno::reflect::any_cast<zeno::Vec3i>(obj);
+                        ret = initVarFromZvar(glm::vec3(static_cast<float>(v.x), static_cast<float>(v.y), static_cast<float>(v.z)));
+                    } else if (t == zeno::reflect::type_info<zeno::Vec4f>()) {
+                        const auto& v = zeno::reflect::any_cast<zeno::Vec4f>(obj);
+                        ret = initVarFromZvar(glm::vec4(v.x, v.y, v.z, v.w));
+                    } else if (t == zeno::reflect::type_info<zeno::Vec4i>()) {
+                        const auto& v = zeno::reflect::any_cast<zeno::Vec4i>(obj);
+                        ret = initVarFromZvar(glm::vec4(static_cast<float>(v.x), static_cast<float>(v.y), static_cast<float>(v.z), static_cast<float>(v.w)));
+                    } else if (t == zeno::reflect::type_info<zeno::vec2f>()) {
+                        const auto& v = zeno::reflect::any_cast<zeno::vec2f>(obj);
+                        ret = initVarFromZvar(glm::vec2(v[0], v[1]));
+                    } else if (t == zeno::reflect::type_info<zeno::vec2i>()) {
+                        const auto& v = zeno::reflect::any_cast<zeno::vec2i>(obj);
+                        ret = initVarFromZvar(glm::vec2(static_cast<float>(v[0]), static_cast<float>(v[1])));
+                    } else if (t == zeno::reflect::type_info<zeno::vec3f>()) {
+                        const auto& v = zeno::reflect::any_cast<zeno::vec3f>(obj);
+                        ret = initVarFromZvar(glm::vec3(v[0], v[1], v[2]));
+                    } else if (t == zeno::reflect::type_info<zeno::vec3i>()) {
+                        const auto& v = zeno::reflect::any_cast<zeno::vec3i>(obj);
+                        ret = initVarFromZvar(glm::vec3(static_cast<float>(v[0]), static_cast<float>(v[1]), static_cast<float>(v[2])));
+                    } else if (t == zeno::reflect::type_info<zeno::vec4f>()) {
+                        const auto& v = zeno::reflect::any_cast<zeno::vec4f>(obj);
+                        ret = initVarFromZvar(glm::vec4(v[0], v[1], v[2], v[3]));
+                    } else if (t == zeno::reflect::type_info<zeno::vec4i>()) {
+                        const auto& v = zeno::reflect::any_cast<zeno::vec4i>(obj);
+                        ret = initVarFromZvar(glm::vec4(static_cast<float>(v[0]), static_cast<float>(v[1]), static_cast<float>(v[2]), static_cast<float>(v[3])));
+                    } else {
+                        throw makeNodeError<UnimplError>(pContext->spNode->get_path(), "getud: unsupported type for key `" + key + "`");
+                    }
+                } catch (const std::exception& e) {
+                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(), std::string("getud: ") + e.what());
                 }
-                else if (auto numobj = dynamic_cast<zeno::NumericObject*>(spud)) {
-                    NumericValue val = numobj->value;
-                    std::visit([&](auto&& arg) {
-                        using T = std::decay_t<decltype(arg)>;
-                        if constexpr (std::is_same_v<T, int>) {
-                            ret = initVarFromZvar(arg);
-                        }
-                        else if constexpr (std::is_same_v<T, float>) {
-                            ret = initVarFromZvar(arg);
-                        }
-                        else if constexpr (std::is_same_v<T, zeno::vec2i>) {
-                            ret = initVarFromZvar(glm::vec2(arg[0], arg[1]));
-                        }
-                        else if constexpr (std::is_same_v<T, zeno::vec2f>) {
-                            ret = initVarFromZvar(glm::vec2(arg[0], arg[1]));
-                        }
-                        else if constexpr (std::is_same_v<T, zeno::vec3i>) {
-                            ret = initVarFromZvar(glm::vec3(arg[0], arg[1], arg[2]));
-                        }
-                        else if constexpr (std::is_same_v<T, zeno::vec3f>) {
-                            ret = initVarFromZvar(glm::vec3(arg[0], arg[1], arg[2]));
-                        }
-                        else if constexpr (std::is_same_v<T, zeno::vec4i>) {
-                            ret = initVarFromZvar(glm::vec4(arg[0], arg[1], arg[2], arg[3]));
-                        }
-                        else if constexpr (std::is_same_v<T, zeno::vec4f>) {
-                            ret = initVarFromZvar(glm::vec4(arg[0], arg[1], arg[2], arg[3]));
-                        }
-                        }, val);
-                }
-                else {
-                    throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"unknown type from userdata");
-                }
-#endif
                 return ret;
             }
             throw makeNodeError<UnimplError>(pContext->spNode->get_path(),"unknown function call `" + funcname + "`");

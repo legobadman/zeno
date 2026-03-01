@@ -1,4 +1,4 @@
-﻿#include "geometrymodel.h"
+#include "geometrymodel.h"
 #include <zeno/types/GeometryObject.h>
 #include <zeno/extra/SceneAssembler.h>
 #include "panel/zgeometryspreadsheet.h"
@@ -580,44 +580,44 @@ zeno::UserData* GeomUserDataModel::userData() const {
 QVariant GeomUserDataModel::userDataToString(const zeno::reflect::Any& object) const {
     if (!object)
         return QVariant();
-#if 0
-    if (zeno::objectIsLiterial<float>(object.get())) {
-        auto v = zeno::objectToLiterial<float>(object);
-        return QString::number(v);
+
+    const auto& t = object.type();
+    if (t == zeno::reflect::type_info<float>()) {
+        return QString::number(zeno::reflect::any_cast<float>(object));
     }
-    else if (zeno::objectIsLiterial<int>(object.get())) {
-        auto v = zeno::objectToLiterial<int>(object);
-        return QString::number(v);
+    if (t == zeno::reflect::type_info<int>()) {
+        return QString::number(zeno::reflect::any_cast<int>(object));
     }
-    else if (zeno::objectIsLiterial<zeno::vec2f>(object.get())) {
-        auto v = zeno::objectToLiterial<zeno::vec2f>(object);
-        return QString("%1, %2").arg(v[0]).arg(v[1]);
+    if (t == zeno::reflect::type_info<bool>()) {
+        return zeno::reflect::any_cast<bool>(object) ? QString("true") : QString("false");
     }
-    else if (zeno::objectIsLiterial<zeno::vec2i>(object.get())) {
-        auto v = zeno::objectToLiterial<zeno::vec2i>(object);
-        return QString("%1, %2").arg(v[0]).arg(v[1]);
+    if (t == zeno::reflect::type_info<zeno::Vec2f>()) {
+        const auto& v = zeno::reflect::any_cast<zeno::Vec2f>(object);
+        return QString("%1, %2").arg(v.x).arg(v.y);
     }
-    else if (zeno::objectIsLiterial<zeno::vec3f>(object.get())) {
-        auto v = zeno::objectToLiterial<zeno::vec3f>(object);
-        return QString("%1, %2, %3").arg(v[0]).arg(v[1]).arg(v[2]);
+    if (t == zeno::reflect::type_info<zeno::Vec2i>()) {
+        const auto& v = zeno::reflect::any_cast<zeno::Vec2i>(object);
+        return QString("%1, %2").arg(v.x).arg(v.y);
     }
-    else if (zeno::objectIsLiterial<zeno::vec3i>(object.get())) {
-        auto v = zeno::objectToLiterial<zeno::vec3i>(object);
-        return QString("%1, %2, %3").arg(v[0]).arg(v[1]).arg(v[2]);
+    if (t == zeno::reflect::type_info<zeno::Vec3f>()) {
+        const auto& v = zeno::reflect::any_cast<zeno::Vec3f>(object);
+        return QString("%1, %2, %3").arg(v.x).arg(v.y).arg(v.z);
     }
-    else if (zeno::objectIsLiterial<zeno::vec4f>(object.get())) {
-        auto v = zeno::objectToLiterial<zeno::vec4f>(object);
-        return QString("%1, %2, %3, %4").arg(v[0]).arg(v[1]).arg(v[2]).arg(v[3]);
+    if (t == zeno::reflect::type_info<zeno::Vec3i>()) {
+        const auto& v = zeno::reflect::any_cast<zeno::Vec3i>(object);
+        return QString("%1, %2, %3").arg(v.x).arg(v.y).arg(v.z);
     }
-    else if (zeno::objectIsLiterial<zeno::vec4i>(object.get())) {
-        auto v = zeno::objectToLiterial<zeno::vec4i>(object);
-        return QString("%1, %2, %3, %4").arg(v[0]).arg(v[1]).arg(v[2]).arg(v[3]);
+    if (t == zeno::reflect::type_info<zeno::Vec4f>()) {
+        const auto& v = zeno::reflect::any_cast<zeno::Vec4f>(object);
+        return QString("%1, %2, %3, %4").arg(v.x).arg(v.y).arg(v.z).arg(v.w);
     }
-    else if (zeno::objectIsLiterial<std::string>(object.get())) {
-        auto v = zeno::objectToLiterial<std::string>(object);
-        return QString(v.c_str());
+    if (t == zeno::reflect::type_info<zeno::Vec4i>()) {
+        const auto& v = zeno::reflect::any_cast<zeno::Vec4i>(object);
+        return QString("%1, %2, %3, %4").arg(v.x).arg(v.y).arg(v.z).arg(v.w);
     }
-#endif
+    if (t == zeno::reflect::type_info<std::string>()) {
+        return QString::fromStdString(zeno::reflect::any_cast<std::string>(object));
+    }
     return QVariant();
 }
 

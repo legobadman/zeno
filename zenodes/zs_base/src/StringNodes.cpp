@@ -26,31 +26,29 @@ struct GetStringFromList : INode2 {
     void clearCalcResults() override {}
 
     ZErrorCode apply(INodeData* nd) override {
-        auto* list = nd->get_input_ListObject("list");
-        if (!list) {
-            throw std::runtime_error("GetStringFromList: input `list` is null");
+        const size_t count = nd->get_input_string_list_count("list");
+        if (count == 0) {
+            throw std::runtime_error("GetStringFromList: input `list` is empty or null");
         }
 
         const int index = nd->get_input2_int("index");
         if (index < 0) {
             throw std::runtime_error("GetStringFromList: index must be non-negative");
         }
-
-        std::vector<char*> buf(list->size(), nullptr);
-        const size_t n = list->get_string_arr(buf.data(), buf.size());
-        if (static_cast<size_t>(index) >= n) {
+        if (static_cast<size_t>(index) >= count) {
             throw std::runtime_error("GetStringFromList: index out of range");
         }
 
-        const char* sval = buf[static_cast<size_t>(index)] ? buf[static_cast<size_t>(index)] : "";
-        nd->set_output_string("string", sval);
+        char buf[512] = {};
+        nd->get_input_string_list("list", static_cast<size_t>(index), buf, sizeof(buf));
+        nd->set_output_string("string", buf);
         return ZErr_OK;
     }
 };
 
 ZENDEFNODE_ABI(GetStringFromList,
     Z_INPUTS(
-        {"list", _gParamType_List},
+        {"list", _gParamType_StringList},
         {"index", _gParamType_Int, ZInt(0)}
     ),
     Z_OUTPUTS(

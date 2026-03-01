@@ -2483,6 +2483,57 @@ namespace zeno {
         return stdStr2charArr(str, ret, cap);
     }
 
+    size_t ZNodeParams::get_input_string_list_count(const char* param)
+    {
+        auto* list = get_input_ListObject(param);
+        if (list) {
+            return list->size();
+        }
+        auto it = m_inputPrims.find(param);
+        if (it != m_inputPrims.end()) {
+            const auto& anyVal = it->second.result;
+            size_t code = anyVal.type().hash_code();
+            if (code == zeno::types::gParamType_StringList) {
+                return zeno::reflect::any_cast<std::vector<std::string>>(anyVal).size();
+            }
+            if (code == zeno::reflect::type_info<zeno::ZsVector<zeno::String>>().hash_code()) {
+                return zeno::reflect::any_cast<zeno::ZsVector<zeno::String>>(anyVal).size();
+            }
+        }
+        return 0;
+    }
+
+    size_t ZNodeParams::get_input_string_list(const char* param, size_t index, char* buf, size_t cap)
+    {
+        auto* list = get_input_ListObject(param);
+        if (list) {
+            std::vector<char*> ptrs(list->size(), nullptr);
+            const size_t n = list->get_string_arr(ptrs.data(), ptrs.size());
+            if (index >= n || !buf || cap == 0) return 0;
+            const char* s = ptrs[index] ? ptrs[index] : "";
+            return stdStr2charArr(std::string(s), buf, cap);
+        }
+        auto it = m_inputPrims.find(param);
+        if (it != m_inputPrims.end()) {
+            const auto& anyVal = it->second.result;
+            size_t code = anyVal.type().hash_code();
+            std::string s;
+            if (code == zeno::types::gParamType_StringList) {
+                const auto& vec = zeno::reflect::any_cast<std::vector<std::string>>(anyVal);
+                if (index >= vec.size()) return 0;
+                s = vec[index];
+            } else if (code == zeno::reflect::type_info<zeno::ZsVector<zeno::String>>().hash_code()) {
+                const auto& zvec = zeno::reflect::any_cast<zeno::ZsVector<zeno::String>>(anyVal);
+                if (index >= zvec.size()) return 0;
+                s = zsString2Std(zvec[index]);
+            } else {
+                return 0;
+            }
+            return stdStr2charArr(s, buf, cap);
+        }
+        return 0;
+    }
+
     bool ZNodeParams::get_input2_bool(const char* param)
     {
         return any_cast<bool>(get_param_result(std::string(param)));
@@ -2499,27 +2550,45 @@ namespace zeno {
     }
 
     Vec2i ZNodeParams::get_input2_vec2i(const char* param) {
-        return toAbiVec2i(any_cast<vec2i>(get_param_result(zsString2Std(param))));
+        auto any = get_param_result(zsString2Std(param));
+        if (any.type() == zeno::reflect::type_info<Vec2i>())
+            return zeno::reflect::any_cast<Vec2i>(any);
+        return toAbiVec2i(zeno::reflect::any_cast<vec2i>(any));
     }
 
     Vec2f ZNodeParams::get_input2_vec2f(const char* param) {
-        return toAbiVec2f(any_cast<vec2f>(get_param_result(zsString2Std(param))));
+        auto any = get_param_result(zsString2Std(param));
+        if (any.type() == zeno::reflect::type_info<Vec2f>())
+            return zeno::reflect::any_cast<Vec2f>(any);
+        return toAbiVec2f(zeno::reflect::any_cast<vec2f>(any));
     }
 
     Vec3i ZNodeParams::get_input2_vec3i(const char* param) {
-        return toAbiVec3i(any_cast<vec3i>(get_param_result(zsString2Std(param))));
+        auto any = get_param_result(zsString2Std(param));
+        if (any.type() == zeno::reflect::type_info<Vec3i>())
+            return zeno::reflect::any_cast<Vec3i>(any);
+        return toAbiVec3i(zeno::reflect::any_cast<vec3i>(any));
     }
 
     Vec3f ZNodeParams::get_input2_vec3f(const char* param) {
-        return toAbiVec3f(any_cast<vec3f>(get_param_result(zsString2Std(param))));
+        auto any = get_param_result(zsString2Std(param));
+        if (any.type() == zeno::reflect::type_info<Vec3f>())
+            return zeno::reflect::any_cast<Vec3f>(any);
+        return toAbiVec3f(zeno::reflect::any_cast<vec3f>(any));
     }
 
     Vec4i ZNodeParams::get_input2_vec4i(const char* param) {
-        return toAbiVec4i(any_cast<vec4i>(get_param_result(zsString2Std(param))));
+        auto any = get_param_result(zsString2Std(param));
+        if (any.type() == zeno::reflect::type_info<Vec4i>())
+            return zeno::reflect::any_cast<Vec4i>(any);
+        return toAbiVec4i(zeno::reflect::any_cast<vec4i>(any));
     }
 
     Vec4f ZNodeParams::get_input2_vec4f(const char* param) {
-        return toAbiVec4f(any_cast<vec4f>(get_param_result(zsString2Std(param))));
+        auto any = get_param_result(zsString2Std(param));
+        if (any.type() == zeno::reflect::type_info<Vec4f>())
+            return zeno::reflect::any_cast<Vec4f>(any);
+        return toAbiVec4f(zeno::reflect::any_cast<vec4f>(any));
     }
 
     ZMat4 ZNodeParams::get_input2_mat4(const char* param) {
