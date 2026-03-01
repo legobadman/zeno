@@ -463,38 +463,33 @@ namespace zeno {
 
     void ZNodeExecutor::apply()
     {
-        if (m_upNode2) {
-            try {
-                if (m_pNodeRepo->is_subnet()) {
-                    subnet_apply();
-                }
-                else if (m_upNode2) {
-                    //这里属于core层面，可以抛异常，但节点不能抛，否则破坏二进制兼容
-                    ZErrorCode err = m_upNode2->apply(&m_pNodeRepo->getNodeParams());
-                    if (err != ZErr_OK) {
-                        auto err = getSession().globalState->get_report_error();
-                        //TODO: 细化各种错误
-                        throw makeNodeError<UnimplError>(get_path(m_pNodeRepo), err);
-                    }
-                }
+        try {
+            if (m_pNodeRepo->is_subnet()) {
+                subnet_apply();
             }
-            catch (ErrorException const& e) {
-                if (e.get_node_info().empty()) {
-                    throw ErrorException(get_path(m_pNodeRepo), e.getError());
+            else if (m_upNode2) {
+                //这里属于core层面，可以抛异常，但节点不能抛，否则破坏二进制兼容
+                ZErrorCode err = m_upNode2->apply(&m_pNodeRepo->getNodeParams());
+                if (err != ZErr_OK) {
+                    auto err = getSession().globalState->get_report_error();
+                    //TODO: 细化各种错误
+                    throw makeNodeError<UnimplError>(get_path(m_pNodeRepo), err);
                 }
-                else {
-                    throw e;
-                }
-            }
-            catch (std::exception const& e) {
-                std::string err = e.what();
-                throw makeNodeError<StdError>(get_path(m_pNodeRepo), std::current_exception());
-            }
-            catch (...) {
-                throw makeNodeError<UnimplError>(get_path(m_pNodeRepo), "unknown error");
             }
         }
-        else {
+        catch (ErrorException const& e) {
+            if (e.get_node_info().empty()) {
+                throw ErrorException(get_path(m_pNodeRepo), e.getError());
+            }
+            else {
+                throw e;
+            }
+        }
+        catch (std::exception const& e) {
+            std::string err = e.what();
+            throw makeNodeError<StdError>(get_path(m_pNodeRepo), std::current_exception());
+        }
+        catch (...) {
             throw makeNodeError<UnimplError>(get_path(m_pNodeRepo), "the node has been uninstalled");
         }
     }
@@ -529,7 +524,7 @@ namespace zeno {
         if (m_bypass) {
             m_pNodeRepo->getNodeStatus().set_name(node_name);
         }
-        if (node_name == "ForEachEnd6") {//}&& pContext->curr_iter == 1) {
+        if (node_name == "HF_maskByFeature1") {//}&& pContext->curr_iter == 1) {
             m_pNodeRepo->getNodeStatus().set_name(node_name);
         }
 #endif

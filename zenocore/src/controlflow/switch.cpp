@@ -91,16 +91,6 @@ namespace zeno
 
         NodeType type() const { return Node_Normal; }
         void clearCalcResults() {}
-        //void getIconResource(char* recv, size_t cap) {
-        //    const char* icon = ":/icons/node/switchif.svg";
-        //    strcpy(recv, icon);
-        //    recv[strlen(icon)] = '\0';
-        //}
-        //void getBackgroundClr(char* recv, size_t cap) {
-        //    const char* bg = "#CEFFB3";
-        //    strcpy(recv, bg);
-        //    recv[strlen(bg)] = '\0';
-        //}
         float time() const { return 1.0f; }
     };
 
@@ -115,7 +105,11 @@ namespace zeno
             {gParamType_IObject2, "Output"}
         },
         {},
-        {"flow"}
+        {"flow"},
+        "",
+        "",
+        ":/icons/node/switchif.svg",
+        "#CEFFB3"
     });
 
     struct SwitchBetween : INode2
@@ -173,19 +167,9 @@ namespace zeno
         }
 
         NodeType type() const {
-            return Node_SubgraphNode;
+            return Node_Normal;
         }
         void clearCalcResults() {}
-        //void getIconResource(char* recv, size_t cap) {
-        //    const char* icon = ":/icons/node/switch-between.svg";
-        //    strcpy(recv, icon);
-        //    recv[strlen(icon)] = '\0';
-        //}
-        //void getBackgroundClr(char* recv, size_t cap) {
-        //    const char* bg = "#CEFFB3";
-        //    strcpy(recv, bg);
-        //    recv[strlen(bg)] = '\0';
-        //}
         float time() const { return 1.0f; }
     };
 
@@ -213,6 +197,10 @@ namespace zeno
             {gParamType_IObject2, "Output"}
         },
         {},
-        {"flow"}
+        {"flow"},
+        "",
+        "",
+        ":/icons/node/switch-between.svg",
+        "#CEFFB3"
     });
 }
