@@ -30,14 +30,68 @@ void ZenoImagePanel::setObject(zeno::IObject2* pObject) {
     if (!pObject)
         return;
     auto ud = pObject->userData();
-    if (ud->get_int("isImage", 0) == 0 || ud->get_bool("isImage", false) == false) {
+    if (!ud || ud->get_int("isImage", 0) == 0 || ud->get_bool("isImage", false) == false) {
         return;
     }
     bool enableGamma = pGamma->checkState() == Qt::Checked;
+    int width = ud->get_int("w");
+    int height = ud->get_int("h");
+
+    if (pObject->type() == zeno::ZObj_Image) {
+        if (width <= 0 || height <= 0 || !image_view)
+            return;
+        int channels = ud->get_int("channels", 3);
+        const size_t pixelCount = static_cast<size_t>(width) * height * channels;
+        std::vector<float> pixels(pixelCount);
+        size_t got = ud->get_float_arr("pixels", pixels.data(), pixelCount);
+        if (got == 0)
+            return;
+        if (pMode->currentText() != "Alpha") {
+            auto index = std::map<QString, zeno::vec3i>{
+                {"RGB", {0, 1, 2}},
+                {"Red", {0, 0, 0}},
+                {"Green", {1, 1, 1}},
+                {"Blue", {2, 2, 2}},
+            }.at(pMode->currentText());
+            QImage img(width, height, QImage::Format_RGB32);
+            for (int i = 0; i < width * height; i++) {
+                int h = i / width;
+                int w = i % width;
+                float c[3] = {
+                    pixels[i * channels + (index[0] < channels ? index[0] : 0)],
+                    pixels[i * channels + (index[1] < channels ? index[1] : 0)],
+                    pixels[i * channels + (index[2] < channels ? index[2] : 0)]
+                };
+                if (enableGamma) {
+                    c[0] = zeno::pow(c[0], 1.0f / 2.2f);
+                    c[1] = zeno::pow(c[1], 1.0f / 2.2f);
+                    c[2] = zeno::pow(c[2], 1.0f / 2.2f);
+                }
+                int r = glm::clamp(int(c[0] * 255.99f), 0, 255);
+                int g = glm::clamp(int(c[1] * 255.99f), 0, 255);
+                int b = glm::clamp(int(c[2] * 255.99f), 0, 255);
+                img.setPixel(w, height - 1 - h, qRgb(r, g, b));
+            }
+            img = img.mirrored(true, false);
+            image_view->setImage(img);
+        } else if (pMode->currentText() == "Alpha" && channels >= 4) {
+            QImage img(width, height, QImage::Format_RGB32);
+            for (int i = 0; i < width * height; i++) {
+                int h = i / width;
+                int w = i % width;
+                float a = pixels[i * channels + 3];
+                int v = glm::clamp(int(a * 255.99f), 0, 255);
+                img.setPixel(w, height - 1 - h, qRgb(v, v, v));
+            }
+            img = img.mirrored(true, false);
+            image_view->setImage(img);
+        }
+        pStatusBar->setText(QString(zeno::format("width: {}, height: {}", width, height).c_str()));
+        return;
+    }
+
     if (auto geom = dynamic_cast<zeno::GeometryObject*>(pObject)) {
         auto obj = geom->toPrimitive();
-        int width = ud->get_int("w");
-        int height = ud->get_int("h");
         if (image_view) {
             if (pMode->currentText() != "Alpha") {
                 QImage img(width, height, QImage::Format_RGB32);
@@ -254,17 +308,43 @@ ZenoImagePanel::ZenoImagePanel(QWidget *parent) : QWidget(parent) {
         if (!spObject) return;
 
         auto ud = spObject->userData();
-        if (ud->get_int("isImage", 0) == 0 || ud->get_bool("isImage", false) == false) {
+        if (!ud || ud->get_int("isImage", 0) == 0 || ud->get_bool("isImage", false) == false) {
             return;
         }
         found = true;
-        if (auto geom = dynamic_cast<zeno::GeometryObject*>(spObject)) {
+        int width = ud->get_int("w");
+        int height = ud->get_int("h");
+        int w = int(zeno::clamp(x, 0, width - 1));
+        int h = int(zeno::clamp(y, 0, height - 1));
+        int i = (height - 1 - h) * width + w;
+
+        if (spObject->type() == zeno::ZObj_Image) {
+            int channels = ud->get_int("channels", 3);
+            std::vector<float> pixels(static_cast<size_t>(width) * height * channels);
+            size_t got = ud->get_float_arr("pixels", pixels.data(), pixels.size());
+            if (got > 0 && i * channels + 2 < static_cast<int>(got)) {
+                float c0 = pixels[i * channels + 0];
+                float c1 = pixels[i * channels + 1];
+                float c2 = pixels[i * channels + 2];
+                std::string info = zeno::format("width: {}, height: {}", width, height);
+                info += zeno::format(" | x: {:5}, y: {:5}", w, h);
+                if (channels >= 4) {
+                    float a = pixels[i * channels + 3];
+                    info += zeno::format(" | value: {}, {}, {}, {}",
+                        QString::number(c0, 'f', 6).toStdString(),
+                        QString::number(c1, 'f', 6).toStdString(),
+                        QString::number(c2, 'f', 6).toStdString(),
+                        QString::number(a, 'f', 6).toStdString());
+                } else {
+                    info += zeno::format(" | value: {}, {}, {}",
+                        QString::number(c0, 'f', 6).toStdString(),
+                        QString::number(c1, 'f', 6).toStdString(),
+                        QString::number(c2, 'f', 6).toStdString());
+                }
+                pStatusBar->setText(QString(info.c_str()));
+            }
+        } else if (auto geom = dynamic_cast<zeno::GeometryObject*>(spObject)) {
             auto obj = geom->toPrimitive();
-            int width = ud->get_int("w");
-            int height = ud->get_int("h");
-            int w = int(zeno::clamp(x, 0, width - 1));
-            int h = int(zeno::clamp(y, 0, height - 1));
-            int i = (height - 1 - h) * width + w;
             auto c = obj->verts[i];
             std::string info = zeno::format("width: {}, height: {}", width, height);
             info += zeno::format(" | x: {:5}, y: {:5}", w, h);
@@ -286,9 +366,7 @@ ZenoImagePanel::ZenoImagePanel(QWidget *parent) : QWidget(parent) {
                     QString::number(c[2], 'f', 6).toStdString()
                 );
             }
-
-            QString statusInfo = QString(info.c_str());
-            pStatusBar->setText(statusInfo);
+            pStatusBar->setText(QString(info.c_str()));
         }
 
     if (found == false) {

@@ -1009,6 +1009,8 @@ void ZenoGraphsEditor::onSearchItemClicked(const QModelIndex& index)
 {
     QString objId = index.data(QtRole::ROLE_NODE_NAME).toString();
     QString objpath = index.data(QtRole::ROLE_OBJPATH).toString();
+    if (objpath.isEmpty())
+        return;
     QStringList subgPath = objpath.split('/', Qt::SkipEmptyParts);
     subgPath.pop_back();
     ZASSERT_EXIT(!subgPath.isEmpty());

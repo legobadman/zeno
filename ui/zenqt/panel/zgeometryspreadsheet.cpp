@@ -1437,7 +1437,7 @@ void ZGeometrySpreadsheet::setGeometry(
     m_clone_obj = std::move(pObject);
     zeno::IObject2* ptrObject = m_clone_obj.get();
     const QString& nodename = nodeidx.data(QtRole::ROLE_NODE_NAME).toString();
-    bool isImage = m_clone_obj->userData()->has("isImage");
+    bool isImage = zeno::ZObj_Image == m_clone_obj->type();
 
     for (int i = 0; i < m_views->count(); i++) {
         QWidget* wid = m_views->widget(i);
@@ -1458,7 +1458,6 @@ void ZGeometrySpreadsheet::setGeometry(
             materialObjView->setMaterialObject(subgraph, nodeidx, materialObj, nodename);
         }
         else if (auto imagepanel = qobject_cast<ZenoImagePanel*>(wid)) {
-            auto geoObj = dynamic_cast<zeno::GeometryObject*>(m_clone_obj.get());
             if (isImage) {
                 imagepanel->setObject(m_clone_obj.get());
             }
