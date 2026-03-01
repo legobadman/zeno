@@ -55,6 +55,9 @@ struct IUserData2 {
     virtual void set_bool(const char* key, bool val = false) = 0;
     virtual bool has_bool(const char* key) const = 0;
 
+    /** Copy float array for key (e.g. "pixels"). Returns number of floats copied, 0 if key not found or not a float array. */
+    virtual size_t get_float_arr(const char* key, float* buf, size_t cap) const = 0;
+
     virtual void del(const char* key) = 0;
 };
 

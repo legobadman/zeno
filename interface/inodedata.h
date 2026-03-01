@@ -14,6 +14,8 @@ namespace zeno {
 		virtual int get_input2_int(const char* param) = 0;
 		virtual float get_input2_float(const char* param) = 0;
 		virtual int get_input2_string(const char* param, char* ret, size_t cap) = 0;
+		virtual size_t get_input_string_list_count(const char* param) = 0;
+		virtual size_t get_input_string_list(const char* param, size_t index, char* buf, size_t cap) = 0;
 		virtual bool get_input2_bool(const char* param) = 0;
 		virtual bool has_input(const char* param) = 0;
 		virtual bool has_link_input(const char* param) = 0;

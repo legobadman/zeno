@@ -70,7 +70,7 @@ ZENDEFNODE_ABI(PrimReduction,
         {"op", _gParamType_String, ZString("avg"), Combobox, Z_STRING_ARRAY("avg", "max", "min", "absmax")}
     ),
     Z_OUTPUTS(
-        {"result", _gParamType_Vec3f}
+        {"result", _gParamType_AnyNumeric}
     ),
     "primitive",
     "",

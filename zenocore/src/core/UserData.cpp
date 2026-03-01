@@ -1,5 +1,7 @@
 #include <zeno/types/UserData.h>
 #include <zeno/utils/helper.h>
+#include <cstring>
+#include <vector>
 
 namespace zeno
 {
@@ -44,7 +46,7 @@ namespace zeno
 
     bool UserData::has_int(const char* key) const {
         std::string skey(key);
-        return has<int>(skey);
+        return has<int>(skey) || has<float>(skey);  // float can be converted to int
     }
 
     float UserData::get_float(const char* key, float defl) const {
@@ -59,7 +61,7 @@ namespace zeno
 
     bool UserData::has_float(const char* key) const {
         std::string skey(key);
-        return has<float>(skey);
+        return has<float>(skey) || has<int>(skey);  // int can be converted to float
     }
 
     bool UserData::get_bool(const char* key, bool defl) const {
@@ -169,6 +171,19 @@ namespace zeno
 
     void UserData::del(const char* key) {
         m_data.erase(std::string(key));
+    }
+
+    size_t UserData::get_float_arr(const char* key, float* buf, size_t cap) const {
+        std::string skey(key);
+        if (!has<std::vector<float>>(skey)) {
+            return 0;
+        }
+        const auto& arr = get2<std::vector<float>>(skey);
+        const size_t copy = (arr.size() < cap) ? arr.size() : cap;
+        if (buf != nullptr && copy > 0) {
+            std::memcpy(buf, arr.data(), copy * sizeof(float));
+        }
+        return copy;
     }
 
     size_t UserData::size() const {

@@ -47,6 +47,7 @@ struct ZENO_API UserData : IUserData2 {
     Vec4i get_vec4i(const char* key) const override;
     void set_vec4f(const char* key, const Vec4f& vec) override;
     void set_vec4i(const char* key, const Vec4i& vec) override;
+    size_t get_float_arr(const char* key, float* buf, size_t cap) const override;
     void del(const char* key) override;
     size_t size() const override;
     bool has(std::string const& name) const;
@@ -74,7 +75,20 @@ struct ZENO_API UserData : IUserData2 {
             throw;
         }
         const zeno::reflect::Any& val = iter->second;
-        return zeno::reflect::any_cast<T>(val);
+        const auto& t = val.type();
+        if (t == zeno::reflect::type_info<T>()) {
+            return zeno::reflect::any_cast<T>(val);
+        }
+        if constexpr (std::is_same_v<T, int>) {
+            if (t == zeno::reflect::type_info<float>()) {
+                return static_cast<int>(zeno::reflect::any_cast<float>(val));
+            }
+        } else if constexpr (std::is_same_v<T, float>) {
+            if (t == zeno::reflect::type_info<int>()) {
+                return static_cast<float>(zeno::reflect::any_cast<int>(val));
+            }
+        }
+        return zeno::reflect::any_cast<T>(val);  // fallback: may throw
     }
 
     template <class T>
