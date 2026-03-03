@@ -2461,6 +2461,62 @@ namespace zeno {
         return res;
     }
 
+    bool ZNodeParams::has_input_int(const char* param) {
+        const auto& anyVal = get_param_result(std::string(param));
+        return anyVal.type().hash_code() == zeno::types::gParamType_Int;
+    }
+
+    bool ZNodeParams::has_input_float(const char* param) {
+        const auto& anyVal = get_param_result(std::string(param));
+        return anyVal.type().hash_code() == zeno::types::gParamType_Float;
+    }
+
+    bool ZNodeParams::has_input_string(const char* param) {
+        const auto& anyVal = get_param_result(std::string(param));
+        return anyVal.type().hash_code() == zeno::types::gParamType_String;
+    }
+
+    bool ZNodeParams::has_input_bool(const char* param) {
+        const auto& anyVal = get_param_result(std::string(param));
+        return anyVal.type().hash_code() == zeno::types::gParamType_Bool;
+    }
+
+    bool ZNodeParams::has_input_vec2f(const char* param) {
+        const auto& anyVal = get_param_result(std::string(param));
+        auto code = anyVal.type().hash_code();
+        return code == zeno::types::gParamType_Vec2f || code == zeno::types::gParamType_AbiVec2f;
+    }
+
+    bool ZNodeParams::has_input_vec2i(const char* param) {
+        const auto& anyVal = get_param_result(std::string(param));
+        auto code = anyVal.type().hash_code();
+        return code == zeno::types::gParamType_Vec2i || code == zeno::types::gParamType_AbiVec2i;
+    }
+
+    bool ZNodeParams::has_input_vec3f(const char* param) {
+        const auto& anyVal = get_param_result(std::string(param));
+        auto code = anyVal.type().hash_code();
+        return code == zeno::types::gParamType_Vec3f || code == zeno::types::gParamType_AbiVec3f;
+    }
+
+    bool ZNodeParams::has_input_vec3i(const char* param) {
+        const auto& anyVal = get_param_result(std::string(param));
+        auto code = anyVal.type().hash_code();
+        return code == zeno::types::gParamType_Vec3i || code == zeno::types::gParamType_AbiVec3f;
+    }
+
+    bool ZNodeParams::has_input_vec4f(const char* param) {
+        const auto& anyVal = get_param_result(std::string(param));
+        auto code = anyVal.type().hash_code();
+        return code == zeno::types::gParamType_Vec4f || code == zeno::types::gParamType_AbiVec4f;
+    }
+
+    bool ZNodeParams::has_input_vec4i(const char* param) {
+        const auto& anyVal = get_param_result(std::string(param));
+        auto code = anyVal.type().hash_code();
+        return code == zeno::types::gParamType_Vec4i || code == zeno::types::gParamType_AbiVec4i;
+    }
+
     float ZNodeParams::get_input2_float(const char* param)
     {
         const auto& anyVal = get_param_result(std::string(param));

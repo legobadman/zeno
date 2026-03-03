@@ -267,7 +267,8 @@ namespace zeno {
                 type == _gParamType_Vec4f ||
                 type == _gParamType_AnyNumeric ||
                 type == _gParamType_Shader ||
-                type == _gParamType_StringList) //TODO: CurveData
+                type == _gParamType_StringList ||
+                type == gParamType_Heatmap) //TODO: CurveData
             {
                 auto deflVal = zvalue2any(param_desc.defl);
                 deflVal = convertType(deflVal, type);
@@ -299,7 +300,8 @@ namespace zeno {
                 type == _gParamType_Vec4f ||
                 type == _gParamType_AnyNumeric ||
                 type == _gParamType_Shader ||
-                type == _gParamType_StringList) //TODO: CurveData
+                type == _gParamType_StringList ||
+                type == gParamType_Heatmap) //TODO: CurveData
             {
                 const auto& deflVal = zvalue2any(param_desc.defl);
                 ParamControl ctrl = param_desc.control;

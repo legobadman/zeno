@@ -12,11 +12,15 @@ namespace zeno {
 		virtual IGeometryObject* clone_input_Geometry(const char* param) = 0;
 		virtual IListObject* get_input_ListObject(const char* param) = 0;
 		virtual int get_input2_int(const char* param) = 0;
+		virtual bool has_input_int(const char* param) = 0;
 		virtual float get_input2_float(const char* param) = 0;
+		virtual bool has_input_float(const char* param) = 0;
 		virtual int get_input2_string(const char* param, char* ret, size_t cap) = 0;
+		virtual bool has_input_string(const char* param) = 0;
 		virtual size_t get_input_string_list_count(const char* param) = 0;
 		virtual size_t get_input_string_list(const char* param, size_t index, char* buf, size_t cap) = 0;
 		virtual bool get_input2_bool(const char* param) = 0;
+		virtual bool has_input_bool(const char* param) = 0;
 		virtual bool has_input(const char* param) = 0;
 		virtual bool has_link_input(const char* param) = 0;
 		virtual Vec2i get_input2_vec2i(const char* param) = 0;
@@ -38,6 +42,12 @@ namespace zeno {
 		virtual bool set_output_vec3i(const char* param, Vec3i val) = 0;
 		virtual bool set_output_vec4f(const char* param, Vec4f val) = 0;
 		virtual bool set_output_vec4i(const char* param, Vec4i val) = 0;
+		virtual bool has_input_vec2f(const char* param) = 0;
+		virtual bool has_input_vec2i(const char* param) = 0;
+		virtual bool has_input_vec3f(const char* param) = 0;
+		virtual bool has_input_vec3i(const char* param) = 0;
+		virtual bool has_input_vec4f(const char* param) = 0;
+		virtual bool has_input_vec4i(const char* param) = 0;
 		virtual int GetFrameId() const = 0;
 		virtual void report_error(const char* error_info) = 0;
 	};

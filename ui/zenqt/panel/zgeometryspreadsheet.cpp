@@ -10,6 +10,7 @@
 #include "zassert.h"
 #include "style/zenostyle.h"
 #include <zeno/extra/SceneAssembler.h>
+#include <zeno/utils/helper.h>
 #include "zenoimagepanel.h"
 
 

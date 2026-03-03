@@ -11,11 +11,12 @@
 namespace zeno {
 
 struct EmissionPass;
+class ZNodeParams;
 
 struct ShaderNode : INode2 {
     ZENO_API virtual ZErrorCode apply(INodeData* pNodeData) override;
-    ZENO_API virtual int determineType(EmissionPass *em) = 0;
-    ZENO_API virtual void emitCode(EmissionPass *em) = 0;
+    ZENO_API virtual int determineType(EmissionPass *em, ZNodeParams* params) = 0;
+    ZENO_API virtual void emitCode(EmissionPass *em, ZNodeParams* params) = 0;
     ZENO_API virtual std::shared_ptr<ShaderNode> clone() const = 0;
 
     ZENO_API ShaderNode();
@@ -81,6 +82,7 @@ struct EmissionPass {
     struct VarInfo {
         int type;
         ShaderNode *node;
+        ZNodeParams* params;
     };
 
     struct CommonFunc {

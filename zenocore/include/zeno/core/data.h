@@ -322,6 +322,16 @@ namespace zeno {
             return rhs.facs == facs && rhs.colors == colors;
         }
 
+        zeno::vec3f interp(float x) const {
+            if (colors.empty()) return zeno::vec3f(0, 0, 0);
+            x = std::max(0.f, std::min(1.f, x));
+            float t = x * (colors.size() - 1);
+            int i = (int)std::floor(t);
+            if (i >= (int)colors.size() - 1) return colors.back();
+            float f = t - i;
+            return zeno::mix(colors[i], colors[i + 1], f);
+        }
+
         std::vector<zeno::vec3f> toVecColors(int nres) const {
             std::vector<zeno::vec3f> clrs;
             for (int i = 0; i < nres; i++) {

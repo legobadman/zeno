@@ -3,7 +3,6 @@
 
 #include <zeno/core/coredata.h>
 #include <zeno/types/PrimitiveObject.h>
-#include <zeno/types/HeatmapObject.h>
 //abi兼容（除了PrimitiveObject...)
 
 namespace zeno

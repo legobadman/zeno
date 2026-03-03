@@ -15,7 +15,6 @@
 #include <zeno/extra/GlobalComm.h>
 #include "zenoapplication.h"
 #include "zenomainwindow.h"
-#include <zeno/types/HeatmapObject.h>
 #include <zeno/extra/GlobalError.h>
 #include <zeno/core/Session.h>
 #include <filesystem>

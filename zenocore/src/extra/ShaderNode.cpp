@@ -1,5 +1,6 @@
 #include <zeno/zeno.h>
 #include <zeno/extra/ShaderNode.h>
+#include <zeno/core/ZNodeParams.h>
 #include <zeno/types/ShaderObject.h>
 #include <zeno/utils/type_traits.h>
 #include <zeno/core/ZNode.h>
@@ -30,7 +31,7 @@ ZENO_API ZErrorCode ShaderNode::apply(INodeData* pNodeData) {
 ZENO_API std::string EmissionPass::finalizeCode() {
     auto defs = collectDefs();
     for (auto const &var: variables) {
-        var.node->emitCode(this);
+        var.node->emitCode(this, var.params);
     }
     translateCommonCode();
     auto code = collectCode();
@@ -72,9 +73,10 @@ ZENO_API int EmissionPass::determineType(const ShaderData& shader) {
         ShaderNode* treenode = dynamic_cast<ShaderNode*>(pNode->getNodeExecutor().coreNode());
         if (auto it = varmap.find(treenode); it != varmap.end())
             return variables.at(it->second).type;
-        int type = treenode->determineType(this);
+        auto* nodeParams = &pNode->getNodeParams();
+        int type = treenode->determineType(this, nodeParams);
         varmap[treenode] = variables.size();
-        variables.push_back(VarInfo{ type, treenode });
+        variables.push_back(VarInfo{ type, treenode, nodeParams });
         return type;
     }
 }

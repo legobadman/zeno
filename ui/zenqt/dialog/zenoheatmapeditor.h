@@ -8,7 +8,6 @@ namespace Ui
 
 #include <QtWidgets>
 #include <uicommon.h>
-#include <zeno/types/HeatmapObject.h>
 
 class ZenoRampBar;
 

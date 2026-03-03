@@ -5,6 +5,7 @@
 #include <zeno/types/UserData.h>
 #include <zeno/types/ListObject_impl.h>
 #include <zeno/extra/SceneAssembler.h>
+#include <zeno/utils/helper.h>
 #include <zeno/utils/MapStablizer.h>
 #include <zeno/utils/PolymorphicMap.h>
 #include <zeno/utils/log.h>

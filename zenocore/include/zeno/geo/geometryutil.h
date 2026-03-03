@@ -4,6 +4,7 @@
 #include <vector>
 #include <tuple>
 #include <array>
+#include <optional>
 #include <zeno/types/ListObject.h>
 #include <zeno/types/GeometryObject.h>
 #include <iobject2.h>
@@ -32,6 +33,7 @@ namespace zeno
 
     ZENO_API std::pair<vec3f, vec3f> GetGeomBoundingBox(GeometryObject* geo);
     ZENO_API bool geomBoundingBox(IGeometryObject* geo, Vec3f& bbmin, Vec3f& bbmax);
+    std::optional<std::pair<vec3f, vec3f>> geomBoundingBox2(GeometryObject* geo);
     //ZENO_EXPORT IGeometryObject* __cdecl mergeObjects(
     //    IListObject* spList,
     //    const char* tagAttr,

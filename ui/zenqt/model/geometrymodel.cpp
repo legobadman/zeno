@@ -1,6 +1,7 @@
 #include "geometrymodel.h"
 #include <zeno/types/GeometryObject.h>
 #include <zeno/extra/SceneAssembler.h>
+#include <zeno_types/reflect/reflection.generated.hpp>
 #include "panel/zgeometryspreadsheet.h"
 
 

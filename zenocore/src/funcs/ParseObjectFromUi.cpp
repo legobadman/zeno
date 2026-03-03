@@ -1,5 +1,4 @@
 #include <zeno/funcs/ParseObjectFromUi.h>
-#include <zeno/types/HeatmapObject.h>
 #include <zeno/utils/string.h>
 
 namespace zeno {
