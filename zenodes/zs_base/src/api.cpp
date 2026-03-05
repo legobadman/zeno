@@ -154,4 +154,22 @@ namespace zeno {
         //TODO:
 #endif
 	}
+
+    IListObject* createList()
+    {
+#ifdef _WIN32
+        HMODULE hDll = ::LoadLibrary("zenocore.dll");
+        if (hDll == INVALID_HANDLE_VALUE || hDll == 0) {
+            return nullptr;
+        }
+        using fnCreateList = IListObject* (__cdecl*)();
+        auto fCall = (fnCreateList)GetProcAddress(hDll, "createList");
+        if (fCall) {
+            return fCall();
+        }
+#else
+        //TODO:
+#endif
+        return nullptr;
+    }
 }

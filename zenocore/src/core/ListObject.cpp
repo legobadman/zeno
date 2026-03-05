@@ -143,4 +143,10 @@ namespace zeno
         }
         return pList;
     }
+
+    // DLL 导出：创建空的 IListObject（ListObject 实例）。
+    ZENO_EXPORT zeno::IListObject* __cdecl createList()
+    {
+        return new ListObject();
+    }
 }

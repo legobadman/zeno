@@ -32,4 +32,7 @@ namespace zeno {
         , vec3f translate
         , vec4f rotation
         , vec3f scaling);
+
+    // Wrapper for zenocore.dll ListObject factory (createList).
+    IListObject* createList();
 }

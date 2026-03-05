@@ -1,3 +1,4 @@
+#if 0
 #include <zeno/zeno.h>
 #include <zeno/types/PrimitiveObject.h>
 #include <zeno/types/NumericObject.h>
@@ -537,3 +538,4 @@ ZENDEFNODE(ReadVATFile, {
 });
 
 } // namespace zeno
+#endif

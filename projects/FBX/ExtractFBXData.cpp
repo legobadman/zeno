@@ -1,3 +1,4 @@
+#if 0
 #include <zeno/zeno.h>
 #include <zeno/utils/logger.h>
 #include <zeno/extra/GlobalState.h>
@@ -378,3 +379,4 @@ ZENDEFNODE(ExchangeFBXData,
            });
 
 }
+#endif

@@ -4,8 +4,7 @@ add_library(zs_fbx SHARED ${FBX_SOURCE})
 
 zeno_disable_warning(${FBX_SOURCE})
 target_include_directories(zs_fbx PRIVATE .)
-target_include_directories(zs_fbx PRIVATE ../../zenovis/stbi/include)
-target_include_directories(zs_fbx PRIVATE ../../ui/include)
+target_include_directories(zs_fbx PRIVATE ${PROJECT_SOURCE_DIR}/interface)
 
 set(ASSIMP_BUILD_ALL_EXPORTERS_BY_DEFAULT FALSE CACHE BOOL "GUN TMD ASS" FORCE)
 set(ASSIMP_BUILD_ALL_IMPORTERS_BY_DEFAULT FALSE CACHE BOOL "GUN TMD ASS" FORCE)
@@ -13,7 +12,7 @@ set(ASSIMP_BUILD_FBX_IMPORTER TRUE CACHE BOOL "CIHOU FBX" FORCE)
 set(ASSIMP_BUILD_STL_IMPORTER TRUE CACHE BOOL "CIHOU FBX" FORCE)
 set(ASSIMP_BUILD_FBX_EXPORTER TRUE CACHE BOOL "CIHOU FBX" FORCE)
 add_subdirectory(assimp)
-target_link_libraries(zs_fbx PRIVATE zenocore assimp)
+target_link_libraries(zs_fbx PRIVATE assimp)
 
 #find_package(assimp CONFIG REQUIRED)
 #target_link_libraries(zs_fbx PRIVATE assimp::assimp)

@@ -1,3 +1,4 @@
+#if 0
 #include <utility>
 #include <zeno/zeno.h>
 #include <zeno/types/CameraObject.h>
@@ -708,3 +709,4 @@ struct LiveCameraNode : INode{
 
 }
 }
+#endif

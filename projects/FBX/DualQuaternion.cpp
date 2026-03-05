@@ -1,3 +1,4 @@
+#if 0
 #include "DualQuaternion.h"
 #include <cmath>
 #include <zeno/utils/bit_operations.h>
@@ -129,3 +130,4 @@ zeno::vec3f transformVector(const DualQuaternion& dq, const zeno::vec3f& v) {
 zeno::vec3f transformPoint2(const DualQuaternion& dq, const zeno::vec3f& v) {
     return zeno::bit_cast<zeno::vec3f>(transformPoint2(dq, zeno::bit_cast<glm::vec3>(v)));
 }
+#endif

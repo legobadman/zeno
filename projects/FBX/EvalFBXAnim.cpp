@@ -1,3 +1,4 @@
+#if 0
 #include <zeno/zeno.h>
 #include <zeno/utils/logger.h>
 #include <zeno/utils/safe_dynamic_cast.h>
@@ -748,3 +749,4 @@ ZENDEFNODE(EvalFBXAnim,
            });
 
 }
+#endif

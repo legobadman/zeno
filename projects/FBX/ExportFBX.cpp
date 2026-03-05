@@ -1,3 +1,4 @@
+#if 0
 #include <zeno/zeno.h>
 #include <zeno/core/IObject.h>
 #include <zeno/types/StringObject.h>
@@ -81,3 +82,4 @@ ZENDEFNODE(ExportFBX,
            });
 
 }
+#endif

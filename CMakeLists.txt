@@ -212,6 +212,10 @@ if (ZENO_WITH_ImgCV)
     add_subdirectory(zenodes/zs_imgcv)
 endif()
 
+if (ZENO_WITH_FBX)
+    add_subdirectory(projects/FBX)
+endif()
+
 if (ZENO_WITH_BATCH)
     add_subdirectory(zenobatch)
 endif()
