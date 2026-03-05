@@ -2008,7 +2008,7 @@ namespace zeno {
                 auto newObj = clone_by_key(spObject.get(), prefix);
                 newList->m_objects.push_back(std::move(newObj));
             }
-            return newList;
+            return zany2(newList.release());
         }
         else {
             auto spClonedObj = pObject->clone();

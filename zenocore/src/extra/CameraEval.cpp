@@ -70,7 +70,7 @@ struct CameraEval : INode2 {
             IObject2* obj = listObj->get(i);
             auto* cam = dynamic_cast<CameraObject*>(obj);
             if (cam)
-                nodelist.push_back(safe_uniqueptr_cast<CameraObject>(zany2(cam->clone())));
+                nodelist.push_back(std::unique_ptr<CameraObject>(static_cast<CameraObject*>(cam->clone())));
         }
 
         std::sort(nodelist.begin(), nodelist.end(), [](const auto& a, const auto& b) {

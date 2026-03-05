@@ -68,7 +68,7 @@ struct MeshObject : IObject2 {
       return &m_userDat;
   }
   void Delete() override {
-      //delete this;
+      delete this;
   }
 private:
     std::string m_key;

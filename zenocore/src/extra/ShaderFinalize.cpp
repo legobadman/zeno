@@ -187,14 +187,14 @@ struct ShaderFinalize : INode2 {
                 for (size_t i = 0; i < tex2dList->size(); i++) {
                     IObject2* obj = tex2dList->get(i);
                     if (auto* tex = dynamic_cast<Texture2DObject*>(obj)) {
-                        em.tex2Ds.push_back(safe_uniqueptr_cast<Texture2DObject>(zany2(tex->clone())));
+                        em.tex2Ds.push_back(std::unique_ptr<Texture2DObject>(static_cast<Texture2DObject*>(tex->clone())));
                     }
                 }
             }
         }
         if (!em.tex2Ds.empty()) {
             for (const auto& tex : em.tex2Ds) {
-                mtl->tex2Ds.push_back(safe_uniqueptr_cast<Texture2DObject>(zany2(tex->clone())));
+                mtl->tex2Ds.push_back(std::unique_ptr<Texture2DObject>(static_cast<Texture2DObject*>(tex->clone())));
             }
             auto texCode = "uniform sampler2D zenotex[32]; \n";
             mtl->common.insert(0, texCode);

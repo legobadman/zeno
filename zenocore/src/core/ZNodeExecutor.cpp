@@ -857,11 +857,11 @@ namespace zeno {
                     //上游已经算好了，但当前的输入没有建立缓存，就得从上游拷贝一下
                     if (in_param->spObject) {
                         //相当于转一次又给回外面。。。
-                        spList = safe_uniqueptr_cast<ListObject>(std::move(in_param->spObject));
+                        spList = safe_uniqueptr_cast<ListObject>(std::move(std::unique_ptr<IObject2>(in_param->spObject.release())));
                     }
                     else {
                         //outNode已经算好了，直接拿应该不会导致race condition
-                        spList = safe_uniqueptr_cast<ListObject>(zany2(out_param->spObject->clone()));
+                        spList = std::unique_ptr<ListObject>(static_cast<ListObject*>(out_param->spObject.release()));
                         //新的list，这里全部内容都要登记到new_added.
                         list_register_all_items(spList.get());
                         spList->update_key(get_object_key(out_param->spObject).c_str());
@@ -1303,7 +1303,7 @@ namespace zeno {
         //resolve all dependencys for input params
         for (auto& [name, param] : _inputObjs) {
             if (param.type == gParamType_List) {
-                param.spObject = processList(&param, pContext);
+                param.spObject = zany2(processList(&param, pContext).release());
             }
             else {
                 if (param.links.size() == 1) {
@@ -1599,7 +1599,7 @@ namespace zeno {
                     assert(ret);
                 }
                 else {
-                    subinput->getNodeParams().set_output("port", std::make_unique<DummyObject>());
+                    subinput->getNodeParams().set_output_object("port", new DummyObject);
                     subinput->getNodeParams().set_output_bool("hasValue", false);
                 }
             }

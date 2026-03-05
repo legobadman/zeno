@@ -145,7 +145,7 @@ namespace zeno {
         }
 
         if (bConvertHalfEdge && spGeom) {
-            pCtx->spObject = spGeom->toIndiceMeshesTopo();
+            pCtx->spObject = zany2(spGeom->toIndiceMeshesTopo().release());
         }
     }
 

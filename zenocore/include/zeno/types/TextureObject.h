@@ -154,7 +154,7 @@ namespace zeno
             return &m_userDat;
         }
         void Delete() override {
-            //delete this;
+            delete this;
         }
     private:
         std::string m_key;
@@ -278,7 +278,7 @@ namespace zeno
             return &m_userDat;
         }
         void Delete() override {
-            //delete this;
+            delete this;
         }
     private:
         std::string m_key;

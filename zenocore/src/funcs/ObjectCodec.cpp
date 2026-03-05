@@ -59,7 +59,8 @@ static zany2 _decodeObjectImpl(const char *buf, size_t len) {
 
 #define _PER_OBJECT_TYPE(TypeName, ...) \
     } else if (header.type == ObjectType::TypeName) { \
-        return decode##TypeName(it);
+        auto uniptr_derived = decode##TypeName(it); \
+        return zany2(uniptr_derived.release());
 ZENO_XMACRO_IObject(_PER_OBJECT_TYPE)
 #undef _PER_OBJECT_TYPE
 

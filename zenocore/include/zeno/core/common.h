@@ -227,7 +227,12 @@ namespace zeno {
         Reload_Calculation,     //由于标脏计算引发的load
     };
 
-    using zany2 = std::unique_ptr<zeno::IObject2>;
+    struct IObject2Deleter {
+        void operator()(zeno::IObject2* p) const {
+            if (p) p->Delete();
+        }
+    };
+    using zany2 = std::unique_ptr<zeno::IObject2, IObject2Deleter>;
 }
 
 
