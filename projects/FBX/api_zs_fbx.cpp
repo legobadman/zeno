@@ -3,7 +3,7 @@
 #include <Windows.h>
 #include <cstring>
 
-namespace zeno::zs_fbx {
+namespace zeno {
 
 namespace {
 
@@ -108,5 +108,5 @@ IListObject* createList()
     return nullptr;
 }
 
-} // namespace zeno::zs_fbx
+} // namespace zeno
 

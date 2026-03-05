@@ -155,6 +155,7 @@ constexpr size_t _gParamType_Vec4i = 724601356907542639ULL;
 constexpr size_t _gParamType_Vec4f = 5986645728587245802ULL;
 constexpr size_t _gParamType_Shader = 5880748608921663691ULL;
 constexpr size_t _gParamType_AnyNumeric = 236;
+constexpr size_t _gParamType_FBXObject = 239;
 
 
 typedef enum ZValueType {

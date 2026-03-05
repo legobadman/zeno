@@ -375,6 +375,24 @@ namespace zeno
         return n;
     }
 
+    size_t GeometryObject::get_int_attr(
+        GeoAttrGroup grp,
+        const char* attr_name,
+        int* buf,
+        size_t buf_size
+    )
+    {
+        auto vec = get_attrs<int>(grp, attr_name);
+        size_t n = vec.size();
+
+        if (buf && buf_size > 0) {
+            size_t copy = (n < buf_size) ? n : buf_size;
+            memcpy(buf, vec.data(), copy * sizeof(int));
+        }
+
+        return n;
+    }
+
     size_t GeometryObject::get_vec3f_attr(
         GeoAttrGroup grp,
         const char* attr_name,
@@ -776,6 +794,22 @@ namespace zeno
             return -1;
 
         std::vector<float> vec(arr, arr + size);
+
+        AttrVar var = std::move(vec);
+        return create_attr(grp, std::string(attr_name), var);
+    }
+
+    int GeometryObject::create_attr_by_int(
+        GeoAttrGroup grp,
+        const char* attr_name,
+        const int* arr,
+        size_t size
+    )
+    {
+        if (!attr_name || !arr || size == 0)
+            return -1;
+
+        std::vector<int> vec(arr, arr + size);
 
         AttrVar var = std::move(vec);
         return create_attr(grp, std::string(attr_name), var);

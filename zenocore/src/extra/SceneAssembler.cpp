@@ -333,11 +333,19 @@ struct FormSceneTree : INode2 {
     ZErrorCode apply(INodeData* nd) override {
         auto* params = static_cast<ZNodeParams*>(nd);
         auto sceneTree = std::make_unique<SceneObject>();
-        auto* sceneJsonObj = nd->get_input_object("Scene Info");
-        auto* scene_json = dynamic_cast<JsonObject*>(sceneJsonObj);
-        if (!scene_json) {
-            nd->report_error("FormSceneTree: Scene Info must be JsonObject");
-            return ZErr_UnimplError;
+
+        // Scene Info is now a JSON string; parse it into Json.
+        std::string scene_info_str = get_input2_string_helper(nd, "Scene Info");
+        if (scene_info_str.empty()) {
+            nd->report_error("FormSceneTree: Scene Info is empty");
+            return ZErr_ParamError;
+        }
+        Json scene_json;
+        try {
+            scene_json = Json::parse(scene_info_str);
+        } catch (...) {
+            nd->report_error("FormSceneTree: Scene Info must be valid JSON string");
+            return ZErr_ParamError;
         }
         sceneTree->root_name = "/ABC";
         auto* prim_geom_list = nd->get_input_ListObject("Geometry List");
@@ -365,7 +373,7 @@ struct FormSceneTree : INode2 {
                 }
             }
         }
-        get_local_matrix_map(scene_json->json, "", sceneTree.get());
+        get_local_matrix_map(scene_json, "", sceneTree.get());
         if (nd->get_input2_bool("flattened")) {
             sceneTree->flatten();
         }
@@ -375,7 +383,7 @@ struct FormSceneTree : INode2 {
 };
 
 ZENDEFNODE(FormSceneTree, {
-    {{gParamType_JsonObject, "Scene Info"}, {gParamType_List, "Geometry List"}, {gParamType_Bool, "flattened", "1"}},
+    {{gParamType_String, "Scene Info"}, {gParamType_List, "Geometry List"}, {gParamType_Bool, "flattened", "1"}},
     {{gParamType_Scene, "scene"}},
     {},
     {"Scene"}

@@ -7396,8 +7396,8 @@
                             },
                             "object_outputs": {},
                             "uipos": [
-                                0.0,
-                                0.0
+                                -771.0,
+                                -494.0
                             ],
                             "status": [],
                             "collasped": false
@@ -7652,8 +7652,8 @@
                             },
                             "object_outputs": {},
                             "uipos": [
-                                0.0,
-                                0.0
+                                -840.0,
+                                218.0
                             ],
                             "status": [],
                             "collasped": false
@@ -7908,8 +7908,8 @@
                             },
                             "object_outputs": {},
                             "uipos": [
-                                0.0,
-                                0.0
+                                -597.0,
+                                1089.0
                             ],
                             "status": [],
                             "collasped": false
@@ -8164,8 +8164,8 @@
                             },
                             "object_outputs": {},
                             "uipos": [
-                                0.0,
-                                0.0
+                                -855.0,
+                                478.0
                             ],
                             "status": [],
                             "collasped": false
@@ -8192,8 +8192,8 @@
                             "primitive_outputs": {},
                             "object_outputs": {},
                             "uipos": [
-                                0.0,
-                                0.0
+                                541.0,
+                                408.0
                             ],
                             "status": [],
                             "collasped": false
@@ -66727,8 +66727,8 @@
                             },
                             "object_outputs": {},
                             "uipos": [
-                                0.0,
-                                0.0
+                                -396.0,
+                                309.0
                             ],
                             "status": [],
                             "collasped": false
@@ -74282,17 +74282,39 @@
                 "class": "FormSceneTree",
                 "object_inputs": {
                     "Geometry List": {
-                        "links": null,
+                        "links": [
+                            {
+                                "out-node": "ParseFBX1",
+                                "out-socket": "Geometry List",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": "Geometry List"
+                            }
+                        ],
                         "type": "list",
-                        "socket-type": "clone"
-                    },
-                    "Scene Info": {
-                        "links": null,
-                        "type": "",
                         "socket-type": "clone"
                     }
                 },
                 "primitive_inputs": {
+                    "Scene Info": {
+                        "links": [
+                            {
+                                "out-node": "NewFBXSceneInfo1",
+                                "out-socket": "json",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": "Scene Info"
+                            }
+                        ],
+                        "type": "string",
+                        "default-value": "",
+                        "control": {
+                            "name": "String"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": true
+                    },
                     "flattened": {
                         "links": null,
                         "type": "bool",
@@ -74313,8 +74335,8 @@
                     }
                 },
                 "uipos": [
-                    -184.0,
-                    1305.0
+                    -240.0,
+                    1258.0
                 ],
                 "status": [],
                 "collasped": false
@@ -74330,11 +74352,22 @@
                     },
                     "Scene Info": {
                         "links": null,
-                        "type": "",
+                        "type": "iobject",
                         "socket-type": "clone"
                     }
                 },
                 "primitive_inputs": {
+                    "Scene Info": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "",
+                        "control": {
+                            "name": "String"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
                     "flattened": {
                         "links": null,
                         "type": "bool",
@@ -74355,8 +74388,8 @@
                     }
                 },
                 "uipos": [
-                    -1161.0,
-                    1508.0
+                    -1235.0,
+                    1624.0
                 ],
                 "status": [
                     "View"
@@ -74397,7 +74430,7 @@
                                 "target-socket": "Output Object"
                             }
                         ],
-                        "type": "",
+                        "type": "iobject",
                         "socket-type": "clone"
                     }
                 },
@@ -74448,7 +74481,7 @@
                                 "target-socket": "object"
                             }
                         ],
-                        "type": "",
+                        "type": "iobject",
                         "socket-type": "clone"
                     }
                 },
@@ -74507,7 +74540,7 @@
                                 "target-socket": "object"
                             }
                         ],
-                        "type": "",
+                        "type": "iobject",
                         "socket-type": "clone"
                     }
                 },
@@ -74895,12 +74928,105 @@
                 ],
                 "collasped": false
             },
+            "Matrix4_1": {
+                "name": "Matrix4_1",
+                "class": "Matrix4",
+                "object_inputs": {},
+                "primitive_inputs": {
+                    "r0": {
+                        "links": null,
+                        "type": "vec4f",
+                        "default-value": [
+                            "0.01 / 3.0",
+                            0.0,
+                            "-0.01 * 2.0 * sqrt(2.0) / 3.0",
+                            0.0
+                        ],
+                        "control": {
+                            "name": "Float Vector 4"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "r1": {
+                        "links": null,
+                        "type": "vec4f",
+                        "default-value": [
+                            0.0,
+                            0.009999999776482582,
+                            0.0,
+                            0.0
+                        ],
+                        "control": {
+                            "name": "Float Vector 4"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "r2": {
+                        "links": null,
+                        "type": "vec4f",
+                        "default-value": [
+                            "0.01 * 2.0 * sqrt(2.0) / 3.0",
+                            0.0,
+                            "0.01 / 3.0",
+                            0.0
+                        ],
+                        "control": {
+                            "name": "Float Vector 4"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "r3": {
+                        "links": null,
+                        "type": "vec4f",
+                        "default-value": [
+                            -70.0,
+                            0.4000000059604645,
+                            38.0,
+                            1.0
+                        ],
+                        "control": {
+                            "name": "Float Vector 4"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {
+                    "matrix": {
+                        "type": "Matrix4",
+                        "socket-type": "clone",
+                        "visible": true
+                    }
+                },
+                "object_outputs": {},
+                "uipos": [
+                    -592.0,
+                    1413.0
+                ],
+                "status": [],
+                "collasped": false
+            },
             "Merge1": {
                 "name": "Merge1",
                 "class": "Merge",
                 "object_inputs": {
                     "Input Of Objects": {
-                        "links": null,
+                        "links": [
+                            {
+                                "out-node": "ParseFBX1",
+                                "out-socket": "Geometry List",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": "Input Of Objects"
+                            }
+                        ],
                         "type": "list",
                         "socket-type": "clone"
                     }
@@ -75002,6 +75128,79 @@
                 "uipos": [
                     -712.0,
                     1918.0
+                ],
+                "status": [],
+                "collasped": false
+            },
+            "NewFBXSceneInfo1": {
+                "name": "NewFBXSceneInfo1",
+                "class": "NewFBXSceneInfo",
+                "object_inputs": {},
+                "primitive_inputs": {
+                    "Json List": {
+                        "links": [
+                            {
+                                "out-node": "ParseFBX1",
+                                "out-socket": "Scene Json List",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": "Json List"
+                            }
+                        ],
+                        "type": "",
+                        "default-value": null,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": true
+                    },
+                    "Start Frame": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 0,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "frameid": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 0,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "fps": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 25.0,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {
+                    "json": {
+                        "type": "string",
+                        "socket-type": "clone",
+                        "visible": true
+                    }
+                },
+                "object_outputs": {},
+                "uipos": [
+                    -625.0,
+                    1143.0
                 ],
                 "status": [],
                 "collasped": false
@@ -75135,6 +75334,131 @@
                 "status": [],
                 "collasped": false
             },
+            "ParseFBX1": {
+                "name": "ParseFBX1",
+                "class": "ParseFBX",
+                "object_inputs": {},
+                "primitive_inputs": {
+                    "FBX Path": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "",
+                        "control": {
+                            "name": "read path"
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "vectors": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "nrm,tang",
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "CopyVectorsFromLoopsToVert": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": true,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "CopyFacesetToMatid": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": true,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "OutputTexEvenMissing": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": false,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "SkipInvisibleMesh": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": false,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "Start Frame": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 0,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "End Frame": {
+                        "links": null,
+                        "type": "int",
+                        "default-value": 0,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "fps": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 25.0,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {
+                    "Scene Json List": {
+                        "type": "",
+                        "socket-type": "clone",
+                        "visible": true
+                    }
+                },
+                "object_outputs": {
+                    "Geometry List": {
+                        "type": "list",
+                        "socket-type": "clone"
+                    }
+                },
+                "uipos": [
+                    -218.0,
+                    933.0
+                ],
+                "status": [],
+                "collasped": false
+            },
             "ReadJsonFromString1": {
                 "name": "ReadJsonFromString1",
                 "class": "ReadJsonFromString",
@@ -75205,7 +75529,15 @@
                         "visible": false
                     },
                     "xform": {
-                        "links": null,
+                        "links": [
+                            {
+                                "out-node": "Matrix4_1",
+                                "out-socket": "matrix",
+                                "out-key": "",
+                                "in-key": "obj0",
+                                "target-socket": "xform"
+                            }
+                        ],
                         "type": "",
                         "default-value": null,
                         "control": {
@@ -75224,8 +75556,8 @@
                     }
                 },
                 "uipos": [
-                    -188.0,
-                    1521.0
+                    -229.0,
+                    1508.0
                 ],
                 "status": [
                     "View"

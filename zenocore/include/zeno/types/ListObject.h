@@ -38,6 +38,7 @@ public:
     }
     IUserData2* userData() override { return &m_userDat; }
     void Delete() override {
+        clear();
         delete this;
     }
     ListObject& operator=(const ListObject& rhs) = delete;

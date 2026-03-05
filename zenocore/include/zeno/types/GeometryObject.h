@@ -169,6 +169,13 @@ namespace zeno
             size_t size
         ) override;
 
+        int create_attr_by_int(
+            GeoAttrGroup grp,
+            const char* attr_name,
+            const int* arr,
+            size_t size
+        ) override;
+
         int create_attr(GeoAttrGroup grp, const std::string& attr_name, const AttrVar& defl);
         int create_face_attr(std::string const& attr_name, const AttrVar& defl);
         int create_point_attr(std::string const& attr_name, const AttrVar& defl);
@@ -200,6 +207,13 @@ namespace zeno
             GeoAttrGroup grp,
             const char* attr_name,
             Vec3f* buf,
+            size_t buf_size
+        ) override;
+
+        size_t get_int_attr(
+            GeoAttrGroup grp,
+            const char* attr_name,
+            int* buf,
             size_t buf_size
         ) override;
 

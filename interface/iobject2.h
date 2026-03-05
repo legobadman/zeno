@@ -99,6 +99,14 @@ struct IGeometryObject : IObject2 {
         size_t size
         ) = 0;
 
+    // Create integer attribute array (e.g. faceset, matid) at ABI level.
+    virtual int create_attr_by_int(
+        GeoAttrGroup grp,
+        const char* attr_name,
+        const int* arr,
+        size_t size
+        ) = 0;
+
     virtual int set_attr2(
         GeoAttrGroup grp,
         const char* attr_name,
@@ -109,6 +117,14 @@ struct IGeometryObject : IObject2 {
         GeoAttrGroup grp,
         const char* attr_name,
         float* buf,
+        size_t buf_size
+        ) = 0;
+
+    // Get integer attribute array at ABI level.
+    virtual size_t get_int_attr(
+        GeoAttrGroup grp,
+        const char* attr_name,
+        int* buf,
         size_t buf_size
         ) = 0;
 
