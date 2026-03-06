@@ -132,7 +132,7 @@ namespace zeno
         GeomTopoType topo_type() const override;
 
         std::vector<vec3f> points_pos() const;
-        size_t points_pos(Vec3f* buf, size_t buf_size) override;
+        size_t points_pos(Vec3f* buf, size_t buf_size) const override;
 
         /* 添加元素 */
         int add_vertex(int face_id, int point_id) override;
@@ -199,7 +199,7 @@ namespace zeno
             const char* attr_name,
             float* buf,
             size_t buf_size
-        ) override;
+        ) const override;
 
         std::vector<float> GeometryObject::get_float_attr_vec3(GeoAttrGroup grp, const std::string& attr_name);
 
@@ -208,14 +208,14 @@ namespace zeno
             const char* attr_name,
             Vec3f* buf,
             size_t buf_size
-        ) override;
+        ) const override;
 
         size_t get_int_attr(
             GeoAttrGroup grp,
             const char* attr_name,
             int* buf,
             size_t buf_size
-        ) override;
+        ) const override;
 
         /* 检查属性是否存在 */
         bool has_attr(
@@ -268,23 +268,23 @@ namespace zeno
 
         /* 面相关 */
         int face_point(int face_id, int vert_id) const override;
-        size_t face_points(int face_id, int* points, size_t cap) override;
-        int face_vertex(int face_id, int vert_id) override;
-        int face_vertex_count(int face_id) override;
-        size_t face_vertices(int face_id, int* vertices, size_t cap) override;
-        Vec3f face_nrm(int face_id) override;
-        std::vector<int> face_points(int face_id);
-        std::vector<int> face_vertices(int face_id);
-        zeno::vec3f face_normal(int face_id);
+        size_t face_points(int face_id, int* points, size_t cap) const override;
+        int face_vertex(int face_id, int vert_id) const override;
+        int face_vertex_count(int face_id) const override;
+        size_t face_vertices(int face_id, int* vertices, size_t cap) const override;
+        Vec3f face_nrm(int face_id) const override;
+        std::vector<int> face_points(int face_id) const;
+        std::vector<int> face_vertices(int face_id) const;
+        zeno::vec3f face_normal(int face_id) const;
 
         /* Vertex相关 */
-        int vertex_index(int face_id, int vertex_id) override;
-        int vertex_next(int linear_vertex_id) override;
-        int vertex_prev(int linear_vertex_id) override;
-        int vertex_point(int linear_vertex_id) override;
-        int vertex_face(int linear_vertex_id) override;
-        int vertex_face_index(int linear_vertex_id) override;
-        std::tuple<int, int, int> vertex_info(int linear_vertex_id);
+        int vertex_index(int face_id, int vertex_id) const override;
+        int vertex_next(int linear_vertex_id) const override;
+        int vertex_prev(int linear_vertex_id) const override;
+        int vertex_point(int linear_vertex_id) const override;
+        int vertex_face(int linear_vertex_id) const override;
+        int vertex_face_index(int linear_vertex_id) const override;
+        std::tuple<int, int, int> vertex_info(int linear_vertex_id) const;
 
     public: //IObject2
         IObject2* clone() const override;

@@ -336,7 +336,7 @@ namespace zeno
         return iter->second.get_attrs<vec3f>();
     }
 
-    size_t GeometryObject::points_pos(Vec3f* buf, size_t buf_size)
+    size_t GeometryObject::points_pos(Vec3f* buf, size_t buf_size) const
     {
         auto pts = points_pos();   // 复用 STL 版本
         size_t n = pts.size();
@@ -362,7 +362,7 @@ namespace zeno
         const char* attr_name,
         float* buf,
         size_t buf_size
-    )
+    ) const
     {
         auto vec = get_attrs<float>(grp, attr_name);
         size_t n = vec.size();
@@ -380,7 +380,7 @@ namespace zeno
         const char* attr_name,
         int* buf,
         size_t buf_size
-    )
+    ) const
     {
         auto vec = get_attrs<int>(grp, attr_name);
         size_t n = vec.size();
@@ -398,7 +398,7 @@ namespace zeno
         const char* attr_name,
         Vec3f* buf,
         size_t buf_size
-    )
+    ) const
     {
         auto vec = get_attrs<vec3f>(grp, attr_name);
         size_t n = vec.size();
@@ -527,12 +527,12 @@ namespace zeno
     }
 
     //通过 face_id，获取此 face 所有 points 索引编号。
-    std::vector<int> GeometryObject::face_points(int face_id)
+    std::vector<int> GeometryObject::face_points(int face_id) const
     {
         return m_spTopology->face_points(face_id);
     }
 
-    size_t GeometryObject::face_points(int face_id, int* points, size_t cap)
+    size_t GeometryObject::face_points(int face_id, int* points, size_t cap) const
     {
         auto v = face_points(face_id);
         size_t n = v.size();
@@ -546,18 +546,18 @@ namespace zeno
     }
 
     //通过 face_id和内部的vertex_id索引，返回其linearindex.
-    int GeometryObject::face_vertex(int face_id, int vert_id)
+    int GeometryObject::face_vertex(int face_id, int vert_id) const
     {
         return m_spTopology->face_vertex(face_id, vert_id);
     }
 
-    int GeometryObject::face_vertex_count(int face_id)
+    int GeometryObject::face_vertex_count(int face_id) const
     {
 
         return m_spTopology->face_vertex_count(face_id);
     }
 
-    size_t GeometryObject::face_vertices(int face_id, int* vertices, size_t cap)
+    size_t GeometryObject::face_vertices(int face_id, int* vertices, size_t cap) const
     {
         auto v = face_vertices(face_id);
         size_t n = v.size();
@@ -570,12 +570,12 @@ namespace zeno
         return n;
     }
 
-    std::vector<int> GeometryObject::face_vertices(int face_id)
+    std::vector<int> GeometryObject::face_vertices(int face_id) const
     {
         return m_spTopology->face_vertices(face_id);
     }
 
-    Vec3f GeometryObject::face_nrm(int face_id)
+    Vec3f GeometryObject::face_nrm(int face_id) const
     {
         auto n = face_normal(face_id);   // zeno::vec3f
 
@@ -586,7 +586,7 @@ namespace zeno
         return out;
     }
 
-    zeno::vec3f GeometryObject::face_normal(int face_id) {
+    zeno::vec3f GeometryObject::face_normal(int face_id) const {
 
         const std::vector<int>& pts = face_points(face_id);
         std::vector<vec3f> pos = points_pos();
@@ -1313,46 +1313,46 @@ namespace zeno
       根据face_id和vertex_id(vertex在面内部的索引，起始值为0）
       返回linear_vertex_idx.
      */
-    int GeometryObject::vertex_index(int face_id, int vertex_id) {
+    int GeometryObject::vertex_index(int face_id, int vertex_id) const {
         return m_spTopology->vertex_index(face_id, vertex_id);
     }
 
     /*
      * 与linear_vertex_id共享一个point的下一个vertex的linear_vertex_id;
      */
-    int GeometryObject::vertex_next(int linear_vertex_id) {
+    int GeometryObject::vertex_next(int linear_vertex_id) const {
         return m_spTopology->vertex_next(linear_vertex_id);
     }
 
     /*
      * 与linear_vertex_id共享一个point的上一个vertex的linear_vertex_id;
      */
-    int GeometryObject::vertex_prev(int linear_vertex_id) {
+    int GeometryObject::vertex_prev(int linear_vertex_id) const {
         return m_spTopology->vertex_prev(linear_vertex_id);
     }
 
     /*
      * 与linear_vertex_id关联的point的id;
      */
-    int GeometryObject::vertex_point(int linear_vertex_id) {
+    int GeometryObject::vertex_point(int linear_vertex_id) const {
         return m_spTopology->vertex_point(linear_vertex_id);
     }
 
     /*
      * 与linear_vertex_id关联的face的id;
      */
-    int GeometryObject::vertex_face(int linear_vertex_id) {
+    int GeometryObject::vertex_face(int linear_vertex_id) const {
         return m_spTopology->vertex_face(linear_vertex_id);
     }
 
     /*
      * 将linear_vertex_id转为它所在的那个面上的idx（就是2:3里面的3);
      */
-    int GeometryObject::vertex_face_index(int linear_vertex_id) {
+    int GeometryObject::vertex_face_index(int linear_vertex_id) const {
         return m_spTopology->vertex_face_index(linear_vertex_id);
     }
 
-    std::tuple<int, int, int> GeometryObject::vertex_info(int linear_vertex_id) {
+    std::tuple<int, int, int> GeometryObject::vertex_info(int linear_vertex_id) const {
         return m_spTopology->vertex_info(linear_vertex_id);
     }
 

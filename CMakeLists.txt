@@ -216,6 +216,10 @@ if (ZENO_WITH_FBX)
     add_subdirectory(projects/FBX)
 endif()
 
+if (ZENO_WITH_Alembic)
+    add_subdirectory(projects/Alembic)
+endif()
+
 if (ZENO_WITH_BATCH)
     add_subdirectory(zenobatch)
 endif()

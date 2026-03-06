@@ -1,27 +1,24 @@
 // https://github.com/alembic/alembic/blob/master/lib/Alembic/AbcGeom/Tests/PolyMeshTest.cpp
 // WHY THE FKING ALEMBIC OFFICIAL GIVES NO DOC BUT ONLY "TESTS" FOR ME TO LEARN THEIR FKING LIB
-#include <zeno/zeno.h>
-#include <zeno/utils/logger.h>
-#include <zeno/types/StringObject.h>
-#include <zeno/types/PrimitiveObject.h>
-#include <zeno/types/PrimitiveTools.h>
-#include <zeno/types/NumericObject.h>
-#include <zeno/types/UserData.h>
 #include <Alembic/AbcGeom/All.h>
 #include <Alembic/AbcCoreAbstract/All.h>
 #include <Alembic/AbcCoreOgawa/All.h>
 #include <Alembic/AbcCoreHDF5/All.h>
 #include <Alembic/Abc/ErrorHandler.h>
 #include "ABCTree.h"
-#include "zeno/types/DictObject.h"
 #include "ABCCommon.h"
+#include "api_zs_alembic.h"
+#include <inodeimpl.h>
+#include <inodedata.h>
+#include <zenum.h>
+#include <zcommon.h>
 #include <cstring>
 #include <cstdio>
 #include <filesystem>
-#include <zeno/utils/string.h>
-#include <zeno/utils/scope_exit.h>
-#include <zeno/geo/commonutil.h>
 #include <numeric>
+#include <algorithm>
+#include <Windows.h>
+#include "format.h"
 
 #ifdef ZENO_WITH_PYTHON
     #include <Python.h>
@@ -94,7 +91,7 @@ static int clamp(int i, int _min, int _max) {
     }
 }
 
-static void set_time_info(IUserData* ud, TimeSamplingType tst, float start, int sample_count) {
+static void set_time_info(IUserData2* ud, TimeSamplingType tst, float start, int sample_count) {
     float time_per_cycle = tst.getTimePerCycle();
     if (tst.isUniform()) {
         ud->set_string("_abc_time_sampling_type", "Uniform");
@@ -115,21 +112,80 @@ static void set_time_info(IUserData* ud, TimeSamplingType tst, float start, int 
         ud->set_float("_abc_time_fps", 0.0f);
     }
 }
-static void read_velocity(PrimitiveObject* prim, V3fArraySamplePtr marr, bool read_done) {
-    if (marr == nullptr) {
-        return;
+static void read_velocity(IGeometryObject* geom, V3fArraySamplePtr marr, bool read_done) {
+    if (!geom || !marr || marr->size() == 0) return;
+    std::vector<Vec3f> varr(marr->size());
+    for (size_t i = 0; i < marr->size(); i++) {
+        auto const& val = (*marr)[i];
+        varr[i] = Vec3f{val[0], val[1], val[2]};
     }
-    if (marr->size() > 0) {
-        if (!read_done) {
-            //log_info("[alembic] totally {} velocities", marr->size());
-        }
-        auto &parr = prim->add_attr<vec3f>("v");
-        for (size_t i = 0; i < marr->size(); i++) {
-            auto const &val = (*marr)[i];
-            parr[i] = {val[0], val[1], val[2]};
-        }
+    geom->create_attr_by_vec3(ATTR_POINT, "v", varr.data(), varr.size());
+}
+
+static void geom_set_abcpath(IGeometryObject* geom, const char* path) {
+    if (geom && geom->userData()) geom->userData()->set_string("abcpath_0", path);
+}
+
+static void geom_copy_faceset_to_matid(IGeometryObject* geom) {
+    if (!geom) return;
+    IUserData2* ud = geom->userData();
+    if (!ud) return;
+    int faceset_count = ud->get_int("faceset_count", 0);
+    ud->set_int("matNum", faceset_count);
+    char buf[4096] = {};
+    for (int i = 0; i < faceset_count; ++i) {
+        char key[64];
+        std::snprintf(key, sizeof(key), "faceset_%d", i);
+        ud->get_string(key, "", buf, sizeof(buf));
+        char mat_key[64];
+        std::snprintf(mat_key, sizeof(mat_key), "Material_%d", i);
+        ud->set_string(mat_key, buf);
+    }
+    int nfaces = geom->nfaces();
+    if (nfaces > 0 && geom->has_attr(ATTR_FACE, "faceset", ATTR_INT)) {
+        std::vector<int> faceset(nfaces);
+        size_t got = geom->get_int_attr(ATTR_FACE, "faceset", faceset.data(), faceset.size());
+        if (got == static_cast<size_t>(nfaces))
+            geom->create_attr_by_int(ATTR_FACE, "matid", faceset.data(), faceset.size());
     }
 }
+
+static bool ends_with(const std::string& s, const std::string& suffix) {
+    return s.size() >= suffix.size() && s.compare(s.size() - suffix.size(), suffix.size(), suffix) == 0;
+}
+
+static void attr_from_data_igeom(IGeometryObject* geom, GeometryScope scope, std::string attr_name, std::vector<float>& data) {
+    if (!geom) return;
+    if (ends_with(attr_name, "_polys")) attr_name = attr_name.substr(0, attr_name.size() - 6);
+    if (ends_with(attr_name, "_loops")) attr_name = attr_name.substr(0, attr_name.size() - 6);
+    GeoAttrGroup grp = ATTR_POINT;
+    int sz = geom->npoints();
+    if (scope == GeometryScope::kUniformScope) { grp = ATTR_FACE; sz = geom->nfaces(); }
+    else if (scope == GeometryScope::kFacevaryingScope) { grp = ATTR_VERTEX; sz = geom->nvertices(); }
+    if (sz == (int)data.size()) geom->create_attr_by_float(grp, attr_name.c_str(), data.data(), data.size());
+}
+
+static void attr_from_data_igeom(IGeometryObject* geom, GeometryScope scope, std::string attr_name, std::vector<int>& data) {
+    if (!geom) return;
+    if (ends_with(attr_name, "_polys")) attr_name = attr_name.substr(0, attr_name.size() - 6);
+    if (ends_with(attr_name, "_loops")) attr_name = attr_name.substr(0, attr_name.size() - 6);
+    GeoAttrGroup grp = ATTR_POINT;
+    int sz = geom->npoints();
+    if (scope == GeometryScope::kUniformScope) { grp = ATTR_FACE; sz = geom->nfaces(); }
+    else if (scope == GeometryScope::kFacevaryingScope) { grp = ATTR_VERTEX; sz = geom->nvertices(); }
+    if (sz == (int)data.size()) geom->create_attr_by_int(grp, attr_name.c_str(), data.data(), data.size());
+}
+
+static void attr_from_data_vec_igeom(IGeometryObject* geom, GeometryScope scope, std::string attr_name, std::vector<Vec3f>& data) {
+    if (!geom) return;
+    GeoAttrGroup grp = ATTR_POINT;
+    int sz = geom->npoints();
+    if (scope == GeometryScope::kUniformScope) { grp = ATTR_FACE; sz = geom->nfaces(); }
+    else if (scope == GeometryScope::kFacevaryingScope) { grp = ATTR_VERTEX; sz = geom->nvertices(); }
+    if (sz == (int)data.size()) geom->create_attr_by_vec3(grp, attr_name.c_str(), data.data(), data.size());
+}
+
+#if 0
 template<typename T>
 void attr_from_data(PrimitiveObject* prim, GeometryScope scope, std::string attr_name, std::vector<T> &data) {
     if (scope == GeometryScope::kUniformScope) {
@@ -338,7 +394,9 @@ void attr_from_data_vec(PrimitiveObject* prim, GeometryScope scope, std::string 
         }
     }
 }
-static void read_attributes2(PrimitiveObject* prim, ICompoundProperty arbattrs, const ISampleSelector &iSS, bool read_done) {
+#endif
+
+static void read_attributes2(IGeometryObject* geom, ICompoundProperty arbattrs, const ISampleSelector& iSS, bool read_done) {
     if (!arbattrs) {
         return;
     }
@@ -357,7 +415,7 @@ static void read_attributes2(PrimitiveObject* prim, ICompoundProperty arbattrs, 
             if (!read_done) {
                 //log_info("[alembic] float attr {}, len {}.", p.getName(), data.size());
             }
-            attr_from_data(prim, samp.getScope(), p.getName(), data);
+            attr_from_data_igeom(geom, samp.getScope(), p.getName(), data);
         }
         else if (IInt32GeomParam::matches(p)) {
             IInt32GeomParam param(arbattrs, p.getName());
@@ -371,73 +429,66 @@ static void read_attributes2(PrimitiveObject* prim, ICompoundProperty arbattrs, 
             if (!read_done) {
                 //log_info("[alembic] int attr {}, len {}.", p.getName(), data.size());
             }
-            attr_from_data(prim, samp.getScope(), p.getName(), data);
+            attr_from_data_igeom(geom, samp.getScope(), p.getName(), data);
         }
         else if (IV3fGeomParam::matches(p)) {
             IV3fGeomParam param(arbattrs, p.getName());
 
             IV3fGeomParam::Sample samp = param.getExpandedValue(iSS);
-            std::vector<vec3f> data;
-            data.resize(samp.getVals()->size());
+            std::vector<Vec3f> data(samp.getVals()->size());
             for (auto i = 0; i < samp.getVals()->size(); i++) {
                 auto v = samp.getVals()->get()[i];
-                data[i] = {v[0], v[1], v[2]};
+                data[i] = Vec3f{v[0], v[1], v[2]};
             }
             if (!read_done) {
                 //log_info("[alembic] V3f attr {}, len {}.", p.getName(), data.size());
             }
-            attr_from_data_vec(prim, samp.getScope(), p.getName(), data);
+            attr_from_data_vec_igeom(geom, samp.getScope(), p.getName(), data);
         }
         else if (IN3fGeomParam::matches(p)) {
             IN3fGeomParam param(arbattrs, p.getName());
 
             IN3fGeomParam::Sample samp = param.getExpandedValue(iSS);
-            std::vector<vec3f> data;
-            data.resize(samp.getVals()->size());
+            std::vector<Vec3f> data(samp.getVals()->size());
             for (auto i = 0; i < samp.getVals()->size(); i++) {
                 auto v = samp.getVals()->get()[i];
-                data[i] = {v[0], v[1], v[2]};
+                data[i] = Vec3f{v[0], v[1], v[2]};
             }
             if (!read_done) {
                 //log_info("[alembic] N3f attr {}, len {}.", p.getName(), data.size());
             }
-            attr_from_data_vec(prim, samp.getScope(), p.getName(), data);
+            attr_from_data_vec_igeom(geom, samp.getScope(), p.getName(), data);
         }
         else if (IC3fGeomParam::matches(p)) {
             IC3fGeomParam param(arbattrs, p.getName());
 
             IC3fGeomParam::Sample samp = param.getExpandedValue(iSS);
-            std::vector<vec3f> data;
-            data.resize(samp.getVals()->size());
+            std::vector<Vec3f> data(samp.getVals()->size());
             for (auto i = 0; i < samp.getVals()->size(); i++) {
                 auto v = samp.getVals()->get()[i];
-                data[i] = {v[0], v[1], v[2]};
+                data[i] = Vec3f{v[0], v[1], v[2]};
             }
             if (!read_done) {
                 //log_info("[alembic] C3f attr {}, len {}.", p.getName(), data.size());
             }
-            attr_from_data_vec(prim, samp.getScope(), p.getName(), data);
+            attr_from_data_vec_igeom(geom, samp.getScope(), p.getName(), data);
         }
         else if (IC4fGeomParam::matches(p)) {
             IC4fGeomParam param(arbattrs, p.getName());
 
             IC4fGeomParam::Sample samp = param.getExpandedValue(iSS);
-            std::vector<vec4f> data;
-            data.resize(samp.getVals()->size());
-            std::vector<vec3f> data_xyz(samp.getVals()->size());
+            std::vector<Vec3f> data_xyz(samp.getVals()->size());
             std::vector<float> data_w(samp.getVals()->size());
             for (auto i = 0; i < samp.getVals()->size(); i++) {
                 auto v = samp.getVals()->get()[i];
-                data[i] = {v[0], v[1], v[2], v[3]};
-                data_xyz[i] = {v[0], v[1], v[2]};
+                data_xyz[i] = Vec3f{v[0], v[1], v[2]};
                 data_w[i] = v[3];
             }
             if (!read_done) {
-                //log_info("[alembic] C4f attr {}, len {}.", p.getName(), data.size());
+                //log_info("[alembic] C4f attr {}, len {}.", p.getName(), data_xyz.size());
             }
-            attr_from_data_vec(prim, samp.getScope(), p.getName(), data);
-            attr_from_data_vec(prim, samp.getScope(), p.getName() + "_rgb", data_xyz);
-            attr_from_data_vec(prim, samp.getScope(), p.getName() + "_a", data_w);
+            attr_from_data_vec_igeom(geom, samp.getScope(), p.getName() + "_rgb", data_xyz);
+            attr_from_data_igeom(geom, samp.getScope(), p.getName() + "_a", data_w);
         }
         else {
             //log_info("[alembic] unknown attr {}.", p.getName());
@@ -446,102 +497,73 @@ static void read_attributes2(PrimitiveObject* prim, ICompoundProperty arbattrs, 
             //zeno::log_info("getPod {} ", p.getDataType().getPod());
         }
     }
-    {
-        if (prim->loops.attr_keys<AttrAcceptAll>().size() == 0) {
-            return;
-        }
-        if (prim->loops.attr_keys<AttrAcceptAll>().size() == 1 && prim->loops.has_attr("uvs")) {
-            return;
-        }
-        if (!prim->loops.has_attr("uvs")) {
-            prim->loops.add_attr<int>("uvs");
-            prim->uvs.emplace_back();
-        }
-        {
-            std::vector<vec2f> uvs(prim->loops.size());
-            auto &uv_index = prim->loops.attr<int>("uvs");
-            for (auto i = 0; i < prim->loops.size(); i++) {
-                uvs[i] = prim->uvs[uv_index[i]];
-            }
-            prim->uvs.values = uvs;
-            std::iota(uv_index.begin(), uv_index.end(), 0);
-            prim->loops.foreach_attr<AttrAcceptAll>([&] (auto const &key, auto &arr) {
-                if (key == "uvs") {
-                    return;
-                }
-                using T = std::decay_t<decltype(arr[0])>;
-                auto &attr = prim->uvs.add_attr<T>(key);
-                std::copy(arr.begin(), arr.end(), attr.begin());
-            });
-        }
-    }
 }
 
-static void read_user_data(PrimitiveObject* prim, ICompoundProperty arbattrs, const ISampleSelector &iSS, bool read_done) {
+static void read_user_data(IGeometryObject* geom, ICompoundProperty arbattrs, const ISampleSelector& iSS, bool read_done) {
     if (!arbattrs) {
         return;
     }
     size_t numProps = arbattrs.getNumProperties();
     for (auto i = 0; i < numProps; i++) {
         PropertyHeader p = arbattrs.getPropertyHeader(i);
-        zeno::String propname = stdString2zs(p.getName());
+        auto propname = p.getName();
         if (IFloatProperty::matches(p)) {
             IFloatProperty param(arbattrs, p.getName());
 
             float v = param.getValue(iSS);
-            prim->userData()->set_float(propname, v);
+            geom->userData()->set_float(propname.c_str(), v);
         }
         else if (IInt32Property::matches(p)) {
             IInt32Property param(arbattrs, p.getName());
 
             int v = param.getValue(iSS);
-            prim->userData()->set_int(propname, v);
+            geom->userData()->set_int(propname.c_str(), v);
         }
         else if (IV2fProperty::matches(p)) {
             IV2fProperty param(arbattrs, p.getName());
 
             auto v = param.getValue(iSS);
-            prim->userData()->set_vec2f(propname, Vec2f{v[0], v[1]});
+            geom->userData()->set_vec2f(propname.c_str(), Vec2f{v[0], v[1]});
         }
         else if (IV3fProperty::matches(p)) {
             IV3fProperty param(arbattrs, p.getName());
 
             auto v = param.getValue(iSS);
-            prim->userData()->set_vec3f(propname, Vec3f{v[0], v[1], v[2]});
+            geom->userData()->set_vec3f(propname.c_str(), Vec3f{v[0], v[1], v[2]});
         }
         else if (IV2iProperty::matches(p)) {
             IV2iProperty param(arbattrs, p.getName());
 
             auto v = param.getValue(iSS);
-            prim->userData()->set_vec2i(propname, Vec2i{v[0], v[1]});
+            geom->userData()->set_vec2i(propname.c_str(), Vec2i{v[0], v[1]});
         }
         else if (IV3iProperty::matches(p)) {
             IV3iProperty param(arbattrs, p.getName());
 
             auto v = param.getValue(iSS);
-            prim->userData()->set_vec3i(propname, Vec3i{v[0], v[1], v[2]});
+            geom->userData()->set_vec3i(propname.c_str(), Vec3i{v[0], v[1], v[2]});
         }
         else if (IStringProperty::matches(p)) {
             IStringProperty param(arbattrs, p.getName());
 
             auto value = param.getValue(iSS);
-            prim->userData()->set_string(propname, stdString2zs(value));
+            geom->userData()->set_string(propname.c_str(), value.c_str());
         }
         else if (IBoolProperty::matches(p)) {
             IBoolProperty param(arbattrs, p.getName());
 
             auto value = param.getValue(iSS);
-            prim->userData()->set_int(propname, int(value));
+            geom->userData()->set_int(propname.c_str(), int(value));
         }
         else if (IInt16Property::matches(p)) {
             IInt16Property param(arbattrs, p.getName());
 
             auto value = param.getValue(iSS);
-            prim->userData()->set_int(propname, int(value));
+            geom->userData()->set_int(propname.c_str(), int(value));
         }
         else {
             if (!read_done) {
-                log_warn("[alembic] can not load user data {}..", p.getName());
+                //log_warn("[alembic] can not load user data {}..", p.getName());
             }
         }
     }
@@ -575,309 +597,225 @@ static ObjectVisibility read_visible_attr(ICompoundProperty arbattrs, const ISam
     return ObjectVisibility::kVisibilityDeferred;
 }
 
-static std::unique_ptr<PrimitiveObject> foundABCMesh(
-        Alembic::AbcGeom::IPolyMeshSchema &mesh
+static ABCTreeUniqueGeom foundABCMesh(
+        Alembic::AbcGeom::IPolyMeshSchema& mesh
         , int frameid
         , bool read_done
         , bool read_face_set
         , bool outOfRangeAsEmpty
         , std::string abc_name
 ) {
-    auto prim = std::make_unique<PrimitiveObject>();
+    std::vector<Vec3f> points;
+    std::vector<std::vector<int>> faces;
+    std::vector<int> face_indices;
+    std::vector<int> face_counts;
+    bool is_point = true;
 
     std::shared_ptr<Alembic::AbcCoreAbstract::v12::TimeSampling> time = mesh.getTimeSampling();
-    float time_per_cycle =  time->getTimeSamplingType().getTimePerCycle();
+    float time_per_cycle = time->getTimeSamplingType().getTimePerCycle();
     double start = time->getStoredTimes().front();
-    int start_frame = std::lround(start / time_per_cycle );
-    set_time_info(prim->userData(), time->getTimeSamplingType(), start, int(mesh.getNumSamples()));
+    int start_frame = std::lround(start / time_per_cycle);
 
     int sample_index = clamp(frameid - start_frame, 0, (int)mesh.getNumSamples() - 1);
     if (outOfRangeAsEmpty && frameid - start_frame != sample_index) {
-        return prim;
+        IGeometryObject* geom = zeno::zs_alembic::createGeometryByPointFace(Topo_IndiceMesh, false, points, faces);
+        if (geom) set_time_info(geom->userData(), time->getTimeSamplingType(), start, int(mesh.getNumSamples()));
+        return ABCTreeUniqueGeom(geom);
     }
     ISampleSelector iSS = Alembic::Abc::v12::ISampleSelector((Alembic::AbcCoreAbstract::index_t)sample_index);
     Alembic::AbcGeom::IPolyMeshSchema::Sample mesamp = mesh.getValue(iSS);
 
     if (auto marr = mesamp.getPositions()) {
         if (!read_done) {
-            log_debug("[alembic] totally {} positions", marr->size());
+            //log_debug("[alembic] totally {} positions", marr->size());
         }
-        auto &parr = prim->verts;
+        points.reserve(marr->size());
         for (size_t i = 0; i < marr->size(); i++) {
-            auto const &val = (*marr)[i];
-            parr.emplace_back(val[0], val[1], val[2]);
-        }
-    }
-
-    read_velocity(prim.get(), mesamp.getVelocities(), read_done);
-    if (auto nrm = mesh.getNormalsParam()) {
-        auto nrmsamp =
-                nrm.getIndexedValue(Alembic::Abc::v12::ISampleSelector((Alembic::AbcCoreAbstract::index_t)sample_index));
-        int value_size = (int)nrmsamp.getVals()->size();
-        if (value_size == prim->verts.size()) {
-            auto &nrms = prim->verts.add_attr<vec3f>("nrm");
-            auto marr = nrmsamp.getVals();
-            for (size_t i = 0; i < marr->size(); i++) {
-                auto const &n = (*marr)[i];
-                nrms[i] = {n[0], n[1], n[2]};
-            }
+            auto const& val = (*marr)[i];
+            points.emplace_back(val[0], val[1], val[2]);
         }
     }
 
     if (auto marr = mesamp.getFaceIndices()) {
         if (!read_done) {
-            log_debug("[alembic] totally {} face indices", marr->size());
+            //log_debug("[alembic] totally {} face indices", marr->size());
         }
-        auto &parr = prim->loops;
-        for (size_t i = 0; i < marr->size(); i++) {
-            int ind = (*marr)[i];
-            parr.push_back(ind);
-        }
+        face_indices.reserve(marr->size());
+        for (size_t i = 0; i < marr->size(); i++)
+            face_indices.push_back((*marr)[i]);
     }
-
-    bool is_point = true;
 
     if (auto marr = mesamp.getFaceCounts()) {
         if (!read_done) {
-            log_debug("[alembic] totally {} faces", marr->size());
+            //log_debug("[alembic] totally {} faces", marr->size());
         }
-        auto &loops = prim->loops;
-        auto &parr = prim->polys;
+        face_counts.reserve(marr->size());
         int base = 0;
         for (size_t i = 0; i < marr->size(); i++) {
             int cnt = (*marr)[i];
-            parr.emplace_back(base, cnt);
+            face_counts.push_back(cnt);
             base += cnt;
-            if (cnt != 1) {
-                is_point = false;
-            }
+            if (cnt != 1) is_point = false;
         }
     }
-    if (auto uv = mesh.getUVsParam()) {
-        auto uvsamp =
-            uv.getIndexedValue(Alembic::Abc::v12::ISampleSelector((Alembic::AbcCoreAbstract::index_t)sample_index));
-        int value_size = (int)uvsamp.getVals()->size();
-        int index_size = (int)uvsamp.getIndices()->size();
-        if (!read_done) {
-            log_debug("[alembic] totally {} uv value", value_size);
-            log_debug("[alembic] totally {} uv indices", index_size);
-            if (prim->loops.size() == index_size) {
-                log_debug("[alembic] uv per face");
-            } else if (prim->verts.size() == index_size) {
-                log_debug("[alembic] uv per vertex");
-            } else {
-                log_error("[alembic] error uv indices");
-            }
-        }
-        prim->uvs.resize(value_size);
-        {
-            auto marr = uvsamp.getVals();
-            for (size_t i = 0; i < marr->size(); i++) {
-                auto const &val = (*marr)[i];
-                prim->uvs[i] = {val[0], val[1]};
-            }
-        }
-        if (prim->loops.size() == index_size) {
-            prim->loops.add_attr<int>("uvs");
-            for (auto i = 0; i < prim->loops.size(); i++) {
-                prim->loops.attr<int>("uvs")[i] = (*uvsamp.getIndices())[i];
-            }
-        }
-        else if (prim->verts.size() == index_size) {
-            prim->loops.add_attr<int>("uvs");
-            for (auto i = 0; i < prim->loops.size(); i++) {
-                prim->loops.attr<int>("uvs")[i] = prim->loops[i];
-            }
-        }
-    }
-    if (!prim->loops.has_attr("uvs")) {
-        if (!read_done) {
-            log_warn("[alembic] Not found uv, auto fill zero.");
-        }
-        prim->uvs.resize(1);
-        prim->uvs[0] = zeno::vec2f(0, 0);
-        prim->loops.add_attr<int>("uvs");
-        for (auto i = 0; i < prim->loops.size(); i++) {
-            prim->loops.attr<int>("uvs")[i] = 0;
-        }
-    }
-    ICompoundProperty arbattrs = mesh.getArbGeomParams();
-    read_attributes2(prim.get(), arbattrs, iSS, read_done);
-    read_user_data(prim.get(), arbattrs, iSS, read_done);
-    ICompoundProperty usrData = mesh.getUserProperties();
-    read_user_data(prim.get(), usrData, iSS, read_done);
 
     if (is_point) {
-        prim->loops.clear();
-        prim->polys.clear();
-        return prim;
+        faces.clear();
+    } else {
+        faces.reserve(face_counts.size());
+        size_t idx = 0;
+        for (int cnt : face_counts) {
+            std::vector<int> f;
+            f.reserve(cnt);
+            for (int j = 0; j < cnt && idx < face_indices.size(); j++, idx++)
+                f.push_back(face_indices[idx]);
+            faces.push_back(std::move(f));
+        }
     }
 
-    if (read_face_set) {
-        auto &faceset = prim->polys.add_attr<int>("faceset");
-        std::fill(faceset.begin(), faceset.end(), -1);
-        auto ud = prim->userData();
+    IGeometryObject* geom = zeno::zs_alembic::createGeometryByPointFace(Topo_IndiceMesh, false, points, faces);
+    if (!geom) return ABCTreeUniqueGeom(nullptr);
+
+    set_time_info(geom->userData(), time->getTimeSamplingType(), start, int(mesh.getNumSamples()));
+
+    if (auto nrm = mesh.getNormalsParam()) {
+        auto nrmsamp = nrm.getIndexedValue(iSS);
+        int value_size = (int)nrmsamp.getVals()->size();
+        if (value_size == (int)points.size()) {
+            std::vector<Vec3f> nrms(points.size());
+            auto marr = nrmsamp.getVals();
+            for (size_t i = 0; i < marr->size(); i++) {
+                auto const& n = (*marr)[i];
+                nrms[i] = Vec3f{n[0], n[1], n[2]};
+            }
+            geom->create_attr_by_vec3(ATTR_POINT, "nrm", nrms.data(), nrms.size());
+        }
+    }
+
+    ICompoundProperty arbattrs = mesh.getArbGeomParams();
+    read_attributes2(geom, arbattrs, iSS, read_done);
+    read_user_data(geom, arbattrs, iSS, read_done);
+    ICompoundProperty usrData = mesh.getUserProperties();
+    read_user_data(geom, usrData, iSS, read_done);
+
+    if (read_face_set && !is_point) {
+        std::vector<int> faceset(geom->nfaces(), -1);
+        IUserData2* ud = geom->userData();
         std::vector<std::string> faceSetNames;
         mesh.getFaceSetNames(faceSetNames);
-        for (auto i = 0; i < faceSetNames.size(); i++) {
-            auto n = faceSetNames[i];
-            IFaceSet faceSet = mesh.getFaceSet(n);
+        for (size_t i = 0; i < faceSetNames.size(); i++) {
+            IFaceSet faceSet = mesh.getFaceSet(faceSetNames[i]);
             IFaceSetSchema::Sample faceSetSample = faceSet.getSchema().getValue();
             size_t s = faceSetSample.getFaces()->size();
-            for (auto j = 0; j < s; j++) {
+            for (size_t j = 0; j < s; j++) {
                 int f = faceSetSample.getFaces()->get()[j];
-                faceset[f] = i;
+                if (f < (int)faceset.size()) faceset[f] = (int)i;
             }
         }
         bool found_unbind_faces = false;
-        int next_faceset_index = faceSetNames.size();
-        for (auto i = 0; i < faceset.size(); i++) {
+        int next_faceset_index = (int)faceSetNames.size();
+        for (size_t i = 0; i < faceset.size(); i++) {
             if (faceset[i] == -1) {
                 found_unbind_faces = true;
                 faceset[i] = next_faceset_index;
             }
         }
-        if (found_unbind_faces) {
-            faceSetNames.push_back(abc_name);
-        }
-        for (auto i = 0; i < faceSetNames.size(); i++) {
-            auto n = faceSetNames[i];
-            ud->set_string(stdString2zs(zeno::format("faceset_{}", i)), stdString2zs(n));
-        }
-        ud->set_int("faceset_count", int(faceSetNames.size()));
+        if (found_unbind_faces) faceSetNames.push_back(abc_name);
+        for (size_t i = 0; i < faceSetNames.size(); i++)
+            ud->set_string(zeno::format("faceset_{}", i).c_str(), faceSetNames[i].c_str());
+        ud->set_int("faceset_count", (int)faceSetNames.size());
+        geom->create_attr_by_int(ATTR_FACE, "faceset", faceset.data(), faceset.size());
     }
 
-    return prim;
+    return ABCTreeUniqueGeom(geom);
 }
 
-static std::unique_ptr<PrimitiveObject> foundABCSubd(Alembic::AbcGeom::ISubDSchema &subd, int frameid, bool read_done, bool read_face_set, bool outOfRangeAsEmpty) {
-    auto prim = std::make_unique<PrimitiveObject>();
+static ABCTreeUniqueGeom foundABCSubd(Alembic::AbcGeom::ISubDSchema& subd, int frameid, bool read_done, bool read_face_set, bool outOfRangeAsEmpty) {
+    std::vector<Vec3f> points;
+    std::vector<std::vector<int>> faces;
+    std::vector<int> face_indices;
+    std::vector<int> face_counts;
 
     std::shared_ptr<Alembic::AbcCoreAbstract::v12::TimeSampling> time = subd.getTimeSampling();
-    float time_per_cycle =  time->getTimeSamplingType().getTimePerCycle();
+    float time_per_cycle = time->getTimeSamplingType().getTimePerCycle();
     double start = time->getStoredTimes().front();
-    int start_frame = std::lround(start / time_per_cycle );
-    set_time_info(prim->userData(), time->getTimeSamplingType(), start, int(subd.getNumSamples()));
+    int start_frame = std::lround(start / time_per_cycle);
 
     int sample_index = clamp(frameid - start_frame, 0, (int)subd.getNumSamples() - 1);
     if (outOfRangeAsEmpty && frameid - start_frame != sample_index) {
-        return prim;
+        IGeometryObject* geom = zeno::zs_alembic::createGeometryByPointFace(Topo_IndiceMesh, false, points, faces);
+        if (geom) set_time_info(geom->userData(), time->getTimeSamplingType(), start, int(subd.getNumSamples()));
+        return ABCTreeUniqueGeom(geom);
     }
     ISampleSelector iSS = Alembic::Abc::v12::ISampleSelector((Alembic::AbcCoreAbstract::index_t)sample_index);
     Alembic::AbcGeom::ISubDSchema::Sample mesamp = subd.getValue(iSS);
 
     if (auto marr = mesamp.getPositions()) {
         if (!read_done) {
-            log_debug("[alembic] totally {} positions", marr->size());
+            //log_debug("[alembic] totally {} positions", marr->size());
         }
-        auto &parr = prim->verts;
+        points.reserve(marr->size());
         for (size_t i = 0; i < marr->size(); i++) {
-            auto const &val = (*marr)[i];
-            parr.emplace_back(val[0], val[1], val[2]);
+            auto const& val = (*marr)[i];
+            points.emplace_back(val[0], val[1], val[2]);
         }
     }
 
-    read_velocity(prim.get(), mesamp.getVelocities(), read_done);
-
     if (auto marr = mesamp.getFaceIndices()) {
         if (!read_done) {
-            log_debug("[alembic] totally {} face indices", marr->size());
+            //log_debug("[alembic] totally {} face indices", marr->size());
         }
-        auto &parr = prim->loops;
-        for (size_t i = 0; i < marr->size(); i++) {
-            int ind = (*marr)[i];
-            parr.push_back(ind);
-        }
+        for (size_t i = 0; i < marr->size(); i++)
+            face_indices.push_back((*marr)[i]);
     }
 
     if (auto marr = mesamp.getFaceCounts()) {
         if (!read_done) {
-            log_debug("[alembic] totally {} faces", marr->size());
+            //log_debug("[alembic] totally {} faces", marr->size());
         }
-        auto &loops = prim->loops;
-        auto &parr = prim->polys;
-        int base = 0;
+        size_t base = 0;
         for (size_t i = 0; i < marr->size(); i++) {
             int cnt = (*marr)[i];
-            parr.emplace_back(base, cnt);
+            std::vector<int> f;
+            f.reserve(cnt);
+            for (int j = 0; j < cnt && base + j < face_indices.size(); j++)
+                f.push_back(face_indices[base + j]);
             base += cnt;
+            faces.push_back(std::move(f));
         }
     }
-    if (auto uv = subd.getUVsParam()) {
-        auto uvsamp =
-            uv.getIndexedValue(Alembic::Abc::v12::ISampleSelector((Alembic::AbcCoreAbstract::index_t)sample_index));
-        int value_size = (int)uvsamp.getVals()->size();
-        int index_size = (int)uvsamp.getIndices()->size();
-        if (!read_done) {
-            log_debug("[alembic] totally {} uv value", value_size);
-            log_debug("[alembic] totally {} uv indices", index_size);
-            if (prim->loops.size() == index_size) {
-                log_debug("[alembic] uv per face");
-            } else if (prim->verts.size() == index_size) {
-                log_debug("[alembic] uv per vertex");
-            } else {
-                log_error("[alembic] error uv indices");
-            }
-        }
-        prim->uvs.resize(value_size);
-        {
-            auto marr = uvsamp.getVals();
-            for (size_t i = 0; i < marr->size(); i++) {
-                auto const &val = (*marr)[i];
-                prim->uvs[i] = {val[0], val[1]};
-            }
-        }
-        if (prim->loops.size() == index_size) {
-            prim->loops.add_attr<int>("uvs");
-            for (auto i = 0; i < prim->loops.size(); i++) {
-                prim->loops.attr<int>("uvs")[i] = (*uvsamp.getIndices())[i];
-            }
-        }
-        else if (prim->verts.size() == index_size) {
-            prim->loops.add_attr<int>("uvs");
-            for (auto i = 0; i < prim->loops.size(); i++) {
-                prim->loops.attr<int>("uvs")[i] = prim->loops[i];
-            }
-        }
-    }
-    if (!prim->loops.has_attr("uvs")) {
-        if (!read_done) {
-            // log_warn("[alembic] Not found uv, auto fill zero.");
-        }
-        prim->uvs.resize(1);
-        prim->uvs[0] = zeno::vec2f(0, 0);
-        prim->loops.add_attr<int>("uvs");
-        for (auto i = 0; i < prim->loops.size(); i++) {
-            prim->loops.attr<int>("uvs")[i] = 0;
-        }
-    }
+
+    IGeometryObject* geom = zeno::zs_alembic::createGeometryByPointFace(Topo_IndiceMesh, false, points, faces);
+    if (!geom) return ABCTreeUniqueGeom(nullptr);
+
+    set_time_info(geom->userData(), time->getTimeSamplingType(), start, int(subd.getNumSamples()));
+
     ICompoundProperty arbattrs = subd.getArbGeomParams();
-    read_attributes2(prim.get(), arbattrs, iSS, read_done);
-    read_user_data(prim.get(), arbattrs, iSS, read_done);
+    read_attributes2(geom, arbattrs, iSS, read_done);
+    read_user_data(geom, arbattrs, iSS, read_done);
     ICompoundProperty usrData = subd.getUserProperties();
-    read_user_data(prim.get(), usrData, iSS, read_done);
+    read_user_data(geom, usrData, iSS, read_done);
 
     if (read_face_set) {
-        auto &faceset = prim->polys.add_attr<int>("faceset");
-        std::fill(faceset.begin(), faceset.end(), -1);
-        auto ud = prim->userData();
+        std::vector<int> faceset(geom->nfaces(), -1);
+        IUserData2* ud = geom->userData();
         std::vector<std::string> faceSetNames;
         subd.getFaceSetNames(faceSetNames);
-        ud->set_int("faceset_count", int(faceSetNames.size()));
-        for (auto i = 0; i < faceSetNames.size(); i++) {
-            auto n = faceSetNames[i];
-            ud->set_string(stdString2zs(zeno::format("faceset_{}", i)), stdString2zs(n));
-            IFaceSet faceSet = subd.getFaceSet(n);
+        ud->set_int("faceset_count", (int)faceSetNames.size());
+        for (size_t i = 0; i < faceSetNames.size(); i++) {
+            ud->set_string(zeno::format("faceset_{}", i).c_str(), faceSetNames[i].c_str());
+            IFaceSet faceSet = subd.getFaceSet(faceSetNames[i]);
             IFaceSetSchema::Sample faceSetSample = faceSet.getSchema().getValue();
             size_t s = faceSetSample.getFaces()->size();
-            for (auto j = 0; j < s; j++) {
+            for (size_t j = 0; j < s; j++) {
                 int f = faceSetSample.getFaces()->get()[j];
-                faceset[f] = i;
+                if (f < (int)faceset.size()) faceset[f] = (int)i;
             }
         }
+        geom->create_attr_by_int(ATTR_FACE, "faceset", faceset.data(), faceset.size());
     }
 
-    return prim;
+    return ABCTreeUniqueGeom(geom);
 }
 
 static std::unique_ptr<CameraInfo> foundABCCamera(Alembic::AbcGeom::ICameraSchema &cam, int frameid) {
@@ -914,105 +852,112 @@ static Alembic::Abc::v12::M44d foundABCXform(Alembic::AbcGeom::IXformSchema &xfm
     return samp.getMatrix();
 }
 
-static std::unique_ptr<PrimitiveObject> foundABCPoints(Alembic::AbcGeom::IPointsSchema &mesh, int frameid, bool read_done, bool outOfRangeAsEmpty) {
-    auto prim = std::make_unique<PrimitiveObject>();
+static ABCTreeUniqueGeom foundABCPoints(Alembic::AbcGeom::IPointsSchema& mesh, int frameid, bool read_done, bool outOfRangeAsEmpty) {
+    std::vector<Vec3f> points;
+    std::vector<std::vector<int>> faces;
 
     std::shared_ptr<Alembic::AbcCoreAbstract::v12::TimeSampling> time = mesh.getTimeSampling();
-    float time_per_cycle =  time->getTimeSamplingType().getTimePerCycle();
+    float time_per_cycle = time->getTimeSamplingType().getTimePerCycle();
     double start = time->getStoredTimes().front();
-    int start_frame = std::lround(start / time_per_cycle );
-    set_time_info(prim->userData(), time->getTimeSamplingType(), start, int(mesh.getNumSamples()));
+    int start_frame = std::lround(start / time_per_cycle);
 
     int sample_index = clamp(frameid - start_frame, 0, (int)mesh.getNumSamples() - 1);
     if (outOfRangeAsEmpty && frameid - start_frame != sample_index) {
-        return prim;
+        IGeometryObject* geom = zeno::zs_alembic::createGeometryByPointFace(Topo_IndiceMesh, false, points, faces);
+        if (geom) set_time_info(geom->userData(), time->getTimeSamplingType(), start, int(mesh.getNumSamples()));
+        return ABCTreeUniqueGeom(geom);
     }
     auto iSS = Alembic::Abc::v12::ISampleSelector((Alembic::AbcCoreAbstract::index_t)sample_index);
     Alembic::AbcGeom::IPointsSchema::Sample mesamp = mesh.getValue(iSS);
     if (auto marr = mesamp.getPositions()) {
-        if (!read_done) {
-            //log_info("[alembic] totally {} positions", marr->size());
-        }
-        auto &parr = prim->verts;
+        points.reserve(marr->size());
         for (size_t i = 0; i < marr->size(); i++) {
-            auto const &val = (*marr)[i];
-            parr.emplace_back(val[0], val[1], val[2]);
+            auto const& val = (*marr)[i];
+            points.emplace_back(val[0], val[1], val[2]);
         }
     }
 
-    {
-        auto &ids = prim->verts.add_attr<int>("id");
+    IGeometryObject* geom = zeno::zs_alembic::createGeometryByPointFace(Topo_IndiceMesh, false, points, faces);
+    if (!geom) return ABCTreeUniqueGeom(nullptr);
+
+    set_time_info(geom->userData(), time->getTimeSamplingType(), start, int(mesh.getNumSamples()));
+
+    if (mesamp.getIds()) {
         auto count = mesamp.getIds()->size();
-        for (auto i = 0; i < count; i++) {
-            ids[i] = mesamp.getIds()->operator[](i);
+        if (count == (size_t)geom->npoints()) {
+            std::vector<int> ids(count);
+            for (size_t i = 0; i < count; i++)
+                ids[i] = mesamp.getIds()->operator[](i);
+            geom->create_attr_by_int(ATTR_POINT, "id", ids.data(), ids.size());
         }
     }
-    read_velocity(prim.get(), mesamp.getVelocities(), read_done);
     ICompoundProperty arbattrs = mesh.getArbGeomParams();
-    read_attributes2(prim.get(), arbattrs, iSS, read_done);
-    read_user_data(prim.get(), arbattrs, iSS, read_done);
+    read_attributes2(geom, arbattrs, iSS, read_done);
+    read_user_data(geom, arbattrs, iSS, read_done);
     ICompoundProperty usrData = mesh.getUserProperties();
-    read_user_data(prim.get(), usrData, iSS, read_done);
-    return prim;
+    read_user_data(geom, usrData, iSS, read_done);
+    return ABCTreeUniqueGeom(geom);
 }
 
-static std::unique_ptr<PrimitiveObject> foundABCCurves(Alembic::AbcGeom::ICurvesSchema &mesh, int frameid, bool read_done, bool outOfRangeAsEmpty) {
-    auto prim = std::make_unique<PrimitiveObject>();
+static ABCTreeUniqueGeom foundABCCurves(Alembic::AbcGeom::ICurvesSchema& mesh, int frameid, bool read_done, bool outOfRangeAsEmpty) {
+    std::vector<Vec3f> points;
+    std::vector<std::vector<int>> faces;
 
     std::shared_ptr<Alembic::AbcCoreAbstract::v12::TimeSampling> time = mesh.getTimeSampling();
-    float time_per_cycle =  time->getTimeSamplingType().getTimePerCycle();
+    float time_per_cycle = time->getTimeSamplingType().getTimePerCycle();
     double start = time->getStoredTimes().front();
-    int start_frame = std::lround(start / time_per_cycle );
-    set_time_info(prim->userData(), time->getTimeSamplingType(), start, int(mesh.getNumSamples()));
+    int start_frame = std::lround(start / time_per_cycle);
 
     int sample_index = clamp(frameid - start_frame, 0, (int)mesh.getNumSamples() - 1);
     if (outOfRangeAsEmpty && frameid - start_frame != sample_index) {
-        return prim;
+        IGeometryObject* geom = zeno::zs_alembic::createGeometryByPointFace(Topo_IndiceMesh, false, points, faces);
+        if (geom) set_time_info(geom->userData(), time->getTimeSamplingType(), start, int(mesh.getNumSamples()));
+        return ABCTreeUniqueGeom(geom);
     }
     auto iSS = Alembic::Abc::v12::ISampleSelector((Alembic::AbcCoreAbstract::index_t)sample_index);
     Alembic::AbcGeom::ICurvesSchema::Sample mesamp = mesh.getValue(iSS);
     if (auto marr = mesamp.getPositions()) {
-        if (!read_done) {
-            //log_info("[alembic] totally {} positions", marr->size());
-        }
-        auto &parr = prim->verts;
+        points.reserve(marr->size());
         for (size_t i = 0; i < marr->size(); i++) {
-            auto const &val = (*marr)[i];
-            parr.emplace_back(val[0], val[1], val[2]);
+            auto const& val = (*marr)[i];
+            points.emplace_back(val[0], val[1], val[2]);
         }
     }
-    read_velocity(prim.get(), mesamp.getVelocities(), read_done);
-    {
-        auto &parr = prim->lines;
-        auto numCurves = mesamp.getCurvesNumVertices()->size();
-        std::size_t offset = 0;
-        for (auto i = 0; i < numCurves; i++) {
-            auto count = mesamp.getCurvesNumVertices()->operator[](i);
-            for (auto j = 0; j < count-1; j++) {
-                parr.push_back(vec2i(offset + j, offset + j + 1));
+
+    if (auto numCurves = mesamp.getCurvesNumVertices()) {
+        size_t offset = 0;
+        for (size_t i = 0; i < numCurves->size(); i++) {
+            int count = numCurves->operator[](i);
+            for (int j = 0; j < count - 1; j++) {
+                faces.push_back({(int)(offset + j), (int)(offset + j + 1)});
             }
             offset += count;
         }
     }
+
+    IGeometryObject* geom = zeno::zs_alembic::createGeometryByPointFace(Topo_IndiceMesh, false, points, faces);
+    if (!geom) return ABCTreeUniqueGeom(nullptr);
+
+    set_time_info(geom->userData(), time->getTimeSamplingType(), start, int(mesh.getNumSamples()));
+
     if (auto width = mesh.getWidthsParam()) {
-        auto widthsamp =
-            width.getIndexedValue(Alembic::Abc::v12::ISampleSelector((Alembic::AbcCoreAbstract::index_t)sample_index));
+        auto widthsamp = width.getIndexedValue(iSS);
         int index_size = (int)widthsamp.getIndices()->size();
-        if (prim->verts.size() == index_size) {
-            auto &width_attr = prim->add_attr<float>("width");
-            for (auto i = 0; i < prim->verts.size(); i++) {
+        if (geom->npoints() == index_size) {
+            std::vector<float> width_attr(index_size);
+            for (int i = 0; i < index_size; i++) {
                 auto index = widthsamp.getIndices()->operator[](i);
-                auto value = widthsamp.getVals()->operator[](index);
-                width_attr[i] = value;
+                width_attr[i] = widthsamp.getVals()->operator[](index);
             }
+            geom->create_attr_by_float(ATTR_POINT, "width", width_attr.data(), width_attr.size());
         }
     }
     ICompoundProperty arbattrs = mesh.getArbGeomParams();
-    read_attributes2(prim.get(), arbattrs, iSS, read_done);
-    read_user_data(prim.get(), arbattrs, iSS, read_done);
+    read_attributes2(geom, arbattrs, iSS, read_done);
+    read_user_data(geom, arbattrs, iSS, read_done);
     ICompoundProperty usrData = mesh.getUserProperties();
-    read_user_data(prim.get(), usrData, iSS, read_done);
-    return prim;
+    read_user_data(geom, usrData, iSS, read_done);
+    return ABCTreeUniqueGeom(geom);
 }
 
 void traverseABC(
@@ -1034,10 +979,10 @@ void traverseABC(
     {
         auto const &md = obj.getMetaData();
         if (!read_done) {
-            log_debug("[alembic] meta data: [{}]", md.serialize());
+            //log_debug("[alembic] meta data: [{}]", md.serialize());
         }
         tree.name = obj.getName();
-        String _path = stdString2zs(zeno::format("{}/{}", path, tree.name));
+        auto _path = zeno::format("{}/{}", path, tree.name);
         if (tree.instanceSourcePath.size()) {
             return;
         }
@@ -1067,65 +1012,68 @@ void traverseABC(
         if (!(tree.visible == ObjectVisibility::kVisibilityHidden && skipInvisibleObject)) {
         if (Alembic::AbcGeom::IPolyMesh::matches(md)) {
             if (!read_done) {
-                log_debug("[alembic] found a mesh [{}]", obj.getName());
+                //log_debug("[alembic] found a mesh [{}]", obj.getName());
             }
 
             Alembic::AbcGeom::IPolyMesh meshy(obj);
             auto &mesh = meshy.getSchema();
             tree.prim = foundABCMesh(mesh, frameid, read_done, read_face_set, outOfRangeAsEmpty, obj.getName());
-            tree.prim->userData()->set_string("_abc_name", stdString2zs(obj.getName()));
-            prim_set_abcpath(tree.prim.get(), _path);
+            if (tree.prim) {
+                tree.prim->userData()->set_string("_abc_name", obj.getName().c_str());
+                geom_set_abcpath(tree.prim.get(), _path.c_str());
+            }
         } else if (Alembic::AbcGeom::IXformSchema::matches(md)) {
             if (!read_done) {
-                log_debug("[alembic] found a Xform [{}]", obj.getName());
+                //log_debug("[alembic] found a Xform [{}]", obj.getName());
             }
             Alembic::AbcGeom::IXform xfm(obj);
             auto &cam_sch = xfm.getSchema();
             tree.xform = foundABCXform(cam_sch, frameid);
         } else if (Alembic::AbcGeom::ICameraSchema::matches(md)) {
             if (!read_done) {
-                log_debug("[alembic] found a Camera [{}]", obj.getName());
+                //log_debug("[alembic] found a Camera [{}]", obj.getName());
             }
             Alembic::AbcGeom::ICamera cam(obj);
             auto &cam_sch = cam.getSchema();
             tree.camera_info = foundABCCamera(cam_sch, frameid);
         } else if(Alembic::AbcGeom::IPointsSchema::matches(md)) {
             if (!read_done) {
-                log_debug("[alembic] found points [{}]", obj.getName());
+                //log_debug("[alembic] found points [{}]", obj.getName());
             }
             Alembic::AbcGeom::IPoints points(obj);
             auto &points_sch = points.getSchema();
             tree.prim = foundABCPoints(points_sch, frameid, read_done, outOfRangeAsEmpty);
-            tree.prim->userData()->set_string("_abc_name", stdString2zs(obj.getName()));
-            prim_set_abcpath(tree.prim.get(), _path);
-            tree.prim->userData()->set_int("faceset_count", 0);
+            if (tree.prim) {
+                tree.prim->userData()->set_string("_abc_name", obj.getName().c_str());
+                geom_set_abcpath(tree.prim.get(), _path.c_str());
+                tree.prim->userData()->set_int("faceset_count", 0);
+            }
         } else if(Alembic::AbcGeom::ICurvesSchema::matches(md)) {
             if (!read_done) {
-                log_debug("[alembic] found curves [{}]", obj.getName());
+                //log_debug("[alembic] found curves [{}]", obj.getName());
             }
             Alembic::AbcGeom::ICurves curves(obj);
             auto &curves_sch = curves.getSchema();
             tree.prim = foundABCCurves(curves_sch, frameid, read_done, outOfRangeAsEmpty);
-            tree.prim->userData()->set_string("_abc_name", stdString2zs(obj.getName()));
-            prim_set_abcpath(tree.prim.get(), _path);
-            tree.prim->userData()->set_int("faceset_count", 0);
+            if (tree.prim) {
+                tree.prim->userData()->set_string("_abc_name", obj.getName().c_str());
+                geom_set_abcpath(tree.prim.get(), _path.c_str());
+                tree.prim->userData()->set_int("faceset_count", 0);
+            }
         } else if (Alembic::AbcGeom::ISubDSchema::matches(md)) {
             if (!read_done) {
-                log_debug("[alembic] found SubD [{}]", obj.getName());
+                //log_debug("[alembic] found SubD [{}]", obj.getName());
             }
             Alembic::AbcGeom::ISubD subd(obj);
             auto &subd_sch = subd.getSchema();
             tree.prim = foundABCSubd(subd_sch, frameid, read_done, read_face_set, outOfRangeAsEmpty);
-            tree.prim->userData()->set_string("_abc_name", stdString2zs(obj.getName()));
-            prim_set_abcpath(tree.prim.get(), _path);
+            if (tree.prim) {
+                tree.prim->userData()->set_string("_abc_name", obj.getName().c_str());
+                geom_set_abcpath(tree.prim.get(), _path.c_str());
+            }
         }
         if (tree.prim) {
             tree.prim->userData()->set_int("vis", tree.visible);
-            if (tree.visible == 0) {
-                for (auto i = 0; i < tree.prim->verts.size(); i++) {
-                    tree.prim->verts[i] = {};
-                }
-            }
         }
     }
     }
@@ -1135,13 +1083,13 @@ void traverseABC(
 
     size_t nch = obj.getNumChildren();
     if (!read_done) {
-        log_debug("[alembic] found {} children", nch);
+        //log_debug("[alembic] found {} children", nch);
     }
 
     for (size_t i = 0; i < nch; i++) {
         auto const &name = obj.getChildHeader(i).getName();
         if (!read_done) {
-            log_debug("[alembic] at {} name: [{}]", i, name);
+            //log_debug("[alembic] at {} name: [{}]", i, name);
         }
 
         Alembic::AbcGeom::IObject child(obj, name);
@@ -1176,91 +1124,110 @@ Alembic::AbcGeom::IArchive readABC(std::string const &path) {
     }
 }
 
-struct ReadAlembic : INode {
+static std::string read_alembic_get_input2_string(INodeData* nd, const char* name) {
+    char buf[4096] = {};
+    nd->get_input2_string(name, buf, sizeof(buf));
+    return std::string(buf);
+}
+static std::vector<std::string> read_alembic_split_str(const std::string& s, std::initializer_list<char> delims) {
+    std::vector<std::string> out;
+    std::string cur;
+    for (char c : s) {
+        bool is_delim = false;
+        for (char d : delims) if (c == d) { is_delim = true; break; }
+        if (is_delim) {
+            if (!cur.empty()) { out.push_back(cur); cur.clear(); }
+        } else cur += c;
+    }
+    if (!cur.empty()) out.push_back(cur);
+    return out;
+}
+
+struct ReadAlembic : INode2 {
     Alembic::Abc::v12::IArchive archive;
     std::string usedPath;
     bool read_done = false;
-    virtual void apply() override {
-        bool use_instance = get_input2_bool("use_instance");
-        int frameid;
-        if (has_link_input("frameid")) {
-            frameid = std::lround(get_input2_float("frameid"));
-        } else {
-            frameid = GetFrameId();
-        }
-        auto abctree = std::make_unique<ABCTree>();
-        bool read_face_set = get_input2_bool("read_face_set");
-        {
-            auto path = zsString2Std(get_input2_string("path"));
-            if (usedPath != path) {
-                read_done = false;
-            }
-            if (read_done == false) {
-                archive = readABC(path);
-            }
-            double start, _end;
-            GetArchiveStartAndEndTime(archive, start, _end);
-            // fmt::print("GetArchiveStartAndEndTime: {}\n", start);
-            // fmt::print("archive.getNumTimeSamplings: {}\n", archive.getNumTimeSamplings());
-            auto obj = archive.getTop();
-            bool outOfRangeAsEmpty = get_input2_bool("outOfRangeAsEmpty");
-            bool skipInvisibleObject = get_input2_bool("skipInvisibleObject");
-            Alembic::Util::uint32_t numSamplings = archive.getNumTimeSamplings();
-            TimeAndSamplesMap timeMap;
-            for (Alembic::Util::uint32_t s = 0; s < numSamplings; ++s)             {
-                timeMap.add(archive.getTimeSampling(s),
-                            archive.getMaxNumSamplesForTimeSamplingIndex(s));
-            }
 
-            traverseABC(obj, *abctree, frameid, read_done, read_face_set, "", timeMap, ObjectVisibility::kVisibilityDeferred,
-                        skipInvisibleObject, outOfRangeAsEmpty, use_instance);
-            read_done = true;
-            usedPath = path;
+    DEF_OVERRIDE_FOR_INODE
+    ZErrorCode apply(INodeData* nd) override {
+        bool use_instance = nd->get_input2_bool("use_instance");
+        int frameid = nd->has_link_input("frameid")
+            ? static_cast<int>(std::lround(nd->get_input2_float("frameid")))
+            : nd->GetFrameId();
+        auto abctree = std::make_unique<ABCTree>();
+        bool read_face_set = nd->get_input2_bool("read_face_set");
+        std::string path = read_alembic_get_input2_string(nd, "path");
+        if (usedPath != path) read_done = false;
+        if (!read_done) {
+            archive = readABC(path);
         }
-        {
-            auto namelist = std::make_unique<zeno::ListObject>();
-            abctree->visitPrims([&] (auto const &p) {
-                auto ud = p->userData();
-                auto _abc_path = zsString2Std(ud->get_string("abcpath_0", ""));
-                namelist->push_back(std::make_unique<StringObject>(_abc_path));
-            });
-            auto ud = abctree->userData();
-            ud->set_int("prim_count", int(namelist->size()));
-            for (auto i = 0; i < namelist->size(); i++) {
-                auto n = namelist->get(i);
-                zeno::String na = stdString2zs(zeno::format("path_{:04}", i));
-                auto strobj = safe_dynamic_cast<StringObject>(n);
-                ud->set_string(na, stdString2zs(strobj->value));
+        double start, _end;
+        GetArchiveStartAndEndTime(archive, start, _end);
+        auto obj = archive.getTop();
+        bool outOfRangeAsEmpty = nd->get_input2_bool("outOfRangeAsEmpty");
+        bool skipInvisibleObject = nd->get_input2_bool("skipInvisibleObject");
+        Alembic::Util::uint32_t numSamplings = archive.getNumTimeSamplings();
+        TimeAndSamplesMap timeMap;
+        for (Alembic::Util::uint32_t s = 0; s < numSamplings; ++s)
+            timeMap.add(archive.getTimeSampling(s), archive.getMaxNumSamplesForTimeSamplingIndex(s));
+        traverseABC(obj, *abctree, frameid, read_done, read_face_set, "", timeMap, ObjectVisibility::kVisibilityDeferred,
+                    skipInvisibleObject, outOfRangeAsEmpty, use_instance);
+        read_done = true;
+        usedPath = path;
+
+        std::string namelist_str;
+        char path_buf[4096] = {};
+        abctree->visitPrims([&](IGeometryObject* p) {
+            IUserData2* ud = p->userData();
+            if (ud) {
+                ud->get_string("abcpath_0", "", path_buf, sizeof(path_buf));
+                namelist_str += path_buf;
+                namelist_str += '\n';
             }
-            set_output("namelist", std::move(namelist));
-        }
-        if (get_input2_bool("CopyFacesetToMatid") && read_face_set) {
-            abctree->visitPrims([](auto &prim){
-                prim_copy_faceset_to_matid(prim.get());
+        });
+        IUserData2* tree_ud = abctree->userData();
+        if (tree_ud) {
+            int n = 0;
+            abctree->visitPrims([&](IGeometryObject*) { n++; });
+            tree_ud->set_int("prim_count", n);
+            n = 0;
+            abctree->visitPrims([&](IGeometryObject* p) {
+                IUserData2* ud = p->userData();
+                if (ud) {
+                    ud->get_string("abcpath_0", "", path_buf, sizeof(path_buf));
+                    char key[32];
+                    std::snprintf(key, sizeof(key), "path_%04d", n);
+                    tree_ud->set_string(key, path_buf);
+                    n++;
+                }
             });
         }
-        set_output("abctree", std::move(abctree));
+        nd->set_output_string("namelist", namelist_str.c_str());
+
+        if (nd->get_input2_bool("CopyFacesetToMatid") && read_face_set) {
+            abctree->visitPrims([](IGeometryObject* p) {
+                geom_copy_faceset_to_matid(p);
+            });
+        }
+        nd->set_output_object("abctree", abctree.release());
+        return ZErr_OK;
     }
 };
 
-ZENDEFNODE(ReadAlembic, {
-    {
-        {gParamType_String, "path", "", zeno::Socket_Primitve, zeno::ReadPathEdit},
-        {gParamType_Bool, "read_face_set", "1"},
-        {gParamType_Bool, "outOfRangeAsEmpty", "0"},
-        {gParamType_Bool, "skipInvisibleObject", "1"},
-        {gParamType_Bool, "CopyFacesetToMatid", "1"},
-        {gParamType_Bool, "use_instance", "1"},
-        {gParamType_Float, "frameid"},
-    },
-    {
-        {gParamType_ABCTree, "abctree"},
-        {gParamType_List, "namelist"},
-    },
-    {},
-    {"alembic"},
-});
+ZENDEFNODE_ABI(ReadAlembic,
+    Z_INPUTS(
+        {"path", _gParamType_String, ZString("")},
+        {"read_face_set", _gParamType_Bool, ZInt(1)},
+        {"outOfRangeAsEmpty", _gParamType_Bool, ZInt(0)},
+        {"skipInvisibleObject", _gParamType_Bool, ZInt(1)},
+        {"CopyFacesetToMatid", _gParamType_Bool, ZInt(1)},
+        {"use_instance", _gParamType_Bool, ZInt(1)},
+        {"frameid", _gParamType_Float, ZFloat(0.f)}
+    ),
+    Z_OUTPUTS({"abctree", _gParamType_IObject}, {"namelist", _gParamType_String}),
+    "alembic", "", "", "");
 
+#if 0
 std::unique_ptr<ListObject> abc_split_by_name(PrimitiveObject* prim, bool add_when_none) {
     auto list = create_ListObject();
     if (prim->verts.size() == 0) {
@@ -1332,6 +1299,8 @@ std::unique_ptr<ListObject> abc_split_by_name(PrimitiveObject* prim, bool add_wh
     }
     return list;
 }
+#endif
+#if 0
 struct AlembicSplitByName: INode {
     void apply() override {
         auto prim = get_input_PrimitiveObject("prim");
@@ -1372,7 +1341,8 @@ ZENDEFNODE(AlembicSplitByName, {
     {},
     {"alembic"},
 });
-
+#endif
+#if 0
 struct CopyPosAndNrmByIndex: INode {
     void apply() override {
         auto prim = clone_input_PrimitiveObject("prim");
@@ -1409,69 +1379,72 @@ ZENDEFNODE(CopyPosAndNrmByIndex, {
     {"alembic"},
 });
 
-struct PrimsFilterInUserdata: INode {
-    void apply() override {
-        auto prims = get_input_ListObject("list");
-        auto filter_str = zsString2Std(get_input2_string("filters"));
-        std::vector<std::string> filters = zeno::split_str(filter_str, {' ', '\n'});
-        std::vector<std::string> filters_;
-        auto out_list = std::make_unique<ListObject>();
+#endif
 
-        for (auto &s: filters) {
-            if (s.length() > 0) {
-                filters_.push_back(s);
-            }
-        }
+struct PrimsFilterInUserdata : INode2 {
+    DEF_OVERRIDE_FOR_INODE
+    ZErrorCode apply(INodeData* nd) override {
+        IListObject* list_in = nd->get_input_ListObject("list");
+        if (!list_in) { nd->report_error("PrimsFilterInUserdata: need list"); return ZErr_ParamError; }
+        std::string filter_str = read_alembic_get_input2_string(nd, "filters");
+        std::vector<std::string> filters_ = read_alembic_split_str(filter_str, {' ', '\n'});
+        filters_.erase(std::remove_if(filters_.begin(), filters_.end(), [](const std::string& s) { return s.empty(); }), filters_.end());
 
-        auto name = get_input2_string("name");
-        auto contain = get_input2_bool("contain");
-        auto fuzzy = get_input2_bool("fuzzy");
-        for (auto p: prims->get()) {
-            auto ud = p->userData();
+        char name_buf[256] = {};
+        nd->get_input2_string("name", name_buf, sizeof(name_buf));
+        const char* name = name_buf[0] ? name_buf : "abcpath_0";
+        bool contain = nd->get_input2_bool("contain");
+        bool fuzzy = nd->get_input2_bool("fuzzy");
+
+        IListObject* out_list = zeno::zs_alembic::createList();
+        if (!out_list) { nd->report_error("PrimsFilterInUserdata: createList failed"); return ZErr_ParamError; }
+        char val_buf[4096] = {};
+        for (size_t i = 0; i < list_in->size(); i++) {
+            IObject2* obj = list_in->get(i);
+            IUserData2* ud = obj ? obj->userData() : nullptr;
             bool this_contain = false;
-            if (ud->has_string(name)) {
-                string sname = zsString2Std(ud->get_string(name));
-                if (fuzzy) {
-                    for (auto & filter: filters_) {
-                        if (sname.find(filter) != std::string::npos) {
-                            this_contain = this_contain || true;
+            if (ud) {
+                if (ud->has_string(name)) {
+                    ud->get_string(name, "", val_buf, sizeof(val_buf));
+                    std::string sname(val_buf);
+                    if (fuzzy) {
+                        for (const auto& filter : filters_) {
+                            if (sname.find(filter) != std::string::npos) { this_contain = true; break; }
                         }
+                    } else {
+                        this_contain = std::count(filters_.begin(), filters_.end(), sname) > 0;
                     }
+                } else if (ud->has_int(name)) {
+                    std::string v = std::to_string(ud->get_int(name));
+                    this_contain = std::count(filters_.begin(), filters_.end(), v) > 0;
+                } else if (ud->has_float(name)) {
+                    std::string v = std::to_string(ud->get_float(name));
+                    this_contain = std::count(filters_.begin(), filters_.end(), v) > 0;
                 }
-                else {
-                    this_contain = std::count(filters_.begin(), filters_.end(), sname) > 0;
-                }
-            }
-            else if (ud->has_int(name)) {
-                this_contain = std::count(filters_.begin(), filters_.end(), std::to_string(ud->get_int(name))) > 0;
-            }
-            else if (ud->has_float(name)) {
-                this_contain = std::count(filters_.begin(), filters_.end(), std::to_string(ud->get_float(name))) > 0;
             }
             bool insert = (contain && this_contain) || (!contain && !this_contain);
-            if (insert) {
-                out_list->push_back(p->clone());
+            if (insert && obj) {
+                IObject2* clone_obj = obj->clone();
+                if (clone_obj) out_list->push_back(clone_obj);
             }
         }
-        set_output("out", std::move(out_list));
+        nd->set_output_object("out", out_list);
+        return ZErr_OK;
     }
 };
 
-ZENDEFNODE(PrimsFilterInUserdata, {
-    {
-        {gParamType_List, "list"},
-        {gParamType_String, "name", ""},
-        {gParamType_String, "filters", "", Socket_Primitve, zeno::Multiline},
-        {gParamType_Bool, "contain", "1"},
-        {gParamType_Bool, "fuzzy", "0"},
-    },
-    {
-        {gParamType_List, "out"},
-    },
-    {},
-    {"alembic"},
-});
+ZENDEFNODE_ABI(PrimsFilterInUserdata,
+    Z_INPUTS(
+        {"list", _gParamType_List},
+        {"name", _gParamType_String, ZString("abcpath_0")},
+        {"filters", _gParamType_String, ZString("")},
+        {"contain", _gParamType_Bool, ZInt(1)},
+        {"fuzzy", _gParamType_Bool, ZInt(0)}
+    ),
+    Z_OUTPUTS({"out", _gParamType_List}),
+    "alembic", "", "", "");
 
+#if 0
 #ifdef ZENO_WITH_PYTHON
 static PyObject * pycheck(PyObject *pResult) {
     if (pResult == nullptr) {
@@ -1615,6 +1588,7 @@ ZENDEFNODE(PrimCopyFacesetToMatid, {
     {"alembic"},
 });
 
+#endif
 
 } // namespace zeno
 

@@ -72,7 +72,7 @@ struct IObject2 {
 };
 
 struct IGeometryObject : IObject2 {
-    virtual size_t points_pos(Vec3f* buf, size_t buf_size) = 0;
+    virtual size_t points_pos(Vec3f* buf, size_t buf_size) const = 0;
     virtual GeomTopoType topo_type() const = 0;
 
     virtual int add_vertex(int face_id, int point_id) = 0;
@@ -118,7 +118,7 @@ struct IGeometryObject : IObject2 {
         const char* attr_name,
         float* buf,
         size_t buf_size
-        ) = 0;
+        ) const = 0;
 
     // Get integer attribute array at ABI level.
     virtual size_t get_int_attr(
@@ -126,14 +126,14 @@ struct IGeometryObject : IObject2 {
         const char* attr_name,
         int* buf,
         size_t buf_size
-        ) = 0;
+        ) const = 0;
 
     virtual size_t get_vec3f_attr(
         GeoAttrGroup grp,
         const char* attr_name,
         Vec3f* buf,
         size_t buf_size
-        ) = 0;
+        ) const = 0;
 
     virtual bool has_attr(
         GeoAttrGroup grp,
@@ -164,19 +164,19 @@ struct IGeometryObject : IObject2 {
     virtual size_t point_vertices(int point_id, int* vertices, size_t cap) = 0;
 
     virtual int face_point(int face_id, int vert_id) const = 0;
-    virtual size_t face_points(int face_id, int* points, size_t cap) = 0;
-    virtual int face_vertex(int face_id, int vert_id) = 0;
-    virtual int face_vertex_count(int face_id) = 0;
-    virtual size_t face_vertices(int face_id, int* vertices, size_t cap) = 0;
-    virtual Vec3f face_nrm(int face_id) = 0;
+    virtual size_t face_points(int face_id, int* points, size_t cap) const = 0;
+    virtual int face_vertex(int face_id, int vert_id) const = 0;
+    virtual int face_vertex_count(int face_id) const = 0;
+    virtual size_t face_vertices(int face_id, int* vertices, size_t cap) const = 0;
+    virtual Vec3f face_nrm(int face_id) const = 0;
 
     /* Vertex相关 */
-    virtual int vertex_index(int face_id, int vertex_id) = 0;
-    virtual int vertex_next(int linear_vertex_id) = 0;
-    virtual int vertex_prev(int linear_vertex_id) = 0;
-    virtual int vertex_point(int linear_vertex_id) = 0;
-    virtual int vertex_face(int linear_vertex_id) = 0;
-    virtual int vertex_face_index(int linear_vertex_id) = 0;
+    virtual int vertex_index(int face_id, int vertex_id) const = 0;
+    virtual int vertex_next(int linear_vertex_id) const = 0;
+    virtual int vertex_prev(int linear_vertex_id) const = 0;
+    virtual int vertex_point(int linear_vertex_id) const = 0;
+    virtual int vertex_face(int linear_vertex_id) const = 0;
+    virtual int vertex_face_index(int linear_vertex_id) const = 0;
 };
 
 struct IPrimitiveObject : IObject2 {

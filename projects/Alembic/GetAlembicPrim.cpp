@@ -1,25 +1,60 @@
-#include <zeno/zeno.h>
-#include <zeno/utils/logger.h>
-#include <zeno/geo/commonutil.h>
-#include <glm/glm.hpp>
-#include <zeno/types/ListObject.h>
-#include <zeno/types/ListObject_impl.h>
-#include <zeno/types/PrimitiveObject.h>
-#include <zeno/types/IGeometryObject.h>
-#include <zeno/types/StringObject.h>
-#include <zeno/types/UserData.h>
-#include <zeno/types/NumericObject.h>
-#include <zeno/extra/GlobalState.h>
 #include "ABCCommon.h"
 #include "ABCTree.h"
-#include "zeno/utils/string.h"
+#include "api_zs_alembic.h"
+#include <iobject2.h>
+#include <zenum.h>
+#include <zvec.h>
+#include <zcommon.h>
+#include <inodeimpl.h>
+#include <inodedata.h>
 #include <queue>
 #include <utility>
+#include <sstream>
+#include <cmath>
+#include <optional>
+
 
 namespace zeno {
-struct JsonObject : IObjectClone<JsonObject> {
-    Json json;
-};
+
+static std::string get_input2_string(INodeData* nd, const char* name) {
+    char buf[4096] = {};
+    nd->get_input2_string(name, buf, sizeof(buf));
+    return std::string(buf);
+}
+
+static bool starts_with(const std::string& s, const std::string& prefix) {
+    return s.size() >= prefix.size() && s.compare(0, prefix.size(), prefix) == 0;
+}
+
+static std::vector<std::string> split_str(const std::string& s, std::initializer_list<char> delims) {
+    std::vector<std::string> out;
+    std::string cur;
+    for (char c : s) {
+        bool is_delim = false;
+        for (char d : delims) if (c == d) { is_delim = true; break; }
+        if (is_delim) {
+            if (!cur.empty()) { out.push_back(cur); cur.clear(); }
+        } else cur += c;
+    }
+    if (!cur.empty()) out.push_back(cur);
+    return out;
+}
+
+static zeno::Vec3f vec3f_normalize(zeno::Vec3f v) {
+    float len = std::sqrt(v.x * v.x + v.y * v.y + v.z * v.z);
+    if (len <= 0.f) return v;
+    return zeno::Vec3f(v.x / len, v.y / len, v.z / len);
+}
+static zeno::Vec3f vec3f_cross(zeno::Vec3f a, zeno::Vec3f b) {
+    return zeno::Vec3f(
+        a.y * b.z - a.z * b.y,
+        a.z * b.x - a.x * b.z,
+        a.x * b.y - a.y * b.x
+    );
+}
+static float radians_to_degrees(float rad) {
+    return rad * (180.f / 3.14159265f);
+}
 
 int count_alembic_prims(zeno::ABCTree* abctree) {
     int count = 0;
@@ -29,49 +64,49 @@ int count_alembic_prims(zeno::ABCTree* abctree) {
     return count;
 }
 
-struct CountAlembicPrims : INode {
-    virtual void apply() override {
-        auto abctree = safe_dynamic_cast<ABCTree>(get_input("abctree"));
-        int count = count_alembic_prims(abctree);
-        set_output_int("count", count);
+struct CountAlembicPrims : INode2 {
+    DEF_OVERRIDE_FOR_INODE
+    ZErrorCode apply(INodeData* nd) override {
+        auto* obj = nd->get_input_object("abctree");
+        auto* abctree = dynamic_cast<ABCTree*>(obj);
+        if (!abctree) { nd->report_error("CountAlembicPrims: need ABCTree"); return ZErr_ParamError; }
+        nd->set_output_int("count", count_alembic_prims(abctree));
+        return ZErr_OK;
     }
 };
 
-ZENDEFNODE(CountAlembicPrims, {
-    {{gParamType_ABCTree, "abctree"}},
-    {{gParamType_Int, "count"}},
-    {},
-    {"alembic"},
-});
+ZENDEFNODE_ABI(CountAlembicPrims,
+    Z_INPUTS({"abctree", _gParamType_IObject}),
+    Z_OUTPUTS({"count", _gParamType_Int}),
+    "alembic", "", "", "");
 
-std::unique_ptr<PrimitiveObject> get_alembic_prim(zeno::ABCTree* abctree, int index) {
-    std::unique_ptr<PrimitiveObject> prim;
-    abctree->visitPrims([&] (auto const &p) {
+std::unique_ptr<IGeometryObject, ABCTreeGeomDeleter> get_alembic_prim(zeno::ABCTree* abctree, int index) {
+    std::unique_ptr<IGeometryObject, ABCTreeGeomDeleter> geom;
+    abctree->visitPrims([&](IGeometryObject* p) {
         if (index == 0) {
-            prim = safe_uniqueptr_cast<PrimitiveObject>(p->clone());
+            IObject2* c = p->clone();
+            geom.reset(dynamic_cast<IGeometryObject*>(c));
             return false;
         }
         index--;
         return true;
     });
-    if (!prim) {
-        throw Exception("index out of range in abctree");
+    if (!geom) {
+        throw;// Exception("index out of range in abctree");
     }
-    return prim;
+    return geom;
 }
 
-int get_alembic_prim_index(zeno::ABCTree* abctree, std::string name) {
+int get_alembic_prim_index(zeno::ABCTree* abctree, const std::string& name) {
     int index = 0;
-    abctree->visitPrims([&] (auto const &p) {
-        auto ud = p->userData();
-        auto _abc_path = zsString2Std(ud->get_string("abcpath_0", ""));
-        if (_abc_path == name) {
-            return false;
-        }
-        else {
-            index++;
-            return true;
-        }
+    char buf[4096] = {};
+    abctree->visitPrims([&](zeno::IGeometryObject* p) {
+        IUserData2* ud = p->userData();
+        if (ud) { ud->get_string("abcpath_0", "", buf, sizeof(buf)); }
+        std::string _abc_path(buf);
+        if (_abc_path == name) return false;
+        index++;
+        return true;
     });
     return index;
 }
@@ -89,293 +124,280 @@ void dfs_abctree(
     }
 }
 
-std::unique_ptr<PrimitiveObject> get_xformed_prim(zeno::ABCTree* abctree, int index) {
-    std::vector<ABCTree*> linear_abctrees;
-    std::vector<int> linear_abctree_parent;
-    dfs_abctree(abctree, -1, linear_abctrees, linear_abctree_parent);
-    std::unique_ptr<PrimitiveObject> prim;
-    std::vector<Alembic::Abc::M44d> transforms;
-    for (auto i = 0; i < linear_abctrees.size(); i++) {
-        auto const& abc_node = linear_abctrees[i];
-        int parent_index = linear_abctree_parent[i];
-        if (parent_index >= 0) {
-            transforms.push_back(abc_node->xform * transforms[parent_index]);
-        } else {
-            transforms.push_back(abc_node->xform);
-        }
-        if (abc_node->prim) {
-            if (index == 0) {
-                prim = safe_uniqueptr_cast<PrimitiveObject>(abc_node->prim->clone());
-                auto& mat = transforms.back();
-                for (auto& p: prim->verts) {
-                    auto pos = Imath::V4d(p[0], p[1], p[2], 1) * mat;
-                    p = zeno::vec3f((float)pos.x, (float)pos.y, (float)pos.z);
-                }
-            }
-            index--;
-        }
-    }
-    return std::move(prim);
-}
-
-std::unique_ptr<zeno::ListObject> get_xformed_prims(zeno::ABCTree* abctree) {
-    auto prims = std::make_unique<zeno::ListObject>();
+IListObject* get_xformed_prims_igeom(zeno::ABCTree* abctree) {
+    IListObject* list = zeno::zs_alembic::createList();
+    if (!list) return nullptr;
     std::vector<ABCTree*> linear_abctrees;
     std::vector<int> linear_abctree_parent;
     dfs_abctree(abctree, -1, linear_abctrees, linear_abctree_parent);
     std::vector<Alembic::Abc::M44d> transforms;
-    for (auto i = 0; i < linear_abctrees.size(); i++) {
-        auto const& abc_node = linear_abctrees[i];
+    for (size_t i = 0; i < linear_abctrees.size(); i++) {
+        auto const* abc_node = linear_abctrees[i];
         int parent_index = linear_abctree_parent[i];
-        if (parent_index >= 0) {
+        if (parent_index >= 0)
             transforms.push_back(abc_node->xform * transforms[parent_index]);
-        } else {
+        else
             transforms.push_back(abc_node->xform);
-        }
         if (abc_node->prim) {
-            auto prim = safe_uniqueptr_cast<PrimitiveObject>(abc_node->prim->clone());
-            auto& mat = transforms.back();
-            for (auto& p: prim->verts) {
-                auto pos = Imath::V4d(p[0], p[1], p[2], 1) * mat;
-                p = zeno::vec3f((float)pos.x, (float)pos.y, (float)pos.z);
+            IGeometryObject* src = abc_node->prim.get();
+            IObject2* c = src->clone();
+            IGeometryObject* cloned = dynamic_cast<IGeometryObject*>(c);
+            if (!cloned) { if (c) c->Delete(); continue; }
+            int np = cloned->npoints();
+            std::vector<zeno::Vec3f> pts((size_t)np);
+            cloned->points_pos(pts.data(), (size_t)np);
+            Alembic::Abc::M44d const& mat = transforms.back();
+            for (int j = 0; j < np; j++) {
+                Imath::V4d q(pts[(size_t)j][0], pts[(size_t)j][1], pts[(size_t)j][2], 1);
+                q = q * mat;
+                pts[(size_t)j] = zeno::Vec3f((float)q.x, (float)q.y, (float)q.z);
             }
-            prims->push_back(std::move(prim));
+            int nf = cloned->nfaces();
+            std::vector<std::vector<int>> faces((size_t)nf);
+            std::vector<int> buf(4);
+            for (int f = 0; f < nf; f++) {
+                size_t n = cloned->face_points(f, buf.data(), 4);
+                faces[(size_t)f].assign(buf.data(), buf.data() + n);
+            }
+            cloned->Delete();
+            IGeometryObject* xformed = zeno::zs_alembic::createGeometryByPointFace(
+                zeno::Topo_IndiceMesh, true, pts, faces);
+            if (xformed) list->push_back(xformed);
         }
     }
-    return prims;
+    return list;
 }
-struct GetAlembicPrim : INode {
-    virtual void apply() override {
-        auto abctree = safe_dynamic_cast<ABCTree>(get_input("abctree"));
-        int index = get_input2_int("index");
-        bool use_xform = get_input2_bool("use_xform");
-        std::unique_ptr<PrimitiveObject> prim;
-        if (get_input2_bool("use_name")) {
-            index = get_alembic_prim_index(abctree, std::string(get_input2_string("name").c_str()));
-        }
+
+std::unique_ptr<IGeometryObject, ABCTreeGeomDeleter> get_xformed_prim_igeom(zeno::ABCTree* abctree, int index) {
+    IListObject* list = get_xformed_prims_igeom(abctree);
+    if (!list || index < 0 || (size_t)index >= list->size()) {
+        if (list) list->Delete();
+        return nullptr;
+    }
+    IObject2* c = list->get(index)->clone();
+    list->Delete();
+    return std::unique_ptr<IGeometryObject, ABCTreeGeomDeleter>(dynamic_cast<IGeometryObject*>(c));
+}
+
+struct GetAlembicPrim : INode2 {
+    DEF_OVERRIDE_FOR_INODE
+    ZErrorCode apply(INodeData* nd) override {
+        auto* obj = nd->get_input_object("abctree");
+        auto* abctree = dynamic_cast<ABCTree*>(obj);
+        if (!abctree) { nd->report_error("GetAlembicPrim: need ABCTree"); return ZErr_ParamError; }
+        int index = nd->get_input2_int("index");
+        bool use_xform = nd->get_input2_bool("use_xform");
+        if (nd->get_input2_bool("use_name"))
+            index = get_alembic_prim_index(abctree, get_input2_string(nd, "name"));
         if (use_xform) {
-            prim = get_xformed_prim(abctree, index);
+            auto geom = get_xformed_prim_igeom(abctree, index);
+            if (!geom) { nd->report_error("GetAlembicPrim: index out of range"); return ZErr_ParamError; }
+            if (nd->get_input2_bool("flipFrontBack")) {
+                auto* g = zeno::zs_alembic::primFlipFaces(geom.get(), true);
+                if (g != geom.get()) geom.reset(g);
+            }
+            if (nd->get_input2_bool("triangulate")) {
+                auto* g = zeno::zs_alembic::primTriangulate(geom.get());
+                if (g != geom.get()) geom.reset(g);
+            }
+            nd->set_output_object("prim", geom.release());
         } else {
-            prim = get_alembic_prim(abctree, index);
+            auto geom = get_alembic_prim(abctree, index);
+            if (nd->get_input2_bool("flipFrontBack")) {
+                auto* g = zeno::zs_alembic::primFlipFaces(geom.get(), true);
+                if (g != geom.get()) geom.reset(g);
+            }
+            if (nd->get_input2_bool("triangulate")) {
+                auto* g = zeno::zs_alembic::primTriangulate(geom.get());
+                if (g != geom.get()) geom.reset(g);
+            }
+            nd->set_output_object("prim", geom.release());
         }
-        if (get_input2_bool("flipFrontBack")) {
-            primFlipFaces(prim.get(), true);
-        }
-        if (get_input2_bool("triangulate")) {
-            zeno::primTriangulate(prim.get());
-        }
-        auto geom = create_GeometryObject(prim.get());
-        set_output("prim", std::move(geom));
+        return ZErr_OK;
     }
 };
 
-ZENDEFNODE(GetAlembicPrim, {
-    {
-        {gParamType_Bool, "flipFrontBack", "1"},
-        {gParamType_ABCTree, "abctree"},
-        {gParamType_Int, "index", "0"},
-        {gParamType_Bool, "use_xform", "0"},
-        {gParamType_Bool, "triangulate", "0"},
-        {gParamType_Bool, "use_name", "0"},
-        {gParamType_String, "name", ""},
-    },
-    {{gParamType_Geometry, "prim"}},
-    {},
-    {"alembic"},
-});
+ZENDEFNODE_ABI(GetAlembicPrim,
+    Z_INPUTS(
+        {"abctree", _gParamType_IObject},
+        {"index", _gParamType_Int, ZInt(0)},
+        {"use_xform", _gParamType_Bool, ZInt(0)},
+        {"triangulate", _gParamType_Bool, ZInt(0)},
+        {"use_name", _gParamType_Bool, ZInt(0)},
+        {"name", _gParamType_String, ZString("")},
+        {"flipFrontBack", _gParamType_Bool, ZInt(1)}
+    ),
+    Z_OUTPUTS({"prim", _gParamType_Geometry}),
+    "alembic", "", "", "");
 
-struct AllAlembicPrim : INode {
-    virtual void apply() override {
-        auto abctree = safe_dynamic_cast<ABCTree>(get_input("abctree"));
-        auto prims = std::make_unique<zeno::ListObject>();
-        int use_xform = get_input2_int("use_xform");
-        if (use_xform) {
-            prims = get_xformed_prims(abctree);
+struct AllAlembicPrim : INode2 {
+    DEF_OVERRIDE_FOR_INODE
+    ZErrorCode apply(INodeData* nd) override {
+        auto* obj = nd->get_input_object("abctree");
+        auto* abctree = dynamic_cast<ABCTree*>(obj);
+        if (!abctree) { nd->report_error("AllAlembicPrim: need ABCTree"); return ZErr_ParamError; }
+        std::vector<zeno::IGeometryObject*> geomlst;
+        if (nd->get_input2_bool("use_xform")) {
+            IListObject* list = get_xformed_prims_igeom(abctree);
+            if (list) {
+                for (size_t i = 0; i < list->size(); i++)
+                    geomlst.push_back(dynamic_cast<zeno::IGeometryObject*>(list->get(i)));
+                list->Delete();
+            }
         } else {
-            abctree->visitPrims([&] (auto const &p) {
-                prims->push_back(p->clone());
-            });
+            abctree->visitPrims([&](zeno::IGeometryObject* p) { geomlst.push_back(p); });
         }
-
-        ZsVector<zeno::PrimitiveObject*> primlst;
-        for (auto spobj : prims->get()) {
-            primlst.push_back(dynamic_cast<PrimitiveObject*>(spobj));
-        }
-
-        auto outprim = zeno::PrimMerge(primlst);
-        if (get_input2_bool("flipFrontBack")) {
-            primFlipFaces(outprim.get(), true);
-        }
-        if (get_input2_int("triangulate") == 1) {
-            zeno::primTriangulate(outprim.get());
-        }
-        set_output("prim", create_GeometryObject(outprim.get()));
+        zeno::IGeometryObject* merged = zeno::zs_alembic::PrimMerge(geomlst);
+        if (!merged) { nd->report_error("AllAlembicPrim: merge failed"); return ZErr_ParamError; }
+        if (nd->get_input2_bool("flipFrontBack")) zeno::zs_alembic::primFlipFaces(merged, true);
+        if (nd->get_input2_int("triangulate") == 1) zeno::zs_alembic::primTriangulate(merged);
+        nd->set_output_object("prim", merged);
+        return ZErr_OK;
     }
 };
 
-ZENDEFNODE(AllAlembicPrim, {
-    {
-        {gParamType_Bool, "flipFrontBack", "1"},
-        {gParamType_ABCTree, "abctree"},
-        {gParamType_Bool, "use_xform", "0"},
-        {gParamType_Bool, "triangulate", "0"},
-    },
-    {{gParamType_Geometry, "prim"}},
-    {},
-    {"alembic"},
-});
+ZENDEFNODE_ABI(AllAlembicPrim,
+    Z_INPUTS(
+        {"abctree", _gParamType_IObject},
+        {"use_xform", _gParamType_Bool, ZInt(0)},
+        {"triangulate", _gParamType_Bool, ZInt(0)},
+        {"flipFrontBack", _gParamType_Bool, ZInt(1)}
+    ),
+    Z_OUTPUTS({"prim", _gParamType_Geometry}),
+    "alembic", "", "", "");
 
-struct AlembicPrimList : INode {
-    virtual void apply() override {
-        auto abctree = safe_dynamic_cast<ABCTree>(get_input("abctree"));
-        auto prims = std::make_shared<zeno::ListObject>();
-        bool use_xform = get_input2_bool("use_xform");
+struct AlembicPrimList : INode2 {
+    DEF_OVERRIDE_FOR_INODE
+    ZErrorCode apply(INodeData* nd) override {
+        auto* obj = nd->get_input_object("abctree");
+        auto* abctree = dynamic_cast<ABCTree*>(obj);
+        if (!abctree) { nd->report_error("AlembicPrimList: need ABCTree"); return ZErr_ParamError; }
+        std::vector<zeno::IGeometryObject*> geoms;
+        bool use_xform = nd->get_input2_bool("use_xform");
         if (use_xform) {
-            prims = get_xformed_prims(abctree);
+            IListObject* list = get_xformed_prims_igeom(abctree);
+            if (list) {
+                for (size_t i = 0; i < list->size(); i++)
+                    geoms.push_back(dynamic_cast<zeno::IGeometryObject*>(list->get(i)->clone()));
+                list->Delete();
+            }
         } else {
-            abctree->visitPrims([&] (auto const &p) {
-                prims->push_back(p->clone());
-            });
+            abctree->visitPrims([&](zeno::IGeometryObject* p) { geoms.push_back(p); });
         }
-
-        bool bSplitByFaceset = get_input2_bool("splitByFaceset");
-        std::unique_ptr<ListObject> new_prims;
+        bool bSplitByFaceset = nd->get_input2_bool("splitByFaceset");
+        std::vector<zeno::IGeometryObject*> expanded;
         if (bSplitByFaceset) {
-            new_prims = std::make_unique<zeno::ListObject>();
-        }
-        else {
-            new_prims = safe_uniqueptr_cast<zeno::ListObject>(prims->clone());
-        }
-        
-        std::vector<zany>& arr = new_prims->m_impl->m_objects;
-        if (get_input2_bool("splitByFaceset")) {
-            for (auto prim: prims->get()) {
-                auto list = abc_split_by_name(dynamic_cast<PrimitiveObject*>(prim), false);
-                auto listarr = list->get();
-                arr.insert(arr.end(), listarr.begin(), listarr.end());
-            }
-        }
-
-        auto pathInclude = zeno::split_str(zsString2Std(get_input2_string("pathInclude")), {' ', '\n'});
-        auto pathExclude = zeno::split_str(zsString2Std(get_input2_string("pathExclude")), {' ', '\n'});
-        auto facesetInclude = zeno::split_str(zsString2Std(get_input2_string("facesetInclude")), {' ', '\n'});
-        auto facesetExclude = zeno::split_str(zsString2Std(get_input2_string("facesetExclude")), {' ', '\n'});
-        for (auto it = arr.begin(); it != arr.end();) {
-            auto np = safe_dynamic_cast<PrimitiveObject>((*it).get());
-            auto abc_path = zsString2Std(np->userData()->get_string("abcpath_0"));
-            bool contain = false;
-            if (pathInclude.empty()) {
-                contain = true;
-            }
-            else {
-                for (const auto & p: pathInclude) {
-                    if (starts_with(abc_path, p)) {
-                        contain = true;
-                    }
+            for (zeno::IGeometryObject* geom : geoms) {
+                IListObject* sub = zeno::zs_alembic::abc_split_by_name(geom, false);
+                if (sub) {
+                    for (size_t i = 0; i < sub->size(); i++)
+                        expanded.push_back(dynamic_cast<zeno::IGeometryObject*>(sub->get(i)->clone()));
+                    sub->Delete();
                 }
             }
-            if (contain) {
-                for (const auto & p: pathExclude) {
-                    if (starts_with(abc_path, p)) {
-                        contain = false;
-                    }
-                }
-            }
-            if (contain && np->userData()->has("faceset_0")) {
-                auto faceset = zsString2Std(np->userData()->get_string("faceset_0"));
-                contain = false;
-                if (facesetInclude.empty()) {
-                    contain = true;
-                }
-                else {
-                    for (const auto & p: facesetInclude) {
-                        if (starts_with(faceset, p)) {
-                            contain = true;
-                        }
-                    }
-                }
-                if (contain) {
-                    for (const auto & p: facesetExclude) {
-                        if (starts_with(faceset, p)) {
-                            contain = false;
-                        }
-                    }
-                }
-            }
-            if (contain) {
-                ++it;
+            if (use_xform) { for (auto* g : geoms) g->Delete(); }
+        } else {
+            if (use_xform) {
+                expanded = std::move(geoms);
             } else {
-                it = arr.erase(it);
+                for (zeno::IGeometryObject* geom : geoms)
+                    expanded.push_back(dynamic_cast<zeno::IGeometryObject*>(geom->clone()));
             }
         }
-        auto new_prims2 = create_ListObject();
-        for (auto& prim : arr) {
-            auto _prim = safe_dynamic_cast<PrimitiveObject>(prim.get());
-            if (get_input2_bool("flipFrontBack")) {
-                primFlipFaces(_prim, true);
+        auto pathInclude = split_str(get_input2_string(nd, "pathInclude"), {' ', '\n'});
+        auto pathExclude = split_str(get_input2_string(nd, "pathExclude"), {' ', '\n'});
+        auto facesetInclude = split_str(get_input2_string(nd, "facesetInclude"), {' ', '\n'});
+        auto facesetExclude = split_str(get_input2_string(nd, "facesetExclude"), {' ', '\n'});
+        std::vector<zeno::IGeometryObject*> filtered;
+        for (zeno::IGeometryObject* geom : expanded) {
+            IUserData2* ud = geom->userData();
+            if (!ud) { filtered.push_back(geom); continue; }
+            char buf[4096] = {};
+            ud->get_string("abcpath_0", "", buf, sizeof(buf));
+            std::string abc_path(buf);
+            bool contain = pathInclude.empty();
+            if (!contain)
+                for (const auto& p : pathInclude) { if (starts_with(abc_path, p)) { contain = true; break; } }
+            if (contain)
+                for (const auto& p : pathExclude) { if (starts_with(abc_path, p)) { contain = false; break; } }
+            if (contain && ud->has_string("faceset_0")) {
+                ud->get_string("faceset_0", "", buf, sizeof(buf));
+                std::string faceset(buf);
+                contain = facesetInclude.empty();
+                if (!contain)
+                    for (const auto& p : facesetInclude) { if (starts_with(faceset, p)) { contain = true; break; } }
+                if (contain)
+                    for (const auto& p : facesetExclude) { if (starts_with(faceset, p)) { contain = false; break; } }
             }
-            if (get_input2_bool("splitByFaceset") && get_input2_bool("killDeadVerts")) {
-                primKillDeadVerts(_prim);
-            }
-            if (get_input2_bool("triangulate")) {
-                zeno::primTriangulate(_prim);
-            }
-            auto abcpath_0 = zsString2Std(_prim->userData()->get_string("abcpath_0"));
-            abcpath_0 += "/mesh";
-            _prim->userData()->set_string("abcpath_0", stdString2zs(abcpath_0));
-            new_prims2->push_back(prim->clone());
+            if (contain) filtered.push_back(geom);
+            else geom->Delete();
         }
-
-        auto new_geoms = create_ListObject();
-        for (auto obj : new_prims2->get()) {
-            auto prim = static_cast<PrimitiveObject*>(obj);
-            new_geoms->push_back(create_GeometryObject(prim));
+        IListObject* out_list = zeno::zs_alembic::createList();
+        if (!out_list) { for (auto* g : filtered) g->Delete(); return ZErr_ParamError; }
+        for (size_t i = 0; i < filtered.size(); i++) {
+            zeno::IGeometryObject* geom = filtered[i];
+            if (nd->get_input2_bool("flipFrontBack")) {
+                auto* g = zeno::zs_alembic::primFlipFaces(geom, true);
+                if (g != geom) { geom->Delete(); filtered[i] = geom = g; }
+            }
+            if (nd->get_input2_bool("triangulate")) {
+                auto* g = zeno::zs_alembic::primTriangulate(geom);
+                if (g != geom) { geom->Delete(); filtered[i] = geom = g; }
+            }
+            IUserData2* ud = geom->userData();
+            if (ud) {
+                char buf[4096] = {};
+                ud->get_string("abcpath_0", "", buf, sizeof(buf));
+                std::string abcpath_0(buf);
+                abcpath_0 += "/mesh";
+                ud->set_string("abcpath_0", abcpath_0.c_str());
+            }
+            out_list->push_back(filtered[i]);
         }
-        set_output("geoms", std::move(new_geoms));
+        nd->set_output_object("geoms", out_list);
+        return ZErr_OK;
     }
 };
 
-ZENDEFNODE(AlembicPrimList, {
-    {
-        {gParamType_Bool, "flipFrontBack", "1"},
-        {gParamType_ABCTree, "abctree"},
-        {gParamType_Bool, "use_xform", "0"},
-        {gParamType_Bool, "triangulate", "0"},
-        {gParamType_Bool, "splitByFaceset", "0"},
-        {gParamType_Bool, "killDeadVerts", "1"},
-        {gParamType_String, "pathInclude", ""},
-        {gParamType_String, "pathExclude", ""},
-        {gParamType_String, "facesetInclude", ""},
-        {gParamType_String, "facesetExclude", ""},
-    },
-    {{gParamType_List, "geoms"}},
-    {},
-    {"alembic"},
-});
+ZENDEFNODE_ABI(AlembicPrimList,
+    Z_INPUTS(
+        {"abctree", _gParamType_IObject},
+        {"use_xform", _gParamType_Bool, ZInt(0)},
+        {"triangulate", _gParamType_Bool, ZInt(0)},
+        {"splitByFaceset", _gParamType_Bool, ZInt(0)},
+        {"killDeadVerts", _gParamType_Bool, ZInt(1)},
+        {"flipFrontBack", _gParamType_Bool, ZInt(1)},
+        {"pathInclude", _gParamType_String, ZString("")},
+        {"pathExclude", _gParamType_String, ZString("")},
+        {"facesetInclude", _gParamType_String, ZString("")},
+        {"facesetExclude", _gParamType_String, ZString("")}
+    ),
+    Z_OUTPUTS({"geoms", _gParamType_List}),
+    "alembic", "", "", "");
 
-struct AlembicSceneInfo : INode {
-    virtual void apply() override {
-        auto abctree = safe_dynamic_cast<ABCTree>(get_input("abctree"));
-        auto json_obj = std::make_unique<JsonObject>();
-        json_obj->json = abctree->get_scene_info();
-        set_output("json", std::move(json_obj));
+struct AlembicSceneInfo : INode2 {
+    DEF_OVERRIDE_FOR_INODE
+    ZErrorCode apply(INodeData* nd) override {
+        auto* obj = nd->get_input_object("abctree");
+        auto* abctree = dynamic_cast<ABCTree*>(obj);
+        if (!abctree) { nd->report_error("AlembicSceneInfo: need ABCTree"); return ZErr_ParamError; }
+        Json j = abctree->get_scene_info();
+        nd->set_output_string("json", j.dump().c_str());
+        return ZErr_OK;
     }
 };
 
-ZENDEFNODE(AlembicSceneInfo, {
-    {
-        {gParamType_ABCTree, "abctree"},
-    },
-    {
-        {gParamType_JsonObject, "json"},
-    },
-    {},
-    {"Alembic"},
-});
+ZENDEFNODE_ABI(AlembicSceneInfo,
+    Z_INPUTS({"abctree", _gParamType_IObject}),
+    Z_OUTPUTS({"json", _gParamType_String}),
+    "alembic", "", "", "");
 
-struct GetAlembicCamera : INode {
-    virtual void apply() override {
-        auto abctree = safe_dynamic_cast<ABCTree>(get_input("abctree"));
+struct GetAlembicCamera : INode2 {
+    DEF_OVERRIDE_FOR_INODE
+    ZErrorCode apply(INodeData* nd) override {
+        auto* obj = nd->get_input_object("abctree");
+        auto* abctree = dynamic_cast<ABCTree*>(obj);
+        if (!abctree) { nd->report_error("GetAlembicCamera: need ABCTree"); return ZErr_ParamError; }
         std::queue<std::pair<Alembic::Abc::v12::M44d, ABCTree*>> q;
         q.emplace(Alembic::Abc::v12::M44d(), abctree);
         Alembic::Abc::v12::M44d mat;
@@ -388,151 +410,142 @@ struct GetAlembicCamera : INode {
                 cam_info = *(t->camera_info);
                 break;
             }
-            for (auto& ch: t->children) {
+            for (auto& ch : t->children)
                 q.emplace(t->xform * m, ch.get());
-            }
         }
         if (!cam_info.has_value()) {
-            log_error("Not found camera!");
+            nd->report_error("GetAlembicCamera: camera not found");
+            return ZErr_ParamError;
         }
-
         auto pos = Imath::V4d(0, 0, 0, 1) * mat;
         auto up = Imath::V4d(0, 1, 0, 0) * mat;
         auto right = Imath::V4d(1, 0, 0, 0) * mat;
-
-        float focal_length = cam_info.value().focal_length;
-
-        set_output_vec3f("pos", { (float)pos.x, (float)pos.y, (float)pos.z });
-
-        auto _up = zeno::normalize(zeno::vec3f((float)up.x, (float)up.y, (float)up.z));
-        auto _right = zeno::normalize(zeno::vec3f((float)right.x, (float)right.y, (float)right.z));
-        auto view = zeno::cross(_up, _right);
-
-        set_output_vec3f("up", toAbiVec3f(_up));//  set_output2("up", _up);
-        set_output_vec3f("right", toAbiVec3f(_right));
-        set_output_vec3f("view", toAbiVec3f(view));
-
-        set_output_float("focal_length", focal_length);
-        set_output_float("near", (float)cam_info.value()._near);
-        set_output_float("far", (float)cam_info.value()._far);
-        set_output_float("horizontalAperture", (float)cam_info->horizontalAperture);
-        set_output_float("verticalAperture", (float)cam_info->verticalAperture);
-
-        float m_nx = get_input2_float("nx");
-        float m_ny = get_input2_float("ny");
+        float focal_length = (float)cam_info.value().focal_length;
+        nd->set_output_vec3f("pos", zeno::Vec3f((float)pos.x, (float)pos.y, (float)pos.z));
+        zeno::Vec3f up_v((float)up.x, (float)up.y, (float)up.z);
+        zeno::Vec3f right_v((float)right.x, (float)right.y, (float)right.z);
+        zeno::Vec3f _up = vec3f_normalize(up_v);
+        zeno::Vec3f _right = vec3f_normalize(right_v);
+        zeno::Vec3f view = vec3f_cross(_up, _right);
+        nd->set_output_vec3f("up", _up);
+        nd->set_output_vec3f("right", _right);
+        nd->set_output_vec3f("view", view);
+        nd->set_output_float("focal_length", focal_length);
+        nd->set_output_float("near", (float)cam_info.value()._near);
+        nd->set_output_float("far", (float)cam_info.value()._far);
+        nd->set_output_float("horizontalAperture", (float)cam_info->horizontalAperture);
+        nd->set_output_float("verticalAperture", (float)cam_info->verticalAperture);
+        float m_nx = (float)nd->get_input2_int("nx");
+        float m_ny = (float)nd->get_input2_int("ny");
         float m_ha = (float)cam_info->horizontalAperture;
         float m_va = (float)cam_info->verticalAperture;
-        float c_aspect = m_ha/m_va;
-        float u_aspect = m_nx/m_ny;
-        float fov_y = glm::degrees(2.0f * std::atan(m_va/(u_aspect/c_aspect) / (2.0f * focal_length)));
-        set_output_float("fov_y", fov_y);
+        float c_aspect = m_ha / m_va;
+        float u_aspect = m_nx / m_ny;
+        float fov_y = radians_to_degrees(2.0f * std::atan(m_va / (u_aspect / c_aspect) / (2.0f * focal_length)));
+        nd->set_output_float("fov_y", fov_y);
+        return ZErr_OK;
     }
 };
 
-ZENDEFNODE(GetAlembicCamera, {
-    {
-        {gParamType_ABCTree, "abctree"},
-        {gParamType_Int, "nx", "1920"},
-        {gParamType_Int, "ny", "1080"},
-    },
-    {
-        {gParamType_Vec3f, "pos"},
-        {gParamType_Vec3f, "up"},
-        {gParamType_Vec3f, "view"},
-        {gParamType_Vec3f, "right"},
-        {gParamType_Float,"fov_y"},
-        {gParamType_Float,"focal_length"},
-        {gParamType_Float,"horizontalAperture"},
-        {gParamType_Float,"verticalAperture"},
-        {gParamType_Float,"near"},
-        {gParamType_Float,"far"},
-    },
-    {},
-    {"alembic"},
-});
+ZENDEFNODE_ABI(GetAlembicCamera,
+    Z_INPUTS(
+        {"abctree", _gParamType_IObject},
+        {"nx", _gParamType_Int, ZInt(1920)},
+        {"ny", _gParamType_Int, ZInt(1080)}
+    ),
+    Z_OUTPUTS(
+        {"pos", _gParamType_Vec3f},
+        {"up", _gParamType_Vec3f},
+        {"view", _gParamType_Vec3f},
+        {"right", _gParamType_Vec3f},
+        {"fov_y", _gParamType_Float},
+        {"focal_length", _gParamType_Float},
+        {"horizontalAperture", _gParamType_Float},
+        {"verticalAperture", _gParamType_Float},
+        {"near", _gParamType_Float},
+        {"far", _gParamType_Float}
+    ),
+    "alembic", "", "", "");
 
-struct ImportAlembicPrim : INode {
+struct ImportAlembicPrim : INode2 {
     Alembic::Abc::v12::IArchive archive;
     std::string usedPath;
-    virtual void apply() override {
-        int frameid;
-        if (has_input("frameid")) {
-            frameid = get_input2_int("frameid");
-        } else {
-            frameid = GetFrameId();
-        }
-        auto abctree = std::make_unique<ABCTree>();
-        {
-            auto path = zsString2Std(get_input2_string("path"));
-            bool read_done = archive.valid() && (path == usedPath);
-            if (!read_done) {
-                archive = readABC(path);
-                usedPath = path;
-            }
-            double start, _end;
-            GetArchiveStartAndEndTime(archive, start, _end);
-            TimeAndSamplesMap timeMap;
-            Alembic::Util::uint32_t numSamplings = archive.getNumTimeSamplings();
-            for (Alembic::Util::uint32_t s = 0; s < numSamplings; ++s)             {
-                timeMap.add(archive.getTimeSampling(s),
-                            archive.getMaxNumSamplesForTimeSamplingIndex(s));
-            }
-            auto obj = archive.getTop();
-            bool read_face_set = get_input2_bool("read_face_set");
-            bool outOfRangeAsEmpty = get_input2_bool("outOfRangeAsEmpty");
-            traverseABC(obj, *abctree, frameid, read_done, read_face_set, "", timeMap, ObjectVisibility::kVisibilityDeferred, false, outOfRangeAsEmpty, 0);
-        }
-        bool use_xform = get_input2_bool("use_xform");
-        auto index = get_input2_int("index");
-        std::unique_ptr<PrimitiveObject> outprim;
-        if (index == -1) {
-            auto prims = std::make_unique<zeno::ListObject>();
-            if (use_xform) {
-                prims = get_xformed_prims(abctree.get());
-            } else {
-                abctree->visitPrims([&] (auto const &p) {
-                    prims->push_back(p->clone());
-                });
-            }
 
-            ZsVector<zeno::PrimitiveObject*> primlst;
-            for (auto spobj : prims->get()) {
-                primlst.push_back(dynamic_cast<PrimitiveObject*>(spobj));
+    DEF_OVERRIDE_FOR_INODE
+    ZErrorCode apply(INodeData* nd) override {
+        int frameid = nd->has_input("frameid") ? nd->get_input2_int("frameid") : nd->GetFrameId();
+        auto abctree = std::make_unique<ABCTree>();
+        std::string path = get_input2_string(nd, "path");
+        bool read_done = archive.valid() && (path == usedPath);
+        if (!read_done) {
+            archive = readABC(path);
+            usedPath = path;
+        }
+        double start, _end;
+        GetArchiveStartAndEndTime(archive, start, _end);
+        TimeAndSamplesMap timeMap;
+        Alembic::Util::uint32_t numSamplings = archive.getNumTimeSamplings();
+        for (Alembic::Util::uint32_t s = 0; s < numSamplings; ++s)
+            timeMap.add(archive.getTimeSampling(s), archive.getMaxNumSamplesForTimeSamplingIndex(s));
+        auto obj = archive.getTop();
+        bool read_face_set = nd->get_input2_bool("read_face_set");
+        bool outOfRangeAsEmpty = nd->get_input2_bool("outOfRangeAsEmpty");
+        traverseABC(obj, *abctree, frameid, read_done, read_face_set, "", timeMap, ObjectVisibility::kVisibilityDeferred, false, outOfRangeAsEmpty, 0);
+
+        bool use_xform = nd->get_input2_bool("use_xform");
+        int index = nd->get_input2_int("index");
+        int abc_count = count_alembic_prims(abctree.get());
+
+        if (index != -1 && !use_xform) {
+            auto geom = get_alembic_prim(abctree.get(), index);
+            { auto* g = zeno::zs_alembic::primFlipFaces(geom.get(), true); if (g != geom.get()) geom.reset(g); }
+            if (nd->get_input2_bool("triangulate")) { auto* g = zeno::zs_alembic::primTriangulate(geom.get()); if (g != geom.get()) geom.reset(g); }
+            if (geom->userData()) geom->userData()->set_int("_abc_prim_count", abc_count);
+            nd->set_output_object("prim", geom.release());
+            return ZErr_OK;
+        }
+        if (index != -1 && use_xform) {
+            auto geom = get_xformed_prim_igeom(abctree.get(), index);
+            if (!geom) { nd->report_error("ImportAlembicPrim: index out of range"); return ZErr_ParamError; }
+            { auto* g = zeno::zs_alembic::primFlipFaces(geom.get(), true); if (g != geom.get()) geom.reset(g); }
+            if (nd->get_input2_bool("triangulate")) { auto* g = zeno::zs_alembic::primTriangulate(geom.get()); if (g != geom.get()) geom.reset(g); }
+            if (geom->userData()) geom->userData()->set_int("_abc_prim_count", abc_count);
+            nd->set_output_object("prim", geom.release());
+            return ZErr_OK;
+        }
+        std::vector<zeno::IGeometryObject*> geomlst;
+        if (use_xform) {
+            IListObject* list = get_xformed_prims_igeom(abctree.get());
+            if (list) {
+                for (size_t i = 0; i < list->size(); i++)
+                    geomlst.push_back(dynamic_cast<zeno::IGeometryObject*>(list->get(i)->clone()));
+                list->Delete();
             }
-            outprim = zeno::PrimMerge(primlst);
+        } else {
+            abctree->visitPrims([&](zeno::IGeometryObject* p) { geomlst.push_back(p); });
         }
-        else {
-            if (use_xform) {
-                outprim = get_xformed_prim(abctree.get(), index);
-            } else {
-                outprim = get_alembic_prim(abctree.get(), index);
-            }
-        }
-        primFlipFaces(outprim.get(), true);
-        if (get_input2_bool("triangulate")) {
-            zeno::primTriangulate(outprim.get());
-        }
-        outprim->userData()->set_int("_abc_prim_count", count_alembic_prims(abctree.get()));
-        set_output("prim", std::move(outprim));
+        zeno::IGeometryObject* merged = zeno::zs_alembic::PrimMerge(geomlst);
+        if (!merged) { nd->report_error("ImportAlembicPrim: merge failed"); return ZErr_ParamError; }
+        { auto* g = zeno::zs_alembic::primFlipFaces(merged, true); if (g != merged) { merged->Delete(); merged = g; } }
+        if (nd->get_input2_bool("triangulate")) { auto* g = zeno::zs_alembic::primTriangulate(merged); if (g != merged) { merged->Delete(); merged = g; } }
+        if (merged->userData()) merged->userData()->set_int("_abc_prim_count", abc_count);
+        nd->set_output_object("prim", merged);
+        return ZErr_OK;
     }
 };
 
-ZENDEFNODE(ImportAlembicPrim, {
-    {
-        {gParamType_String, "path", "", zeno::Socket_Primitve, zeno::ReadPathEdit},
-        {gParamType_Int, "frameid"},
-        {gParamType_Int, "index", "-1"},
-        {gParamType_Bool, "use_xform", "0"},
-        {gParamType_Bool, "triangulate", "0"},
-        {gParamType_Bool, "read_face_set", "0"},
-        {gParamType_Bool, "outOfRangeAsEmpty", "0"},
-    },
-    {
-        {gParamType_Primitive, "prim"},
-    },
-    {},
-    {"alembic"},
-});
+ZENDEFNODE_ABI(ImportAlembicPrim,
+    Z_INPUTS(
+        {"path", _gParamType_String, ZString("")},
+        {"frameid", _gParamType_Int, ZInt(-1)},
+        {"index", _gParamType_Int, ZInt(-1)},
+        {"use_xform", _gParamType_Bool, ZInt(0)},
+        {"triangulate", _gParamType_Bool, ZInt(0)},
+        {"read_face_set", _gParamType_Bool, ZInt(0)},
+        {"outOfRangeAsEmpty", _gParamType_Bool, ZInt(0)}
+    ),
+    Z_OUTPUTS({"prim", _gParamType_Geometry}),
+    "alembic", "", "", "");
 
 } // namespace zeno
 

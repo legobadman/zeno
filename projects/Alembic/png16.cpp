@@ -1,6 +1,7 @@
 //
 // Created by zh on 2023/7/31.
 //
+#if 0
 #include <ImfMultiPartOutputFile.h>
 #include <ImfOutputFile.h>
 #include <ImfInputFile.h>
@@ -380,3 +381,4 @@ ZENDEFNODE(ReadExr, {
 });
 #endif
 }
+#endif

@@ -1,23 +1,28 @@
 #pragma once
 
 #include <tinygltf/json.hpp>
-using Json = nlohmann::json;
-
-#include <zeno/core/IObject.h>
-#include <zeno/types/PrimitiveObject.h>
-#include <zeno/utils/safe_dynamic_cast.h>
+#include <iobject2.h>
 #include <memory>
+#include <cstring>
 #include <Alembic/AbcGeom/Foundation.h>
 #include <Alembic/AbcGeom/All.h>
 #include <Alembic/AbcCoreAbstract/All.h>
 #include <Alembic/AbcCoreOgawa/All.h>
 #include <Alembic/AbcCoreHDF5/All.h>
 #include <Alembic/Abc/ErrorHandler.h>
-#include "zeno/utils/log.h"
 
 using Alembic::AbcGeom::ObjectVisibility;
+using Json = nlohmann::json;
 
 namespace zeno {
+
+// Deleter for IGeometryObject so ownership stays in the creating module (ABI-safe).
+struct ABCTreeGeomDeleter {
+    void operator()(IGeometryObject* p) const {
+        if (p) p->Delete();
+    }
+};
+using ABCTreeUniqueGeom = std::unique_ptr<IGeometryObject, ABCTreeGeomDeleter>;
 
 struct CameraInfo {
     double _far;
@@ -27,32 +32,74 @@ struct CameraInfo {
     double verticalAperture;
 };
 
-struct ABCTree : IObject {
+struct ABCTree : IObject2 {
     std::string name;
-    std::unique_ptr<zeno::PrimitiveObject> prim;
+    ABCTreeUniqueGeom prim;
     Alembic::Abc::M44d xform = Alembic::Abc::M44d();
     std::unique_ptr<CameraInfo> camera_info;
     std::vector<std::unique_ptr<ABCTree>> children;
     ObjectVisibility visible = ObjectVisibility::kVisibilityDeferred;
     std::string instanceSourcePath;
 
-    zany clone() const override {
-        auto tree = std::make_unique<ABCTree>();
+    std::string m_key;
+
+    // IObject2 implementation -------------------------------------------------
+    IObject2* clone() const override {
+        auto* tree = new ABCTree();
         tree->name = name;
         if (prim) {
-            tree->prim = zeno::safe_uniqueptr_cast<PrimitiveObject>(prim->clone());
+            IObject2* c = prim->clone();
+            tree->prim.reset(dynamic_cast<IGeometryObject*>(c));
         }
         tree->xform = xform;
         if (camera_info) {
             tree->camera_info = std::make_unique<CameraInfo>(*camera_info);
         }
-        tree->children.resize(children.size());
-        for (int i = 0; i < children.size(); i++) {
-            tree->children[i] = zeno::safe_uniqueptr_cast<ABCTree>(children[i]->clone());
+        tree->children.clear();
+        tree->children.reserve(children.size());
+        for (auto const& ch : children) {
+            if (ch) {
+                auto* ch_clone = dynamic_cast<ABCTree*>(ch->clone());
+                tree->children.emplace_back(ch_clone);
+            }
         }
         tree->visible = visible;
         tree->instanceSourcePath = instanceSourcePath;
+        tree->m_key = m_key;
         return tree;
+    }
+
+    size_t key(char* buf, size_t buf_size) const override {
+        const char* s = m_key.c_str();
+        size_t len = m_key.size();   // not including '\0'
+        if (buf && buf_size > 0) {
+            size_t copy = (len < buf_size - 1) ? len : (buf_size - 1);
+            std::memcpy(buf, s, copy);
+            buf[copy] = '\0';
+        }
+        return len;
+    }
+
+    void update_key(const char* keyStr) override {
+        m_key = keyStr ? keyStr : "";
+    }
+
+    size_t serialize_json(char* buf, size_t buf_size) const override {
+        (void)buf;
+        (void)buf_size;
+        return 0;
+    }
+
+    IUserData2* userData() override {
+        return nullptr;
+    }
+
+    void Delete() override {
+        delete this;
+    }
+
+    ZObjectType type() const override {
+        return ZObj_Dummy;
     }
 
     Json get_scene_info(
@@ -89,20 +136,18 @@ struct ABCTree : IObject {
     }
 
     template <class Func>
-    bool visitPrims(Func const &func) const {
-        if constexpr (std::is_void_v<std::invoke_result_t<Func,
-                      std::unique_ptr<PrimitiveObject> const &>>) {
-            if (prim)
-                func(prim);
-            for (auto const &ch: children)
-                ch->visitPrims(func);
-        } else {
-            if (prim)
-                if (!func(prim))
+    bool visitPrims(Func const& func) const {
+        if (prim) {
+            if constexpr (std::is_void_v<std::invoke_result_t<Func, IGeometryObject*>>) {
+                func(prim.get());
+            } else {
+                if (!func(prim.get()))
                     return false;
-            for (auto const &ch: children)
-                if (!ch->visitPrims(func))
-                    return false;
+            }
+        }
+        for (auto const& ch : children) {
+            if (!ch->visitPrims(func))
+                return false;
         }
         return true;
     }

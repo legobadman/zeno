@@ -3,7 +3,7 @@
 
 #include "ABCTree.h"
 #include "Alembic/Abc/IObject.h"
-#include "zeno/ListObject.h"
+#include "iobject2.h"
 
 namespace zeno {
 class TimeAndSamplesMap {
@@ -42,20 +42,21 @@ extern void traverseABC(
 
 extern Alembic::AbcGeom::IArchive readABC(std::string const &path);
 
-extern std::unique_ptr<zeno::ListObject> get_xformed_prims(zeno::ABCTree* abctree);
-
-extern std::unique_ptr<PrimitiveObject> get_alembic_prim(zeno::ABCTree* abctree, int index);
+extern std::unique_ptr<zeno::IListObject> get_xformed_prims(zeno::ABCTree* abctree);
+/** Plugin ABI: returns IListObject* (caller must call list->Delete()). No zenocore dependency. */
+extern IListObject* get_xformed_prims_igeom(zeno::ABCTree* abctree);
+extern std::unique_ptr<IGeometryObject, ABCTreeGeomDeleter> get_alembic_prim(zeno::ABCTree* abctree, int index);
 
 void writeObjFile(
-    const zeno::PrimitiveObject* primitive,
+    const IGeometryObject* geom,
     const char *path,
     int32_t frameNum = 1,
-    const std::pair<zeno::vec3f, zeno::vec3f>& bbox = std::make_pair(vec3f{}, vec3f{})
+    const std::pair<zeno::Vec3f, zeno::Vec3f>& bbox = std::make_pair(zeno::Vec3f(), zeno::Vec3f())
 );
 
 bool SaveEXR(const float* rgb, int width, int height, const char* outfilename);
 
-std::unique_ptr<ListObject> abc_split_by_name(PrimitiveObject* prim, bool add_when_none = false);
+IListObject* abc_split_by_name(IGeometryObject* geom, bool add_when_none = false);
 }
 
 #endif //ZENO_ABCCOMMON_H

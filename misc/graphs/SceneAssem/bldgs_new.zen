@@ -73367,6 +73367,178 @@
                     }
                 }
             },
+            "AlembicPrimList1": {
+                "name": "AlembicPrimList1",
+                "class": "AlembicPrimList",
+                "object_inputs": {
+                    "abctree": {
+                        "links": [
+                            {
+                                "out-node": "ReadAlembic1",
+                                "out-socket": "abctree",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": "abctree"
+                            }
+                        ],
+                        "type": "iobject",
+                        "socket-type": "clone"
+                    }
+                },
+                "primitive_inputs": {
+                    "use_xform": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": false,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "triangulate": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": false,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "splitByFaceset": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": false,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "killDeadVerts": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": false,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "flipFrontBack": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": true,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "pathInclude": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "",
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "pathExclude": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "",
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "facesetInclude": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "",
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "facesetExclude": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "",
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "geoms": {
+                        "type": "list",
+                        "socket-type": "clone"
+                    }
+                },
+                "uipos": [
+                    -1314.1402587890626,
+                    1289.181396484375
+                ],
+                "status": [],
+                "collasped": false
+            },
+            "AlembicSceneInfo1": {
+                "name": "AlembicSceneInfo1",
+                "class": "AlembicSceneInfo",
+                "object_inputs": {
+                    "abctree": {
+                        "links": [
+                            {
+                                "out-node": "ReadAlembic1",
+                                "out-socket": "abctree",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": "abctree"
+                            }
+                        ],
+                        "type": "iobject",
+                        "socket-type": "clone"
+                    }
+                },
+                "primitive_inputs": {},
+                "primitive_outputs": {
+                    "json": {
+                        "type": "string",
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "object_outputs": {
+                    "json": {
+                        "type": "iobject",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    -1782.0,
+                    1445.0
+                ],
+                "status": [],
+                "collasped": false
+            },
             "CameraEval1": {
                 "name": "CameraEval1",
                 "class": "CameraEval",
@@ -74388,8 +74560,8 @@
                     }
                 },
                 "uipos": [
-                    -1235.0,
-                    1624.0
+                    -1466.0,
+                    1768.0
                 ],
                 "status": [
                     "View"
@@ -75459,6 +75631,191 @@
                 "status": [],
                 "collasped": false
             },
+            "PrimsFilterInUserdata1": {
+                "name": "PrimsFilterInUserdata1",
+                "class": "PrimsFilterInUserdata",
+                "object_inputs": {
+                    "list": {
+                        "links": [
+                            {
+                                "out-node": "AlembicPrimList1",
+                                "out-socket": "geoms",
+                                "out-key": "",
+                                "in-key": "",
+                                "target-socket": "list"
+                            }
+                        ],
+                        "type": "list",
+                        "socket-type": "clone"
+                    }
+                },
+                "primitive_inputs": {
+                    "name": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "_abc_name",
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "filters": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "UCR_GENSUV_ZYX0_",
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "contain": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": false,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "fuzzy": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": true,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {},
+                "object_outputs": {
+                    "out": {
+                        "type": "list",
+                        "socket-type": "clone"
+                    }
+                },
+                "uipos": [
+                    -1307.0,
+                    1446.0
+                ],
+                "status": [],
+                "collasped": false
+            },
+            "ReadAlembic1": {
+                "name": "ReadAlembic1",
+                "class": "ReadAlembic",
+                "object_inputs": {},
+                "primitive_inputs": {
+                    "path": {
+                        "links": null,
+                        "type": "string",
+                        "default-value": "O:/擎天柱变形动画FBX/bigCity.abc",
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "read_face_set": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": true,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "outOfRangeAsEmpty": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": false,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "skipInvisibleObject": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": true,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "CopyFacesetToMatid": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": true,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "use_instance": {
+                        "links": null,
+                        "type": "bool",
+                        "default-value": true,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    },
+                    "frameid": {
+                        "links": null,
+                        "type": "float",
+                        "default-value": 0.0,
+                        "control": {
+                            "name": ""
+                        },
+                        "controlProps": null,
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "primitive_outputs": {
+                    "namelist": {
+                        "type": "string",
+                        "socket-type": "clone",
+                        "visible": false
+                    }
+                },
+                "object_outputs": {
+                    "abctree": {
+                        "type": "iobject",
+                        "socket-type": "clone"
+                    },
+                    "namelist": {
+                        "type": "list",
+                        "socket-type": "output"
+                    }
+                },
+                "uipos": [
+                    -1480.0,
+                    1083.0
+                ],
+                "status": [],
+                "collasped": false
+            },
             "ReadJsonFromString1": {
                 "name": "ReadJsonFromString1",
                 "class": "ReadJsonFromString",
@@ -75534,7 +75891,7 @@
                                 "out-node": "Matrix4_1",
                                 "out-socket": "matrix",
                                 "out-key": "",
-                                "in-key": "obj0",
+                                "in-key": "",
                                 "target-socket": "xform"
                             }
                         ],

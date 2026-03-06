@@ -1,5 +1,6 @@
 // https://github.com/alembic/alembic/blob/master/lib/Alembic/AbcGeom/Tests/PolyMeshTest.cpp
 // WHY THE FKING ALEMBIC OFFICIAL GIVES NO DOC BUT ONLY "TESTS" FOR ME TO LEARN THEIR FKING LIB
+#if 0
 #include <zeno/zeno.h>
 #include <any>
 #include <zeno/types/PrimitiveObject.h>
@@ -999,3 +1000,4 @@ ZENDEFNODE(WriteAlembicPrims, {
 
 } // namespace
 } // namespace zeno
+#endif
