@@ -365,4 +365,8 @@ namespace zeno {
         return m_pos;
     }
 
+    void ZNodeStatus::register_removeSelf(std::function<void()> cb_func) {
+        m_cbRemoveSelfCallback.insert(std::make_pair(generateUUID(), cb_func));
+    }
+
 } // namespace zeno

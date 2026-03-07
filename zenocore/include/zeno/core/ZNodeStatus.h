@@ -71,12 +71,14 @@ namespace zeno {
         std::pair<float, float> get_pos() const;
 
         Graph* getGraph() const { return m_pGraph; }
+        void register_removeSelf(std::function<void()> cb_func);
 
     private:
         std::string m_name;
         std::string m_nodecls;
         std::string m_uuid;
         std::pair<float, float> m_pos;
+        std::unordered_map<std::string, std::function<void()>> m_cbRemoveSelfCallback;
         std::string m_uuidPath;
         Graph* m_pGraph = nullptr;
         ZNode* m_pNodeRepo {};

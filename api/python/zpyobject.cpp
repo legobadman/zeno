@@ -12,7 +12,7 @@ if (!spNode) {\
     throw std::runtime_error("the node has been destroyed in core data");\
 }
 
-Zpy_Object::Zpy_Object(zeno::zany&& obj) : m_wpObject(std::move(obj)) {
+Zpy_Object::Zpy_Object(zeno::zany2&& obj) : m_wpObject(std::move(obj)) {
 
 }
 
@@ -21,46 +21,50 @@ VAR_USER_DATA Zpy_Object::get_user_data(const std::string& key) {
     if (!spObject) {
         throw std::runtime_error("object has been destroyed");
     }
-    zeno::UserData* pUserData = static_cast<zeno::UserData*>(spObject->m_usrData.get());
-    auto iter = pUserData->m_data.find(key);
-    if (iter == pUserData->m_data.end())
-        throw std::runtime_error("the key \"" + key + "\" doesn't exist");
-
-    const zeno::zany& dat = iter->second;
-    if (auto numobj = dynamic_cast<zeno::NumericObject*>(dat.get())) {
-        return std::visit([&](auto&& arg)->VAR_USER_DATA {
-            using T = std::decay_t<decltype(arg)>;
-            if constexpr (std::is_same_v<T, int>) {
-                return arg;
-            }
-            else if constexpr (std::is_same_v<T, float>) {
-                return arg;
-            }
-            else if constexpr (std::is_same_v<T, zeno::vec2i>) {
-                return arg;
-            }
-            else if constexpr (std::is_same_v<T, zeno::vec2f>) {
-                return arg;
-            }
-            else if constexpr (std::is_same_v<T, zeno::vec3f>) {
-                return arg;
-            }
-            else if constexpr (std::is_same_v<T, zeno::vec3i>) {
-                return arg;
-            }
-            else if constexpr (std::is_same_v<T, zeno::vec4i>) {
-                return arg;
-            }
-            else if constexpr (std::is_same_v<T, zeno::vec4f>) {
-                return arg;
-            }
-            }, numobj->value);
+    auto ud = m_wpObject->userData();
+    if (ud->has_int(key.c_str())) {
+        int v = ud->get_int(key.c_str(), 0);
+        return v;
     }
-    else if (auto strobj = dynamic_cast<zeno::StringObject*>(dat.get())) {
-        return strobj->get();
+    else if (ud->has_float(key.c_str())) {
+        float v = ud->get_float(key.c_str(), 0.0f);
+        return v;
+    }
+    else if (ud->has_vec2i(key.c_str())) {
+        zeno::Vec2i v = ud->get_vec2i(key.c_str());
+        return zeno::toVec2i(v);
+    }
+    else if (ud->has_vec3i(key.c_str())) {
+        zeno::Vec3i v = ud->get_vec3i(key.c_str());
+        return zeno::toVec3i(v);
+    }
+    else if (ud->has_vec4i(key.c_str())) {
+        zeno::Vec4i v = ud->get_vec4i(key.c_str());
+        return zeno::toVec4i(v);
+    }
+    else if (ud->has_vec2f(key.c_str())) {
+        zeno::Vec2f v = ud->get_vec2f(key.c_str());
+        return zeno::toVec2f(v);
+    }
+    else if (ud->has_vec3f(key.c_str())) {
+        zeno::Vec3f v = ud->get_vec3f(key.c_str());
+        return zeno::toVec3f(v);
+    }
+    else if (ud->has_vec4f(key.c_str())) {
+        zeno::Vec4f v = ud->get_vec4f(key.c_str());
+        return zeno::toVec4f(v);
+    }
+    else if (ud->has_string(key.c_str())) {
+        char sbuf[512] = {};
+        ud->get_string(key.c_str(), "", sbuf, sizeof(sbuf));
+        return std::string(sbuf);
+    }
+    else if (ud->has_bool(key.c_str())) {
+        bool v = ud->get_bool(key.c_str(), false);
+        return v ? 1 : 0;
     }
     else {
-        throw std::runtime_error("no numeric or string on userdata");
+        throw std::runtime_error("GetUserData3: unsupported UserData type for given key");
     }
 }
 
@@ -70,36 +74,37 @@ void Zpy_Object::set_user_data(const std::string& key, const VAR_USER_DATA& dat)
         throw std::runtime_error("object has been destroyed");
     }
 
-    zeno::UserData* pUserData = static_cast<zeno::UserData*>(spObject->m_usrData.get());
+    auto csKey = key.c_str();
+    auto ud = m_wpObject->userData();
 
     std::visit([&](auto&& arg) {
         using T = std::decay_t<decltype(arg)>;
         if constexpr (std::is_same_v<T, int>) {
-            pUserData->set2(key, arg);
+            ud->set_int(csKey, arg);
         }
         else if constexpr (std::is_same_v<T, float>) {
-            pUserData->set2(key, arg);
+            ud->set_float(csKey, arg);
         }
         else if constexpr (std::is_same_v<T, std::string>) {
-            pUserData->set2(key, arg);
+            ud->set_string(csKey, arg.c_str());
         }
         else if constexpr (std::is_same_v<T, zeno::vec2i>) {
-            pUserData->set2(key, arg);
+            ud->set_vec2i(csKey, zeno::toAbiVec2i(arg));
         }
         else if constexpr (std::is_same_v<T, zeno::vec2f>) {
-            pUserData->set2(key, arg);
+            ud->set_vec2f(csKey, zeno::toAbiVec2f(arg));
         }
         else if constexpr (std::is_same_v<T, zeno::vec3f>) {
-            pUserData->set2(key, arg);
+            ud->set_vec3f(csKey, zeno::toAbiVec3f(arg));
         }
         else if constexpr (std::is_same_v<T, zeno::vec3i>) {
-            pUserData->set2(key, arg);
+            ud->set_vec3i(csKey, zeno::toAbiVec3i(arg));
         }
         else if constexpr (std::is_same_v<T, zeno::vec4i>) {
-            pUserData->set2(key, arg);
+            ud->set_vec4i(csKey, zeno::toAbiVec4i(arg));
         }
         else if constexpr (std::is_same_v<T, zeno::vec4f>) {
-            pUserData->set2(key, arg);
+            ud->set_vec4f(csKey, zeno::toAbiVec4f(arg));
         }
         }, dat);
 }
@@ -112,7 +117,7 @@ std::vector<Zpy_Object> Zpy_Object::toList() const {
     if (auto spList = dynamic_cast<zeno::ListObject*>(spObject)) {
         std::vector<Zpy_Object> vec;
         for (auto spObj : spList->get()) {
-            vec.push_back(Zpy_Object(spObj->clone()));
+            vec.push_back(Zpy_Object(zeno::zany2(spObj->clone())));
         }
         return vec;
     }
@@ -148,13 +153,13 @@ Zpy_Camera::Zpy_Camera(
     if (_view.size() != 3) { throw std::runtime_error("error dims of `view`,which should be 3."); }
 
     //其他参数暂时不考虑公式的情况
-    spNode->update_param("pos", _pos);
-    spNode->update_param("up", _up);
-    spNode->update_param("view", _view);
-    spNode->update_param("fov", fov);
-    spNode->update_param("aperture", aperture);
-    spNode->update_param("focalPlaneDistance", focalPlaneDistance);
-    spNode->set_view(true);
+    spNode->getNodeParams().update_param("pos", _pos);
+    spNode->getNodeParams().update_param("up", _up);
+    spNode->getNodeParams().update_param("view", _view);
+    spNode->getNodeParams().update_param("fov", fov);
+    spNode->getNodeParams().update_param("aperture", aperture);
+    spNode->getNodeParams().update_param("focalPlaneDistance", focalPlaneDistance);
+    spNode->getNodeStatus().set_view(true);
 
     auto nodename = spNode->get_name();
     zeno::render_reload_info render_;
@@ -175,8 +180,8 @@ void Zpy_Camera::run() {
 
 std::unique_ptr<zeno::CameraObject> Zpy_Camera::getCamera() const {
     THROW_WHEN_CORE_DESTROYED(m_wpNode)
-    zeno::zany spResObj = spNode->get_default_output_object()->clone();
-    return zeno::safe_uniqueptr_cast<zeno::CameraObject>(std::move(spResObj));
+    zeno::IObject2* spResObj = spNode->getNodeParams().get_default_output_object()->clone();
+    return std::unique_ptr<zeno::CameraObject>(static_cast<zeno::CameraObject*>(spResObj));
 }
 
 py::list Zpy_Camera::getPos() const {
@@ -188,7 +193,7 @@ py::list Zpy_Camera::getPos() const {
 
 void Zpy_Camera::setPos(py::list v) {
     THROW_WHEN_CORE_DESTROYED(m_wpNode)
-    spNode->update_param("pos", zpyapi::pylist2vec(v));
+    spNode->getNodeParams().update_param("pos", zpyapi::pylist2vec(v));
     run();
 }
 
@@ -201,7 +206,7 @@ py::list Zpy_Camera::getUp() const {
 
 void Zpy_Camera::setUp(py::list v) {
     THROW_WHEN_CORE_DESTROYED(m_wpNode)
-    spNode->update_param("up", zpyapi::pylist2vec(v));
+    spNode->getNodeParams().update_param("up", zpyapi::pylist2vec(v));
     run();
 }
 
@@ -214,7 +219,7 @@ py::list Zpy_Camera::getView() const {
 
 void Zpy_Camera::setView(py::list v) {
     THROW_WHEN_CORE_DESTROYED(m_wpNode)
-    spNode->update_param("view", zpyapi::pylist2vec(v));
+    spNode->getNodeParams().update_param("view", zpyapi::pylist2vec(v));
     run();
 }
 
@@ -227,7 +232,7 @@ float Zpy_Camera::getNear() const {
 
 void Zpy_Camera::setNear(float near) {
     THROW_WHEN_CORE_DESTROYED(m_wpNode)
-    spNode->update_param("near", near);
+    spNode->getNodeParams().update_param("near", near);
     run();
 }
 
@@ -240,7 +245,7 @@ float Zpy_Camera::getFar() const {
 
 void Zpy_Camera::setFar(float far) {
     THROW_WHEN_CORE_DESTROYED(m_wpNode)
-    spNode->update_param("far", far);
+    spNode->getNodeParams().update_param("far", far);
     run();
 }
 
@@ -253,7 +258,7 @@ float Zpy_Camera::getFov() const {
 
 void Zpy_Camera::setFov(float fov) {
     THROW_WHEN_CORE_DESTROYED(m_wpNode)
-    spNode->update_param("fov", fov);
+    spNode->getNodeParams().update_param("fov", fov);
     run();
 }
 
@@ -266,7 +271,7 @@ float Zpy_Camera::getAperture() const {
 
 void Zpy_Camera::setAperture(float aperture) {
     THROW_WHEN_CORE_DESTROYED(m_wpNode)
-    spNode->update_param("aperture", aperture);
+    spNode->getNodeParams().update_param("aperture", aperture);
     run();
 }
 
@@ -279,7 +284,7 @@ float Zpy_Camera::getFocalPlaneDistance() const {
 
 void Zpy_Camera::setFocalPlaneDistance(float focal) {
     THROW_WHEN_CORE_DESTROYED(m_wpNode)
-    spNode->update_param("focalPlaneDistance", focal);
+    spNode->getNodeParams().update_param("focalPlaneDistance", focal);
     run();
 }
 
@@ -312,12 +317,12 @@ Zpy_Light::Zpy_Light(
     if (_color.size() != 3) { throw std::runtime_error("error dims of `color`, which should be 3."); }
 
     //其他参数暂时不考虑公式的情况
-    spNode->update_param("position", _pos);
-    spNode->update_param("scale", _scale);
-    spNode->update_param("rotate", _rotate);
-    spNode->update_param("color", _color);
-    spNode->update_param("intensity", intensity);
-    spNode->set_view(true);
+    spNode->getNodeParams().update_param("position", _pos);
+    spNode->getNodeParams().update_param("scale", _scale);
+    spNode->getNodeParams().update_param("rotate", _rotate);
+    spNode->getNodeParams().update_param("color", _color);
+    spNode->getNodeParams().update_param("intensity", intensity);
+    spNode->getNodeStatus().set_view(true);
 
     auto nodename = spNode->get_name();
     zeno::render_reload_info render_;
@@ -339,7 +344,7 @@ py::list Zpy_Light::getPos() const {
 
 void Zpy_Light::setPos(py::list v) {
     THROW_WHEN_CORE_DESTROYED(m_wpNode)
-    spNode->update_param("position", zpyapi::pylist2vec(v));
+    spNode->getNodeParams().update_param("position", zpyapi::pylist2vec(v));
     run();
 }
 
@@ -353,7 +358,7 @@ py::list Zpy_Light::getScale() const {
 
 void Zpy_Light::setScale(py::list v) {
     THROW_WHEN_CORE_DESTROYED(m_wpNode)
-    spNode->update_param("scale", zpyapi::pylist2vec(v));
+    spNode->getNodeParams().update_param("scale", zpyapi::pylist2vec(v));
     run();
 }
 
@@ -367,7 +372,7 @@ py::list Zpy_Light::getRotate() const {
 
 void Zpy_Light::setRotate(py::list v) {
     THROW_WHEN_CORE_DESTROYED(m_wpNode)
-    spNode->update_param("rotate", zpyapi::pylist2vec(v));
+    spNode->getNodeParams().update_param("rotate", zpyapi::pylist2vec(v));
     run();
 }
 
@@ -381,7 +386,7 @@ py::list Zpy_Light::getColor() const {
 
 void Zpy_Light::setColor(py::list v) {
     THROW_WHEN_CORE_DESTROYED(m_wpNode)
-    spNode->update_param("color", zpyapi::pylist2vec(v));
+    spNode->getNodeParams().update_param("color", zpyapi::pylist2vec(v));
     run();
 }
 
@@ -394,7 +399,7 @@ float Zpy_Light::getIntensity() const {
 
 void Zpy_Light::setIntensity(float intensity) {
     THROW_WHEN_CORE_DESTROYED(m_wpNode)
-    spNode->update_param("intensity", intensity);
+    spNode->getNodeParams().update_param("intensity", intensity);
     run();
 }
 
@@ -408,10 +413,10 @@ void Zpy_Light::run() {
 std::shared_ptr<zeno::PrimitiveObject> Zpy_Light::getLight() const {
     THROW_WHEN_CORE_DESTROYED(m_wpNode)
 
-    auto pObject = spNode->get_default_output_object();
+    auto pObject = spNode->getNodeParams().get_default_output_object();
     if (pObject) {
-        zeno::zany spResObj = pObject->clone();
-        return zeno::safe_uniqueptr_cast<zeno::PrimitiveObject>(std::move(spResObj));
+        zeno::IObject2* pResObj = pObject->clone();
+        return std::shared_ptr<zeno::PrimitiveObject>(static_cast<zeno::PrimitiveObject*>(pObject));
     }
     return nullptr;
 }

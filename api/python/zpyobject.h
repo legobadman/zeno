@@ -22,13 +22,13 @@ using VAR_USER_DATA = std::variant<int, float, std::string,
 
 class Zpy_Object {
 public:
-    Zpy_Object(zeno::zany&& obj);
+    Zpy_Object(zeno::zany2&& obj);
     VAR_USER_DATA get_user_data(const std::string& key);
     void set_user_data(const std::string& key, const VAR_USER_DATA& dat);
     std::vector<Zpy_Object> toList() const;
 
 private:
-    zeno::zany m_wpObject;
+    zeno::zany2 m_wpObject;
 };
 
 
