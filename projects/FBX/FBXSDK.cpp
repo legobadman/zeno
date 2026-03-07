@@ -31,6 +31,7 @@
 #include "zs_primitive.h"
 #include "stringhelper.h"
 #include "api_zs_fbx.h"
+#include "FBXUserData.h"
 #include <iobject2.h>
 
 #ifdef ZENO_FBXSDK
@@ -491,19 +492,19 @@ struct FBXObject : IObject2 {
     struct Inner {
         FbxManager* lSdkManager = nullptr;
         FbxScene*   lScene = nullptr;
-        ~Inner() {
-            if (lScene) {
-                lScene->Destroy();
-                lScene = nullptr;
-            }
-            if (lSdkManager) {
-                lSdkManager->Destroy();
-                lSdkManager = nullptr;
-            }
-        }
+        //~Inner() {
+        //    if (lScene) {
+        //        lScene->Destroy();
+        //        lScene = nullptr;
+        //    }
+        //    if (lSdkManager) {
+        //        lSdkManager->Destroy();
+        //        lSdkManager = nullptr;
+        //    }
+        //}
     };
-    std::shared_ptr<Inner> inner;
-
+    Inner inner;
+    FBXUserData m_userData;
     std::string m_key;
 
     FBXObject() = default;
@@ -535,7 +536,7 @@ struct FBXObject : IObject2 {
     }
 
     IUserData2* userData() override {
-        return nullptr;
+        return &m_userData;
     }
 
     void Delete() override {
@@ -552,7 +553,7 @@ struct ReadFBXFile : INode2 {
     DEF_OVERRIDE_FOR_INODE
 
     std::string m_usedPath;
-    std::shared_ptr<FBXObject::Inner> m_cachedInner;
+    FBXObject::Inner m_cachedInner;
 
     ZErrorCode apply(INodeData* nd) override {
         const std::string path = get_input2_string(nd, "path");
@@ -565,7 +566,7 @@ struct ReadFBXFile : INode2 {
         nd->report_error("ReadFBXFile: ZENO_FBXSDK not enabled at build time");
         return ZErr_ParamError;
 #else
-        if (path == m_usedPath && m_cachedInner) {
+        if (path == m_usedPath) {
             auto* obj = new FBXObject();
             obj->inner = m_cachedInner;
             obj->update_key(path.c_str());
@@ -604,9 +605,9 @@ struct ReadFBXFile : INode2 {
         FbxRootNodeUtility::RemoveAllFbxRoots(scene);
         importer->Destroy();
 
-        auto inner = std::make_shared<FBXObject::Inner>();
-        inner->lSdkManager = manager;
-        inner->lScene = scene;
+        FBXObject::Inner inner;
+        inner.lSdkManager = manager;
+        inner.lScene = scene;
         m_cachedInner = inner;
         m_usedPath = path;
 
@@ -654,39 +655,42 @@ struct ParseFBX : INode2 {
         std::vector<std::string> scene_info_list;
         {
             std::lock_guard scopeLock(s_fbx_mutex);
-        FbxManager* lSdkManager = FbxManager::Create();
+            FbxManager* lSdkManager = FbxManager::Create();
 
-        // Create the IO settings object.
+            // Create the IO settings object.
             FbxIOSettings* ios = FbxIOSettings::Create(lSdkManager, IOSROOT);
-        lSdkManager->SetIOSettings(ios);
+            lSdkManager->SetIOSettings(ios);
 
-        // Create an importer using the SDK manager.
+            // Create an importer using the SDK manager.
             FbxImporter* lImporter = FbxImporter::Create(lSdkManager, "");
 
-        // Use the first argument as the filename for the importer.
+            // Use the first argument as the filename for the importer.
             if (!lImporter->Initialize(lFilename.c_str(), -1, lSdkManager->GetIOSettings())) {
-            printf("Call to FbxImporter::Initialize() failed.\n");
-            printf("Error returned: %s\n\n", lImporter->GetStatus().GetErrorString());
-            exit(-1);
-        }
-        int major, minor, revision;
-        lImporter->GetFileVersion(major, minor, revision);
-        auto fbx_object = std::make_unique<FBXObject>();
+                std::string errStr(lImporter->GetStatus().GetErrorString());
+                ptrNodeData->report_error("Call to FbxImporter::Initialize() failed.\n");
+                //printf("Call to FbxImporter::Initialize() failed.\n");
+                //printf("Error returned: %s\n\n", lImporter->GetStatus().GetErrorString());
+                //exit(-1);
+                return ZErr_ParamError;
+            }
+            int major, minor, revision;
+            lImporter->GetFileVersion(major, minor, revision);
+            auto fbx_object = std::make_unique<FBXObject>();
 
-            fbx_object->inner->lSdkManager = lSdkManager;
-        // Create a new scene so that it can be populated by the imported file.
-            fbx_object->inner->lScene = FbxScene::Create(lSdkManager, "myScene");
+            fbx_object->inner.lSdkManager = lSdkManager;
+            // Create a new scene so that it can be populated by the imported file.
+            fbx_object->inner.lScene = FbxScene::Create(lSdkManager, "myScene");
 
-        // Import the contents of the file into the scene.
-            lImporter->Import(fbx_object->inner->lScene);
-            FbxRootNodeUtility::RemoveAllFbxRoots(fbx_object->inner->lScene);
+            // Import the contents of the file into the scene.
+            lImporter->Import(fbx_object->inner.lScene);
+            FbxRootNodeUtility::RemoveAllFbxRoots(fbx_object->inner.lScene);
 
-        // The file is imported; so get rid of the importer.
-        lImporter->Destroy();
-        fbx_object->userData()->set_vec3i("version", zeno::Vec3i(major, minor, revision));
+            // The file is imported; so get rid of the importer.
+            lImporter->Destroy();
+            fbx_object->userData()->set_vec3i("version", zeno::Vec3i(major, minor, revision));
             fbx_object->userData()->set_string("file_path", lFilename.c_str());
 
-            auto lScene = fbx_object->inner->lScene;
+            auto lScene = fbx_object->inner.lScene;
             // Print the nodes of the scene and their attributes recursively.
             // Note that we are not printing the root node because it should
             // not contain any attributes.
@@ -756,7 +760,7 @@ struct ParseFBX : INode2 {
                 FbxTime curTime;       // The time for each key in the animation curve(s)
                 curTime.SetSecondDouble(t);   // Starting time
 
-                auto lScene = fbx_object->inner->lScene;
+                auto lScene = fbx_object->inner.lScene;
                 FbxNode* lRootNode = lScene->GetRootNode();
                 Json json;
                 if (lRootNode != nullptr) {
@@ -789,6 +793,7 @@ struct ParseFBX : INode2 {
             scene_cstrs.empty() ? nullptr : scene_cstrs.data(),
             scene_cstrs.size());
         ptrNodeData->set_output_object("Geometry List", geo_list);
+        return ZErr_OK;
     }
 };
     
@@ -960,7 +965,7 @@ struct NewFBXSceneInfo : INode2 {
         }
 
         // Fetch JSON string from string list.
-        char buf[32768] = {};
+        char buf[327680] = {};
         size_t written = nd->get_input_string_list("Json List", static_cast<size_t>(idx), buf, sizeof(buf));
         if (written == 0) {
             nd->report_error("NewFBXSceneInfo: selected JSON string is empty");

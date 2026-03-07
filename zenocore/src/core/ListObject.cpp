@@ -58,6 +58,7 @@ namespace zeno
     }
 
     void ListObject::update_key(const char* key) {
+        m_key = key;
         if (!key || strlen(key) == 0) return;
         for (int i = 0; i < m_objects.size(); i++) {
             auto& obj = m_objects[i];
