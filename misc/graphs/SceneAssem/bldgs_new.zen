@@ -73374,7 +73374,7 @@
                     "abctree": {
                         "links": [
                             {
-                                "out-node": "ReadAlembic1",
+                                "out-node": "ReadAlembic2",
                                 "out-socket": "abctree",
                                 "out-key": "",
                                 "in-key": "",
@@ -73494,8 +73494,8 @@
                     }
                 },
                 "uipos": [
-                    -1314.1402587890626,
-                    1289.181396484375
+                    -1287.0,
+                    1280.0
                 ],
                 "status": [],
                 "collasped": false
@@ -73507,7 +73507,7 @@
                     "abctree": {
                         "links": [
                             {
-                                "out-node": "ReadAlembic1",
+                                "out-node": "ReadAlembic2",
                                 "out-socket": "abctree",
                                 "out-key": "",
                                 "in-key": "",
@@ -74569,7 +74569,9 @@
                     -1548.0,
                     1769.0
                 ],
-                "status": [],
+                "status": [
+                    "View"
+                ],
                 "collasped": false
             },
             "GetFrameNum1": {
@@ -75099,9 +75101,7 @@
                     3235.0,
                     5385.0
                 ],
-                "status": [
-                    "View"
-                ],
+                "status": [],
                 "collasped": false
             },
             "Matrix4_1": {
@@ -75335,7 +75335,7 @@
                     "Start Frame": {
                         "links": null,
                         "type": "int",
-                        "default-value": 0,
+                        "default-value": 75,
                         "control": {
                             "name": ""
                         },
@@ -75518,7 +75518,7 @@
                     "FBX Path": {
                         "links": null,
                         "type": "string",
-                        "default-value": "",
+                        "default-value": "O:/test_scene_tree/擎天柱.fbx",
                         "control": {
                             "name": "read path"
                         },
@@ -75584,7 +75584,7 @@
                     "Start Frame": {
                         "links": null,
                         "type": "int",
-                        "default-value": 0,
+                        "default-value": 75,
                         "control": {
                             "name": ""
                         },
@@ -75595,7 +75595,7 @@
                     "End Frame": {
                         "links": null,
                         "type": "int",
-                        "default-value": 0,
+                        "default-value": 500,
                         "control": {
                             "name": ""
                         },
@@ -75758,8 +75758,8 @@
                 "status": [],
                 "collasped": false
             },
-            "ReadAlembic1": {
-                "name": "ReadAlembic1",
+            "ReadAlembic2": {
+                "name": "ReadAlembic2",
                 "class": "ReadAlembic",
                 "object_inputs": {},
                 "primitive_inputs": {
@@ -75852,15 +75852,11 @@
                     "abctree": {
                         "type": "iobject",
                         "socket-type": "clone"
-                    },
-                    "namelist": {
-                        "type": "list",
-                        "socket-type": "output"
                     }
                 },
                 "uipos": [
-                    -1480.0,
-                    1083.0
+                    -1538.0,
+                    1041.0
                 ],
                 "status": [],
                 "collasped": false

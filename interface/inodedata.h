@@ -16,6 +16,8 @@ namespace zeno {
 		virtual float get_input2_float(const char* param) = 0;
 		virtual bool has_input_float(const char* param) = 0;
 		virtual int get_input2_string(const char* param, char* ret, size_t cap) = 0;
+		// Returns length (excluding null) of input string; 0 if no such input or empty.
+		virtual size_t get_input_string_size(const char* param) = 0;
 		virtual bool has_input_string(const char* param) = 0;
 		virtual size_t get_input_string_list_count(const char* param) = 0;
 		virtual size_t get_input_string_list(const char* param, size_t index, char* buf, size_t cap) = 0;

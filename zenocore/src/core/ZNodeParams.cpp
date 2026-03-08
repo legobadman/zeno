@@ -2533,6 +2533,11 @@ namespace zeno {
         return res;
     }
 
+    size_t ZNodeParams::get_input_string_size(const char* param) {
+        const auto& str = any_cast<std::string>(get_param_result(std::string(param)));
+        return str.size();
+    }
+
     int ZNodeParams::get_input2_string(const char* param, char* ret, size_t cap)
     {
         const auto& str = any_cast<std::string>(get_param_result(std::string(param)));

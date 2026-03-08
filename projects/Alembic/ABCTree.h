@@ -2,6 +2,7 @@
 
 #include <tinygltf/json.hpp>
 #include <iobject2.h>
+#include "AlembicUserData.h"
 #include <memory>
 #include <cstring>
 #include <Alembic/AbcGeom/Foundation.h>
@@ -42,6 +43,7 @@ struct ABCTree : IObject2 {
     std::string instanceSourcePath;
 
     std::string m_key;
+    AlembicUserData m_userData;
 
     // IObject2 implementation -------------------------------------------------
     IObject2* clone() const override {
@@ -66,6 +68,9 @@ struct ABCTree : IObject2 {
         tree->visible = visible;
         tree->instanceSourcePath = instanceSourcePath;
         tree->m_key = m_key;
+        if (m_userData.size() > 0) {
+            tree->m_userData.copy(const_cast<AlembicUserData*>(&m_userData));
+        }
         return tree;
     }
 
@@ -91,7 +96,7 @@ struct ABCTree : IObject2 {
     }
 
     IUserData2* userData() override {
-        return nullptr;
+        return &m_userData;
     }
 
     void Delete() override {

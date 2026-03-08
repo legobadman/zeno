@@ -15,6 +15,7 @@
 #include <iostream>
 #include <memory>
 #include <sstream>
+#include <fstream>
 #include <set>
 #include <numeric>
 #include <filesystem>
@@ -44,9 +45,17 @@ namespace zeno {
     namespace fs = std::filesystem;
 
 static std::string get_input2_string(INodeData* nd, const char* name) {
-    char buf[1024] = {};
-    nd->get_input2_string(name, buf, sizeof(buf));
-    return std::string(buf);
+    size_t sz = nd->get_input_string_size(name);
+    if (sz == 0) return "";
+    constexpr size_t STACK_THRESHOLD = 8192;
+    if (sz < STACK_THRESHOLD) {
+        char buf[STACK_THRESHOLD];
+        nd->get_input2_string(name, buf, sz + 1);
+        return std::string(buf);
+    }
+    std::vector<char> heap_buf(sz + 1);
+    nd->get_input2_string(name, heap_buf.data(), heap_buf.size());
+    return std::string(heap_buf.data());
 }
 
 static std::string get_ud_string(IUserData2* pUserData, const std::string& param) {
@@ -964,9 +973,10 @@ struct NewFBXSceneInfo : INode2 {
             return ZErr_ParamError;
         }
 
-        // Fetch JSON string from string list.
-        char buf[327680] = {};
-        size_t written = nd->get_input_string_list("Json List", static_cast<size_t>(idx), buf, sizeof(buf));
+        // Fetch JSON string from string list (no get_input_string_list_size API; use fixed buffer).
+        constexpr size_t BUF_SIZE_FOR_JSON = 327680;
+        char buf[BUF_SIZE_FOR_JSON] = {};
+        size_t written = nd->get_input_string_list("Json List", static_cast<size_t>(idx), buf, BUF_SIZE_FOR_JSON);
         if (written == 0) {
             nd->report_error("NewFBXSceneInfo: selected JSON string is empty");
             return ZErr_ParamError;
@@ -979,13 +989,12 @@ struct NewFBXSceneInfo : INode2 {
         std::string json_str(buf, written);
 
         // Optionally validate/normalize via nlohmann::json.
-        try {
-            Json j = Json::parse(json_str);
-            json_str = j.dump();
-        } catch (...) {
-            nd->report_error("NewFBXSceneInfo: invalid JSON string in Json List");
-            return ZErr_ParamError;
-        }
+        //try {
+        //    Json j = Json::parse(json_str);
+        //} catch (...) {
+        //    nd->report_error("NewFBXSceneInfo: invalid JSON string in Json List");
+        //    return ZErr_ParamError;
+        //}
 
         nd->set_output_string("json", json_str.c_str());
         return ZErr_OK;

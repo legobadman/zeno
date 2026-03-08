@@ -64,7 +64,7 @@ namespace zeno
             auto& obj = m_objects[i];
             if (get_object_key(obj.get()).empty()) {
                 std::string newkey = m_key + "/" + std::to_string(i);
-                obj->update_key(m_key.c_str());
+                obj->update_key(newkey.c_str());
             }
         }
     }

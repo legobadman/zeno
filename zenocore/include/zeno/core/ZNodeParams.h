@@ -188,6 +188,7 @@ namespace zeno {
         float get_input2_float(const char* param) override;
         bool has_input_float(const char* param) override;
         int get_input2_string(const char* param, char* ret, size_t cap) override;
+        size_t get_input_string_size(const char* param) override;
         bool has_input_string(const char* param) override;
         size_t get_input_string_list_count(const char* param) override;
         size_t get_input_string_list(const char* param, size_t index, char* buf, size_t cap) override;

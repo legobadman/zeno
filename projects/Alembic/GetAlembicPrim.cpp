@@ -380,7 +380,10 @@ struct AlembicSceneInfo : INode2 {
     ZErrorCode apply(INodeData* nd) override {
         auto* obj = nd->get_input_object("abctree");
         auto* abctree = dynamic_cast<ABCTree*>(obj);
-        if (!abctree) { nd->report_error("AlembicSceneInfo: need ABCTree"); return ZErr_ParamError; }
+        if (!abctree) {
+            nd->report_error("AlembicSceneInfo: need ABCTree");
+            return ZErr_ParamError;
+        }
         Json j = abctree->get_scene_info();
         nd->set_output_string("json", j.dump().c_str());
         return ZErr_OK;

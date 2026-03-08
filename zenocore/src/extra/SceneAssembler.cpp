@@ -27,7 +27,9 @@
 #include <zeno/utils/scope_exit.h>
 #include <deque>
 #include <string>
+#include <vector>
 #include <memory>
+#include <fstream>
 
 using Json = nlohmann::json;
 
@@ -36,9 +38,17 @@ namespace zeno {
 namespace {
 
 static std::string get_input2_string_helper(INodeData* nd, const char* name) {
-    char buf[512];
-    nd->get_input2_string(name, buf, sizeof(buf));
-    return std::string(buf);
+    size_t sz = nd->get_input_string_size(name);
+    if (sz == 0) return "";
+    constexpr size_t STACK_THRESHOLD = 8192;
+    if (sz < STACK_THRESHOLD) {
+        char buf[STACK_THRESHOLD];
+        nd->get_input2_string(name, buf, sz + 1);
+        return std::string(buf);
+    }
+    std::vector<char> heap_buf(sz + 1);
+    nd->get_input2_string(name, heap_buf.data(), heap_buf.size());
+    return std::string(heap_buf.data());
 }
 
 static void get_local_matrix_map(Json& json, std::string parent_path, SceneObject* scene) {
@@ -340,6 +350,11 @@ struct FormSceneTree : INode2 {
             nd->report_error("FormSceneTree: Scene Info is empty");
             return ZErr_ParamError;
         }
+
+        //std::ofstream f("C:\\Users\\Admin\\Desktop\\jsondebug\\zeno3.json");
+        //f << scene_info_str;
+        //f.close();
+
         Json scene_json;
         try {
             scene_json = Json::parse(scene_info_str);
